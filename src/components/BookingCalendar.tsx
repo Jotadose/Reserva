@@ -87,6 +87,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return true;
   };
 
+  const getBookingsForDate = (date: string) => {
+    return bookings.filter(booking => 
+      booking.date === date && booking.status === 'confirmed'
+    ).length;
+  };
   const previousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
   };
@@ -147,13 +152,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             );
             const isAvailable = isDateAvailable(dateString);
             const isSelected = selectedDate === dateString;
+            const bookingCount = getBookingsForDate(dateString);
 
             return (
               <button
                 key={day}
                 onClick={() => isAvailable && onDateSelect(dateString)}
                 disabled={!isAvailable}
-                className={`p-3 rounded-lg font-semibold transition-all duration-200 ${
+                className={`p-3 rounded-lg font-semibold transition-all duration-200 relative ${
                   isSelected
                     ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
                     : isAvailable
@@ -162,6 +168,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 }`}
               >
                 {day}
+                {bookingCount > 0 && isAvailable && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-black text-xs rounded-full flex items-center justify-center font-bold">
+                    {bookingCount}
+                  </div>
+                )}
               </button>
             );
           })}
@@ -189,7 +200,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 key={slot.time}
                 onClick={() => slot.available && onTimeSelect(slot)}
                 disabled={!slot.available}
-                className={`p-3 rounded-lg font-semibold transition-all duration-200 ${
+                className={`p-3 rounded-lg font-semibold transition-all duration-200 relative ${
                   selectedTime?.time === slot.time
                     ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
                     : slot.available
@@ -198,6 +209,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 }`}
               >
                 {slot.time}
+                {!slot.available && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-full h-0.5 bg-red-500 transform rotate-45"></div>
+                  </div>
+                )}
               </button>
             ))}
           </div>

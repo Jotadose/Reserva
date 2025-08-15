@@ -135,9 +135,28 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
           <li>• Si necesitas cancelar o reagendar, contáctanos con al menos 24 horas de anticipación</li>
           <li>• Ubicación: Lago Blanco 1585, Coquimbo</li>
           <li>• Para consultas: +56 9 1234 5678</li>
+          <li>• Recibirás un recordatorio por WhatsApp 24 horas antes de tu cita</li>
+          <li>• Horario de atención: Lunes a Sábado de 9:00 a 19:00</li>
         </ul>
       </div>
 
+      {/* WhatsApp Contact */}
+      <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-green-500 mb-2">¿Tienes alguna consulta?</h3>
+            <p className="text-gray-300">Contáctanos directamente por WhatsApp</p>
+          </div>
+          <a
+            href={`https://wa.me/56912345678?text=Hola! Tengo una consulta sobre mi reserva del ${new Date(booking.date).toLocaleDateString('es-ES')} a las ${booking.time}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 hover:bg-green-400 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+          >
+            <span>WhatsApp</span>
+          </a>
+        </div>
+      </div>
       {/* Action Button */}
       <div className="text-center">
         <button
