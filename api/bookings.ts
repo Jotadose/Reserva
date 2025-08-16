@@ -2,13 +2,10 @@
 import express from "express";
 import { Pool } from "pg";
 
+
 // Load local .env when running locally (not needed on Vercel, which uses Environment Variables)
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require("dotenv").config();
-} catch (e) {
-  // ignore if dotenv not available in environment
-}
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 // Use built-in express JSON parser

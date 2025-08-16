@@ -181,8 +181,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
           <div className="absolute inset-0 bg-black/60 z-10"></div>
           <img
             src="https://images.pexels.com/photos/1319460/pexels-photo-1319460.jpeg?auto=compress&cs=tinysrgb&w=1920"
-            alt="Barbershop interior"
+            alt="Interior de barbería, ambiente moderno y profesional"
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         </div>
 
@@ -242,8 +243,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                 >
                   <img
                     src={work.image}
-                    alt={work.title}
+                    alt={`Trabajo destacado: ${work.title}`}
                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-4 left-4 right-4">
@@ -328,8 +330,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                 <div className="relative overflow-hidden rounded-xl mb-6">
                   <img
                     src={member.image}
-                    alt={member.name}
+                    alt={`Barbero: ${member.name}, especialidad: ${member.specialty}`}
                     className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-4 left-4 right-4">
@@ -366,8 +369,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
               <div key={seminar.id} className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-yellow-500/50 transition-colors">
                 <img
                   src={seminar.image}
-                  alt={seminar.title}
+                  alt={`Seminario: ${seminar.title}`}
                   className="w-full h-48 object-cover"
+                  loading="lazy"
                 />
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-white mb-4">{seminar.title}</h3>
@@ -413,8 +417,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
               <div className="text-center">
                 <img
                   src={testimonials[currentTestimonial].image}
-                  alt={testimonials[currentTestimonial].name}
+                  alt={`Testimonio de ${testimonials[currentTestimonial].name}`}
                   className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-yellow-500"
+                  loading="lazy"
                 />
                 
                 <div className="flex justify-center mb-4">
@@ -473,15 +478,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                   referrerPolicy="no-referrer-when-downgrade"
                   className="rounded-lg"
                   title="Ubicación de Michael The Barber Studios"
-                ></iframe>
-              </div>
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-6">Información de Contacto</h3>
-                
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d864.061178292458!2d-71.2546005853337!3d-29.972396471197104!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9691cbd5bc6baeb1%3A0x1d123d4fb99d5ba5!2sMICHAEL%20THE%20BARBER!5e0!3m2!1ses-419!2scl!4v1753654219301!5m2!1ses-419!2scl"
+                  width="100%"
+                  height="400"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="rounded-lg"
+                  title="Ubicación de Michael The Barber en Google Maps"
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <div className="p-3 bg-yellow-500/20 rounded-lg">

@@ -37,12 +37,25 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 
-  // Load bookings from API on mount
+
+  // Función para cargar reservas desde la API
+  const fetchBookings = async () => {
+    try {
+      const res = await fetch("/api/bookings");
+      if (res.ok) {
+        const data = await res.json();
+        setBookings(data);
+      } else {
+        setBookings([]);
+      }
+    } catch {
+      setBookings([]);
+    }
+  };
+
+  // Cargar reservas al montar
   useEffect(() => {
-    fetch("/api/bookings")
-      .then((res) => res.json())
-      .then((data) => setBookings(data))
-      .catch(() => setBookings([]));
+    fetchBookings();
   }, []);
 
 
@@ -61,8 +74,8 @@ function App() {
         }),
       });
       if (res.ok) {
+        await fetchBookings(); // Refresca reservas desde la API
         const saved = await res.json();
-        setBookings((prev) => [...prev, { ...booking, id: saved.id }]);
         setCurrentBooking({ ...booking, id: saved.id });
         setBookingStep("confirmation");
       } else {
@@ -86,7 +99,7 @@ function App() {
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
       if (res.ok) {
-        setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+        await fetchBookings(); // Refresca reservas desde la API
       } else {
         alert("No se pudo cancelar la reserva.");
       }
