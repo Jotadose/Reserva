@@ -1,5 +1,5 @@
-# API for Reserva app
-# PostgreSQL table for bookings
+-- API for Reserva app
+-- PostgreSQL table for bookings
 
 CREATE TABLE IF NOT EXISTS bookings (
   id SERIAL PRIMARY KEY,

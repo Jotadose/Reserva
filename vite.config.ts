@@ -7,4 +7,15 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  // Proxy /api during vite dev to the local CommonJS dev server (api/dev-server.cjs)
+  server: {
+    // Use DEV_API_PORT env var when set (e.g. in PowerShell: $env:DEV_API_PORT='3001')
+    proxy: {
+      '/api': {
+        target: `http://localhost:${process.env.DEV_API_PORT || '3001'}`,
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
