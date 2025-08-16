@@ -1,11 +1,11 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, Clock, ArrowRight } from 'lucide-react';
-import { TimeSlot, Booking } from '../types/booking';
+import React, { useMemo, useCallback, useState } from "react";
+import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
+import { TimeSlot, Booking } from "../types/booking";
 
 interface BookingCalendarProps {
   selectedDate: string;
   selectedTime: TimeSlot | null;
-  bookings: Booking[];
+  bookings?: Booking[];
   onDateSelect: (date: string) => void;
   onTimeSelect: (timeSlot: TimeSlot) => void;
   onNext: () => void;
@@ -14,163 +14,190 @@ interface BookingCalendarProps {
 const BookingCalendar: React.FC<BookingCalendarProps> = ({
   selectedDate,
   selectedTime,
-  bookings,
+  bookings = [],
   onDateSelect,
   onTimeSelect,
-  onNext
+  onNext,
 }) => {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
 
-  const generateTimeSlots = (date: string): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const startHour = 9;
-    const endHour = 19;
-    const slotDuration = 30; // minutes
+  /** ---------- Utilidades ---------- **/
+  const isValidDate = (date: Date) =>
+    date instanceof Date && !isNaN(date.getTime());
 
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += slotDuration) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
-        // Check if this slot is already booked
-        const isBooked = bookings.some(booking => 
-          booking.date === date && booking.time === time && booking.status === 'confirmed'
-        );
-        
-        slots.push({
-          time,
-          available: !isBooked
-        });
-      }
-    }
-    
-    return slots;
-  };
+  const formatDateString = useCallback(
+    (y: number, m: number, d: number) =>
+      y && Number.isInteger(m) && Number.isInteger(d)
+        ? `${y}-${(m + 1).toString().padStart(2, "0")}-${d
+            .toString()
+            .padStart(2, "0")}`
+        : "",
+    []
+  );
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+  const isDateAvailable = useCallback((date: string) => {
+    const parsed = new Date(date);
+    if (!isValidDate(parsed)) return false;
 
-    const days = [];
-
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-
-    return days;
-  };
-
-  const formatDateString = (year: number, month: number, day: number): string => {
-    return `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-  };
-
-  const isDateAvailable = (date: string): boolean => {
-    const selectedDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    // Check if date is in the future
-    if (selectedDate < today) return false;
-    
-    // Check if it's Sunday (0) - closed on Sundays
-    if (selectedDate.getDay() === 0) return false;
-    
-    return true;
-  };
+    parsed.setHours(0, 0, 0, 0);
 
-  const getBookingsForDate = (date: string) => {
-    return bookings.filter(booking => 
-      booking.date === date && booking.status === 'confirmed'
-    ).length;
-  };
-  const previousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-  };
+    return parsed >= today && parsed.getDay() !== 0;
+  }, []);
 
-  const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-  };
+  const getBookingsForDate = useCallback(
+    (date: string) =>
+      bookings.filter((b) => b?.date === date && b?.status === "confirmed")
+        .length,
+    [bookings]
+  );
 
-  const timeSlots = selectedDate ? generateTimeSlots(selectedDate) : [];
+  const generateTimeSlots = useCallback(
+    (date: string) => {
+      if (!date) return [];
 
-  const canProceed = selectedDate && selectedTime;
+      const startHour = 9,
+        endHour = 19,
+        slotDuration = 30;
+      return Array.from(
+        { length: (endHour - startHour) * (60 / slotDuration) },
+        (_, i) => {
+          const hour = startHour + Math.floor((i * slotDuration) / 60);
+          const minute = (i * slotDuration) % 60;
+          const time = `${hour.toString().padStart(2, "0")}:${minute
+            .toString()
+            .padStart(2, "0")}`;
+          const booked = bookings.some(
+            (b) =>
+              b?.date === date && b?.time === time && b?.status === "confirmed"
+          );
+          return { time, available: !booked };
+        }
+      );
+    },
+    [bookings]
+  );
 
+  const getDaysInMonth = useCallback((date: Date) => {
+    if (!isValidDate(date)) return [];
+    const year = date.getFullYear(),
+      month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    return [
+      ...Array(firstDay.getDay()).fill(null),
+      ...Array.from({ length: totalDays }, (_, i) => i + 1),
+    ];
+  }, []);
+
+  /** ---------- Navegación ---------- **/
+  const changeMonth = (offset: number) =>
+    setCurrentMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)
+    );
+
+  /** ---------- Memos ---------- **/
+  const daysInMonth = useMemo(
+    () => getDaysInMonth(currentMonth),
+    [currentMonth, getDaysInMonth]
+  );
+  const timeSlots = useMemo(
+    () => (selectedDate ? generateTimeSlots(selectedDate) : []),
+    [selectedDate, generateTimeSlots]
+  );
+  const canProceed = Boolean(selectedDate && selectedTime?.time);
+
+  /** ---------- Handlers ---------- **/
+  const handleDateSelect = useCallback(
+    (date: string) => isDateAvailable(date) && onDateSelect(date),
+    [isDateAvailable, onDateSelect]
+  );
+
+  const handleTimeSelect = useCallback(
+    (slot: TimeSlot) => slot?.available && onTimeSelect(slot),
+    [onTimeSelect]
+  );
+
+  /** ---------- Render ---------- **/
   return (
     <div className="space-y-6">
       {/* Calendar */}
-      <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+      <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-700 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Selecciona una fecha</h2>
+          <h2 className="text-2xl font-bold text-white">
+            Selecciona una fecha
+          </h2>
           <div className="flex items-center space-x-4">
             <button
-              onClick={previousMonth}
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+              onClick={() => changeMonth(-1)}
+              aria-label="Mes anterior"
+              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <h3 className="text-xl font-semibold text-white min-w-[200px] text-center">
-              {currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              {currentMonth.toLocaleDateString("es-ES", {
+                month: "long",
+                year: "numeric",
+              })}
             </h3>
             <button
-              onClick={nextMonth}
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white transition-colors"
+              onClick={() => changeMonth(1)}
+              aria-label="Mes siguiente"
+              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        {/* Days of week header */}
+        {/* Days of week */}
         <div className="grid grid-cols-7 gap-2 mb-4">
-          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-            <div key={day} className="p-3 text-center text-gray-400 font-semibold text-sm">
+          {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
+            <div
+              key={day}
+              className="p-3 text-center text-gray-400 font-semibold text-sm"
+            >
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar grid */}
+        {/* Days grid */}
         <div className="grid grid-cols-7 gap-2">
-          {getDaysInMonth(currentMonth).map((day, index) => {
-            if (!day) {
-              return <div key={index} className="p-3"></div>;
-            }
-
+          {daysInMonth.map((day, idx) => {
+            if (!day) return <div key={`empty-${idx}`} className="p-3" />;
             const dateString = formatDateString(
               currentMonth.getFullYear(),
               currentMonth.getMonth(),
               day
             );
+            if (!dateString)
+              return <div key={`invalid-${idx}`} className="p-3" />;
+
             const isAvailable = isDateAvailable(dateString);
             const isSelected = selectedDate === dateString;
             const bookingCount = getBookingsForDate(dateString);
 
             return (
               <button
-                key={day}
-                onClick={() => isAvailable && onDateSelect(dateString)}
+                key={`day-${day}`}
+                onClick={() => handleDateSelect(dateString)}
                 disabled={!isAvailable}
-                className={`p-3 rounded-lg font-semibold transition-all duration-200 relative ${
+                aria-label={`Seleccionar ${dateString}`}
+                className={`p-3 rounded-lg font-semibold relative transition-all duration-200 ${
                   isSelected
-                    ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
+                    ? "bg-yellow-500 text-black shadow-lg scale-105"
                     : isAvailable
-                    ? 'bg-gray-800 text-white hover:bg-gray-700 hover:scale-105'
-                    : 'bg-gray-900 text-gray-600 cursor-not-allowed'
+                    ? "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105"
+                    : "bg-gray-900 text-gray-600 cursor-not-allowed"
                 }`}
               >
                 {day}
                 {bookingCount > 0 && isAvailable && (
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-black text-xs rounded-full flex items-center justify-center font-bold">
-                    {bookingCount}
+                    {bookingCount > 9 ? "9+" : bookingCount}
                   </div>
                 )}
               </button>
@@ -181,48 +208,57 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
       {/* Time Slots */}
       {selectedDate && (
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+        <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center space-x-2 mb-6">
             <Clock className="h-6 w-6 text-yellow-500" />
             <h2 className="text-2xl font-bold text-white">
-              Horarios disponibles - {new Date(selectedDate).toLocaleDateString('es-ES', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              Horarios disponibles -{" "}
+              {new Date(selectedDate).toLocaleDateString("es-ES", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {timeSlots.map((slot) => (
-              <button
-                key={slot.time}
-                onClick={() => slot.available && onTimeSelect(slot)}
-                disabled={!slot.available}
-                className={`p-3 rounded-lg font-semibold transition-all duration-200 relative ${
-                  selectedTime?.time === slot.time
-                    ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
-                    : slot.available
-                    ? 'bg-gray-800 text-white hover:bg-gray-700 hover:scale-105'
-                    : 'bg-gray-900 text-gray-600 cursor-not-allowed'
-                }`}
-              >
-                {slot.time}
-                {!slot.available && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-red-500 transform rotate-45"></div>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {timeSlots.filter(slot => slot.available).length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-400 text-lg">No hay horarios disponibles para esta fecha</p>
-              <p className="text-gray-500 text-sm mt-2">Por favor, selecciona otra fecha</p>
-            </div>
+          {timeSlots.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {timeSlots.map((slot) => (
+                  <button
+                    key={slot.time}
+                    onClick={() => handleTimeSelect(slot)}
+                    disabled={!slot.available}
+                    aria-label={`${
+                      slot.available ? "Seleccionar" : "No disponible"
+                    } horario ${slot.time}`}
+                    className={`p-3 rounded-lg font-semibold transition-all duration-200 relative ${
+                      selectedTime?.time === slot.time
+                        ? "bg-yellow-500 text-black shadow-lg scale-105"
+                        : slot.available
+                        ? "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105"
+                        : "bg-gray-900 text-gray-600 cursor-not-allowed"
+                    }`}
+                  >
+                    {slot.time}
+                    {!slot.available && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-0.5 bg-red-500 rotate-45" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 text-center text-gray-400 text-sm">
+                {timeSlots.filter((s) => s.available).length} de{" "}
+                {timeSlots.length} horarios disponibles
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-gray-400">
+              No hay horarios disponibles para esta fecha
+            </p>
           )}
         </div>
       )}
@@ -232,7 +268,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         <div className="flex justify-end">
           <button
             onClick={onNext}
-            className="flex items-center space-x-2 bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-400 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center space-x-2 bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-400 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <span>Continuar</span>
             <ArrowRight className="h-5 w-5" />

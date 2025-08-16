@@ -1,75 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Scissors, Users, Settings, CheckCircle, Menu, X, MapPin, Phone, Mail, Instagram, MessageCircle } from 'lucide-react';
-import BookingCalendar from './components/BookingCalendar';
-import ServiceSelection from './components/ServiceSelection';
-import ClientForm from './components/ClientForm';
-import AdminPanel from './components/AdminPanel';
-import BookingConfirmation from './components/BookingConfirmation';
-import LandingPage from './components/LandingPage';
-import { Booking, Service, TimeSlot } from './types/booking';
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  Clock,
+  Scissors,
+  Users,
+  Settings,
+  CheckCircle,
+  Menu,
+  X,
+  MapPin,
+  Phone,
+  Mail,
+  Instagram,
+  MessageCircle,
+} from "lucide-react";
+import BookingCalendar from "./components/BookingCalendar";
+import ServiceSelection from "./components/ServiceSelection";
+import ClientForm from "./components/ClientForm";
+import AdminPanel from "./components/AdminPanel";
+import BookingConfirmation from "./components/BookingConfirmation";
+import LandingPage from "./components/LandingPage";
+import { Booking, Service, TimeSlot } from "./types/booking";
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'booking' | 'admin'>('landing');
-  const [bookingStep, setBookingStep] = useState<'calendar' | 'service' | 'form' | 'confirmation'>('calendar');
+  const [currentView, setCurrentView] = useState<
+    "landing" | "booking" | "admin"
+  >("landing");
+  const [bookingStep, setBookingStep] = useState<
+    "calendar" | "service" | "form" | "confirmation"
+  >("calendar");
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Load bookings from localStorage on component mount
+
+  // Load bookings from API on mount
   useEffect(() => {
-    const savedBookings = localStorage.getItem('barbershop-bookings');
-    if (savedBookings) {
-      setBookings(JSON.parse(savedBookings));
-    }
+    fetch("/api/bookings")
+      .then((res) => res.json())
+      .then((data) => setBookings(data))
+      .catch(() => setBookings([]));
   }, []);
 
-  // Save bookings to localStorage whenever bookings change
-  useEffect(() => {
-    localStorage.setItem('barbershop-bookings', JSON.stringify(bookings));
-  }, [bookings]);
 
-  const handleBookingComplete = (booking: Booking) => {
-    setBookings(prev => [...prev, booking]);
-    setCurrentBooking(booking);
-    setBookingStep('confirmation');
+  const handleBookingComplete = async (booking: Booking) => {
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: booking.client.name,
+          phone: booking.client.phone,
+          email: booking.client.email,
+          date: booking.date,
+          time: booking.time,
+          services: booking.services,
+        }),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setBookings((prev) => [...prev, { ...booking, id: saved.id }]);
+        setCurrentBooking({ ...booking, id: saved.id });
+        setBookingStep("confirmation");
+      } else {
+        alert("Error al guardar la reserva. Intenta nuevamente.");
+      }
+    } catch {
+      alert("Error de conexión con el servidor.");
+    }
   };
 
   const handleNewBooking = () => {
-    setBookingStep('calendar');
-    setSelectedDate('');
+    setBookingStep("calendar");
+    setSelectedDate("");
     setSelectedTime(null);
     setSelectedServices([]);
     setCurrentBooking(null);
   };
 
-  const handleBookingCancel = (bookingId: string) => {
-    setBookings(prev => prev.filter(b => b.id !== bookingId));
+
+  const handleBookingCancel = async (bookingId: string) => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
+      if (res.ok) {
+        setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+      } else {
+        alert("No se pudo cancelar la reserva.");
+      }
+    } catch {
+      alert("Error de conexión al cancelar.");
+    }
   };
 
   const startBookingProcess = () => {
-    setCurrentView('booking');
-    setBookingStep('calendar');
-    setSelectedDate('');
+    setCurrentView("booking");
+    setBookingStep("calendar");
+    setSelectedDate("");
     setSelectedTime(null);
     setSelectedServices([]);
     setCurrentBooking(null);
   };
 
   const goToLanding = () => {
-    setCurrentView('landing');
+    setCurrentView("landing");
     setMobileMenuOpen(false);
   };
 
   const goToBooking = () => {
-    setCurrentView('booking');
+    setCurrentView("booking");
     setMobileMenuOpen(false);
   };
 
   const goToAdmin = () => {
-    setCurrentView('admin');
+    setCurrentView("admin");
     setMobileMenuOpen(false);
   };
 
@@ -79,24 +125,29 @@ function App() {
       <header className="bg-black/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={goToLanding}>
+            <div
+              className="flex items-center space-x-3 cursor-pointer"
+              onClick={goToLanding}
+            >
               <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-3 rounded-xl">
                 <Scissors className="h-8 w-8 text-black" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Michael The Barber</h1>
+                <h1 className="text-2xl font-bold text-white">
+                  Michael The Barber
+                </h1>
                 <p className="text-sm text-gray-400">Studios</p>
               </div>
             </div>
-            
+
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-1">
               <button
                 onClick={goToLanding}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                  currentView === 'landing'
-                    ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  currentView === "landing"
+                    ? "bg-yellow-500 text-black shadow-lg transform scale-105"
+                    : "text-gray-300 hover:text-white hover:bg-gray-800"
                 }`}
               >
                 <span>Inicio</span>
@@ -104,9 +155,9 @@ function App() {
               <button
                 onClick={goToBooking}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                  currentView === 'booking'
-                    ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  currentView === "booking"
+                    ? "bg-yellow-500 text-black shadow-lg transform scale-105"
+                    : "text-gray-300 hover:text-white hover:bg-gray-800"
                 }`}
               >
                 <Calendar className="h-5 w-5" />
@@ -115,9 +166,9 @@ function App() {
               <button
                 onClick={goToAdmin}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                  currentView === 'admin'
-                    ? 'bg-yellow-500 text-black shadow-lg transform scale-105'
-                    : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                  currentView === "admin"
+                    ? "bg-yellow-500 text-black shadow-lg transform scale-105"
+                    : "text-gray-300 hover:text-white hover:bg-gray-800"
                 }`}
               >
                 <Settings className="h-5 w-5" />
@@ -130,7 +181,11 @@ function App() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden text-white p-2"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
 
@@ -141,9 +196,9 @@ function App() {
                 <button
                   onClick={goToLanding}
                   className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                    currentView === 'landing'
-                      ? 'bg-yellow-500 text-black'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    currentView === "landing"
+                      ? "bg-yellow-500 text-black"
+                      : "text-gray-300 hover:text-white hover:bg-gray-800"
                   }`}
                 >
                   Inicio
@@ -151,9 +206,9 @@ function App() {
                 <button
                   onClick={goToBooking}
                   className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                    currentView === 'booking'
-                      ? 'bg-yellow-500 text-black'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    currentView === "booking"
+                      ? "bg-yellow-500 text-black"
+                      : "text-gray-300 hover:text-white hover:bg-gray-800"
                   }`}
                 >
                   Reservas
@@ -161,9 +216,9 @@ function App() {
                 <button
                   onClick={goToAdmin}
                   className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all duration-300 ${
-                    currentView === 'admin'
-                      ? 'bg-yellow-500 text-black'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    currentView === "admin"
+                      ? "bg-yellow-500 text-black"
+                      : "text-gray-300 hover:text-white hover:bg-gray-800"
                   }`}
                 >
                   Admin
@@ -175,64 +230,103 @@ function App() {
       </header>
 
       <main className="min-h-screen">
-        {currentView === 'landing' && (
+        {currentView === "landing" && (
           <LandingPage onStartBooking={startBookingProcess} />
         )}
 
-        {currentView === 'booking' && (
+        {currentView === "booking" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="space-y-8">
               {/* Progress Steps */}
               <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
                 <div className="flex items-center justify-between">
-                  <div className={`flex items-center space-x-3 ${
-                    bookingStep === 'calendar' ? 'text-yellow-500' : 
-                    ['service', 'form', 'confirmation'].includes(bookingStep) ? 'text-green-500' : 'text-gray-500'
-                  }`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                      bookingStep === 'calendar' ? 'border-yellow-500 bg-yellow-500/20' :
-                      ['service', 'form', 'confirmation'].includes(bookingStep) ? 'border-green-500 bg-green-500/20' : 'border-gray-500'
-                    }`}>
-                      {['service', 'form', 'confirmation'].includes(bookingStep) ? 
-                        <CheckCircle className="h-5 w-5" /> : 
+                  <div
+                    className={`flex items-center space-x-3 ${
+                      bookingStep === "calendar"
+                        ? "text-yellow-500"
+                        : ["service", "form", "confirmation"].includes(
+                            bookingStep
+                          )
+                        ? "text-green-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        bookingStep === "calendar"
+                          ? "border-yellow-500 bg-yellow-500/20"
+                          : ["service", "form", "confirmation"].includes(
+                              bookingStep
+                            )
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
+                      }`}
+                    >
+                      {["service", "form", "confirmation"].includes(
+                        bookingStep
+                      ) ? (
+                        <CheckCircle className="h-5 w-5" />
+                      ) : (
                         <Calendar className="h-5 w-5" />
-                      }
+                      )}
                     </div>
                     <span className="font-semibold">Fecha y Hora</span>
                   </div>
-                  
+
                   <div className="h-px bg-gray-600 flex-1 mx-4"></div>
-                  
-                  <div className={`flex items-center space-x-3 ${
-                    bookingStep === 'service' ? 'text-yellow-500' : 
-                    ['form', 'confirmation'].includes(bookingStep) ? 'text-green-500' : 'text-gray-500'
-                  }`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                      bookingStep === 'service' ? 'border-yellow-500 bg-yellow-500/20' :
-                      ['form', 'confirmation'].includes(bookingStep) ? 'border-green-500 bg-green-500/20' : 'border-gray-500'
-                    }`}>
-                      {['form', 'confirmation'].includes(bookingStep) ? 
-                        <CheckCircle className="h-5 w-5" /> : 
+
+                  <div
+                    className={`flex items-center space-x-3 ${
+                      bookingStep === "service"
+                        ? "text-yellow-500"
+                        : ["form", "confirmation"].includes(bookingStep)
+                        ? "text-green-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        bookingStep === "service"
+                          ? "border-yellow-500 bg-yellow-500/20"
+                          : ["form", "confirmation"].includes(bookingStep)
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
+                      }`}
+                    >
+                      {["form", "confirmation"].includes(bookingStep) ? (
+                        <CheckCircle className="h-5 w-5" />
+                      ) : (
                         <Scissors className="h-5 w-5" />
-                      }
+                      )}
                     </div>
                     <span className="font-semibold">Servicios</span>
                   </div>
-                  
+
                   <div className="h-px bg-gray-600 flex-1 mx-4"></div>
-                  
-                  <div className={`flex items-center space-x-3 ${
-                    bookingStep === 'form' ? 'text-yellow-500' : 
-                    bookingStep === 'confirmation' ? 'text-green-500' : 'text-gray-500'
-                  }`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                      bookingStep === 'form' ? 'border-yellow-500 bg-yellow-500/20' :
-                      bookingStep === 'confirmation' ? 'border-green-500 bg-green-500/20' : 'border-gray-500'
-                    }`}>
-                      {bookingStep === 'confirmation' ? 
-                        <CheckCircle className="h-5 w-5" /> : 
+
+                  <div
+                    className={`flex items-center space-x-3 ${
+                      bookingStep === "form"
+                        ? "text-yellow-500"
+                        : bookingStep === "confirmation"
+                        ? "text-green-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                        bookingStep === "form"
+                          ? "border-yellow-500 bg-yellow-500/20"
+                          : bookingStep === "confirmation"
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
+                      }`}
+                    >
+                      {bookingStep === "confirmation" ? (
+                        <CheckCircle className="h-5 w-5" />
+                      ) : (
                         <Users className="h-5 w-5" />
-                      }
+                      )}
                     </div>
                     <span className="font-semibold">Datos</span>
                   </div>
@@ -240,37 +334,37 @@ function App() {
               </div>
 
               {/* Content */}
-              {bookingStep === 'calendar' && (
+              {bookingStep === "calendar" && (
                 <BookingCalendar
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   bookings={bookings}
                   onDateSelect={setSelectedDate}
                   onTimeSelect={setSelectedTime}
-                  onNext={() => setBookingStep('service')}
+                  onNext={() => setBookingStep("service")}
                 />
               )}
-              
-              {bookingStep === 'service' && (
+
+              {bookingStep === "service" && (
                 <ServiceSelection
                   selectedServices={selectedServices}
                   onServicesChange={setSelectedServices}
-                  onBack={() => setBookingStep('calendar')}
-                  onNext={() => setBookingStep('form')}
+                  onBack={() => setBookingStep("calendar")}
+                  onNext={() => setBookingStep("form")}
                 />
               )}
-              
-              {bookingStep === 'form' && (
+
+              {bookingStep === "form" && (
                 <ClientForm
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   selectedServices={selectedServices}
-                  onBack={() => setBookingStep('service')}
+                  onBack={() => setBookingStep("service")}
                   onSubmit={handleBookingComplete}
                 />
               )}
-              
-              {bookingStep === 'confirmation' && currentBooking && (
+
+              {bookingStep === "confirmation" && currentBooking && (
                 <BookingConfirmation
                   booking={currentBooking}
                   onNewBooking={handleNewBooking}
@@ -280,7 +374,7 @@ function App() {
           </div>
         )}
 
-        {currentView === 'admin' && (
+        {currentView === "admin" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <AdminPanel
               bookings={bookings}
@@ -291,7 +385,7 @@ function App() {
       </main>
 
       {/* Footer - Only show on landing page */}
-      {currentView === 'landing' && (
+      {currentView === "landing" && (
         <footer className="bg-gray-900 border-t border-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -302,13 +396,15 @@ function App() {
                     <Scissors className="h-6 w-6 text-black" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Michael The Barber</h3>
+                    <h3 className="text-xl font-bold text-white">
+                      Michael The Barber
+                    </h3>
                     <p className="text-sm text-gray-400">Studios</p>
                   </div>
                 </div>
                 <p className="text-gray-400 mb-4">
-                  Servicios de barbería y formación de alto estándar en Coquimbo. 
-                  Donde tu estilo encuentra precisión.
+                  Servicios de barbería y formación de alto estándar en
+                  Coquimbo. Donde tu estilo encuentra precisión.
                 </p>
                 <div className="flex space-x-4">
                   <a
@@ -332,7 +428,9 @@ function App() {
 
               {/* Contact Info */}
               <div>
-                <h4 className="text-lg font-semibold text-white mb-4">Contacto</h4>
+                <h4 className="text-lg font-semibold text-white mb-4">
+                  Contacto
+                </h4>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3 text-gray-400">
                     <MapPin className="h-5 w-5" />
@@ -351,7 +449,9 @@ function App() {
 
               {/* Quick Links */}
               <div>
-                <h4 className="text-lg font-semibold text-white mb-4">Enlaces</h4>
+                <h4 className="text-lg font-semibold text-white mb-4">
+                  Enlaces
+                </h4>
                 <div className="space-y-2">
                   <button
                     onClick={startBookingProcess}
@@ -370,8 +470,14 @@ function App() {
             </div>
 
             <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-              <p>&copy; 2025 Michael The Barber Studios. Todos los derechos reservados.</p>
-              <p className="text-sm mt-2">Diseñado con ❤️ para la mejor barbería de Coquimbo</p>
+              <p>
+                &copy; 2025 Michael The Barber Studios. Todos los derechos
+                reservados.
+              </p>
+              <p className="text-sm mt-2">
+                ✂️ Diseñado por Juan Emilio Elgueda Lillo — Para la barbería que
+                marca estilo en Coquimbo.
+              </p>
             </div>
           </div>
         </footer>
