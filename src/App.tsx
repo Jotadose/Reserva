@@ -35,8 +35,7 @@ function App() {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-
+  const [isCreatingBooking, setIsCreatingBooking] = useState(false);
 
   // Función para cargar reservas desde la API
   const fetchBookings = async () => {
@@ -58,8 +57,8 @@ function App() {
     fetchBookings();
   }, []);
 
-
   const handleBookingComplete = async (booking: Booking) => {
+    setIsCreatingBooking(true);
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -78,11 +77,17 @@ function App() {
         const saved = await res.json();
         setCurrentBooking({ ...booking, id: saved.id });
         setBookingStep("confirmation");
+      } else if (res.status === 409) {
+        alert(
+          "Este horario ya fue reservado. Por favor elige otro horario disponible."
+        );
       } else {
         alert("Error al guardar la reserva. Intenta nuevamente.");
       }
     } catch {
       alert("Error de conexión con el servidor.");
+    } finally {
+      setIsCreatingBooking(false);
     }
   };
 
@@ -94,10 +99,11 @@ function App() {
     setCurrentBooking(null);
   };
 
-
   const handleBookingCancel = async (bookingId: string) => {
     try {
-      const res = await fetch(`/api/bookings/${bookingId}`, { method: "DELETE" });
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         await fetchBookings(); // Refresca reservas desde la API
       } else {
@@ -374,6 +380,7 @@ function App() {
                   selectedServices={selectedServices}
                   onBack={() => setBookingStep("service")}
                   onSubmit={handleBookingComplete}
+                  isSubmitting={isCreatingBooking}
                 />
               )}
 

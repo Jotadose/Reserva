@@ -88,10 +88,10 @@ const BookingFlow: React.FC = () => {
           <BookingCalendar
             selectedDate={selectedDate}
             selectedTime={selectedTime}
-            onDateChange={setDate}
-            onTimeChange={setTime}
+            selectedServices={selectedServices}
+            onDateSelect={setDate}
+            onTimeSelect={setTime}
             onNext={goToNextStep}
-            onBack={handleBackToHome}
           />
         );
 
