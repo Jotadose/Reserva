@@ -17,12 +17,15 @@ import {
 import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
 import ClientForm from "./components/ClientForm";
-import AdminPanel from "./components/AdminPanel";
+import { AdminPanelEnhanced } from "./components/AdminPanelEnhanced";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
+import { ToastProvider, useToast } from "./contexts/ToastContext";
+import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
-function App() {
+function AppContent() {
+  const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<
     "landing" | "booking" | "admin"
   >("landing");
@@ -36,9 +39,11 @@ function App() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
   // Función para cargar reservas desde la API
   const fetchBookings = async () => {
+    setIsLoadingBookings(true);
     try {
       const res = await fetch("/api/bookings");
       if (res.ok) {
@@ -46,9 +51,21 @@ function App() {
         setBookings(data);
       } else {
         setBookings([]);
+        addToast({
+          type: 'error',
+          title: 'Error al cargar reservas',
+          message: 'No se pudieron cargar las reservas existentes',
+        });
       }
     } catch {
       setBookings([]);
+      addToast({
+        type: 'error',
+        title: 'Error de conexión',
+        message: 'No se pudo conectar con el servidor',
+      });
+    } finally {
+      setIsLoadingBookings(false);
     }
   };
 
@@ -77,15 +94,30 @@ function App() {
         const saved = await res.json();
         setCurrentBooking({ ...booking, id: saved.id });
         setBookingStep("confirmation");
+        addToast({
+          type: 'success',
+          title: '¡Reserva confirmada!',
+          message: 'Tu cita ha sido agendada exitosamente',
+        });
       } else if (res.status === 409) {
-        alert(
-          "Este horario ya fue reservado. Por favor elige otro horario disponible."
-        );
+        addToast({
+          type: 'error',
+          title: 'Horario no disponible',
+          message: 'Este horario ya fue reservado. Por favor elige otro horario disponible.',
+        });
       } else {
-        alert("Error al guardar la reserva. Intenta nuevamente.");
+        addToast({
+          type: 'error',
+          title: 'Error al guardar',
+          message: 'No se pudo guardar la reserva. Intenta nuevamente.',
+        });
       }
     } catch {
-      alert("Error de conexión con el servidor.");
+      addToast({
+        type: 'error',
+        title: 'Error de conexión',
+        message: 'No se pudo conectar con el servidor.',
+      });
     } finally {
       setIsCreatingBooking(false);
     }
@@ -106,11 +138,24 @@ function App() {
       });
       if (res.ok) {
         await fetchBookings(); // Refresca reservas desde la API
+        addToast({
+          type: 'success',
+          title: 'Reserva cancelada',
+          message: 'La reserva ha sido cancelada exitosamente',
+        });
       } else {
-        alert("No se pudo cancelar la reserva.");
+        addToast({
+          type: 'error',
+          title: 'Error al cancelar',
+          message: 'No se pudo cancelar la reserva.',
+        });
       }
     } catch {
-      alert("Error de conexión al cancelar.");
+      addToast({
+        type: 'error',
+        title: 'Error de conexión',
+        message: 'No se pudo conectar con el servidor.',
+      });
     }
   };
 
@@ -396,7 +441,7 @@ function App() {
 
         {currentView === "admin" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <AdminPanel
+            <AdminPanelEnhanced
               bookings={bookings}
               onCancelBooking={handleBookingCancel}
             />
@@ -502,7 +547,18 @@ function App() {
           </div>
         </footer>
       )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 
