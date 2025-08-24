@@ -7,15 +7,13 @@ import { MapPin, Phone, Instagram } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-black border-t border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="border-t border-gray-800 bg-black">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand */}
           <div className="col-span-1">
-            <h3 className="text-2xl font-bold text-yellow-500 mb-4">
-              MICHAEL THE BARBER STUDIOS
-            </h3>
-            <p className="text-gray-400 mb-6">
+            <h3 className="mb-4 text-2xl font-bold text-yellow-500">MICHAEL THE BARBER STUDIOS</h3>
+            <p className="mb-6 text-gray-400">
               Servicios de barbería y formación de alto estándar en Coquimbo
             </p>
             <div className="flex space-x-4">
@@ -23,7 +21,7 @@ const Footer: React.FC = () => {
                 href="https://instagram.com/michael.the.barber"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-800 rounded-lg text-gray-400 hover:text-yellow-500 hover:bg-gray-700 transition-colors"
+                className="rounded-lg bg-gray-800 p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-yellow-500"
               >
                 <Instagram className="h-5 w-5" />
               </a>
@@ -32,7 +30,7 @@ const Footer: React.FC = () => {
 
           {/* Contact Info */}
           <div className="col-span-1">
-            <h4 className="text-lg font-semibold text-white mb-4">Contacto</h4>
+            <h4 className="mb-4 text-lg font-semibold text-white">Contacto</h4>
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-gray-400">
                 <MapPin className="h-4 w-4 text-yellow-500" />
@@ -47,7 +45,7 @@ const Footer: React.FC = () => {
 
           {/* Hours */}
           <div className="col-span-1">
-            <h4 className="text-lg font-semibold text-white mb-4">Horarios</h4>
+            <h4 className="mb-4 text-lg font-semibold text-white">Horarios</h4>
             <div className="space-y-2 text-gray-400">
               <div className="flex justify-between">
                 <span>Lun - Vie:</span>
@@ -65,7 +63,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+        <div className="mt-8 border-t border-gray-800 pt-8 text-center">
           <p className="text-gray-400">
             © 2025 Michael The Barber Studios. Todos los derechos reservados.
           </p>

@@ -128,12 +128,12 @@ const BookingFlow: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header with back button and progress */}
         <div className="mb-8">
           <button
             onClick={handleBackToHome}
-            className="flex items-center space-x-2 text-gray-400 hover:text-white mb-6 transition-colors"
+            className="mb-6 flex items-center space-x-2 text-gray-400 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
             <span>Volver al inicio</span>
@@ -141,15 +141,15 @@ const BookingFlow: React.FC = () => {
 
           {/* Progress Indicator */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <h1 className="text-3xl font-bold text-white">Nueva Reserva</h1>
               <span className="text-gray-400">Paso {getStepNumber()} de 4</span>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+            <div className="mb-4 h-2 w-full rounded-full bg-gray-700">
               <div
-                className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full bg-yellow-500 transition-all duration-300"
                 style={{ width: `${(getStepNumber() / 4) * 100}%` }}
               />
             </div>
@@ -160,9 +160,7 @@ const BookingFlow: React.FC = () => {
                 <span
                   key={name}
                   className={`${
-                    index + 1 <= getStepNumber()
-                      ? "text-yellow-500 font-medium"
-                      : "text-gray-500"
+                    index + 1 <= getStepNumber() ? "font-medium text-yellow-500" : "text-gray-500"
                   }`}
                 >
                   {name}
@@ -177,9 +175,9 @@ const BookingFlow: React.FC = () => {
 
         {/* Debug info in development */}
         {process.env.NODE_ENV === "development" && (
-          <div className="mt-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-            <h3 className="text-white font-medium mb-2">Debug Info:</h3>
-            <div className="text-sm text-gray-400 space-y-1">
+          <div className="mt-8 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+            <h3 className="mb-2 font-medium text-white">Debug Info:</h3>
+            <div className="space-y-1 text-sm text-gray-400">
               <p>Step: {bookingStep}</p>
               <p>Date: {selectedDate || "No seleccionada"}</p>
               <p>Time: {selectedTime?.time || "No seleccionada"}</p>

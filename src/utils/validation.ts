@@ -15,8 +15,8 @@ export interface ValidationErrors {
 }
 
 export const validateField = (value: string, rules: ValidationRule): string | null => {
-  if (rules.required && (!value || value.trim() === '')) {
-    return 'Este campo es obligatorio';
+  if (rules.required && (!value || value.trim() === "")) {
+    return "Este campo es obligatorio";
   }
 
   if (value && rules.minLength && value.length < rules.minLength) {
@@ -28,7 +28,7 @@ export const validateField = (value: string, rules: ValidationRule): string | nu
   }
 
   if (value && rules.pattern && !rules.pattern.test(value)) {
-    return 'El formato no es válido';
+    return "El formato no es válido";
   }
 
   if (value && rules.custom) {
@@ -38,11 +38,14 @@ export const validateField = (value: string, rules: ValidationRule): string | nu
   return null;
 };
 
-export const validateForm = (data: Record<string, string>, rules: ValidationRules): ValidationErrors => {
+export const validateForm = (
+  data: Record<string, string>,
+  rules: ValidationRules,
+): ValidationErrors => {
   const errors: ValidationErrors = {};
 
-  Object.keys(rules).forEach(field => {
-    const value = data[field] || '';
+  Object.keys(rules).forEach((field) => {
+    const value = data[field] || "";
     const error = validateField(value, rules[field]);
     if (error) {
       errors[field] = error;
@@ -68,9 +71,9 @@ export const commonRules = {
     required: true,
     pattern: /^(\+?56)?[0-9]{8,9}$/,
     custom: (value: string) => {
-      const cleaned = value.replace(/\D/g, '');
+      const cleaned = value.replace(/\D/g, "");
       if (cleaned.length < 8 || cleaned.length > 11) {
-        return 'El teléfono debe tener entre 8 y 11 dígitos';
+        return "El teléfono debe tener entre 8 y 11 dígitos";
       }
       return null;
     },

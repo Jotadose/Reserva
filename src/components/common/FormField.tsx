@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { AlertCircle } from "lucide-react";
 
 interface FormFieldProps {
   id: string;
   label: string;
-  type?: 'text' | 'email' | 'tel' | 'textarea';
+  type?: "text" | "email" | "tel" | "textarea";
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -17,7 +17,7 @@ interface FormFieldProps {
 export const FormField: React.FC<FormFieldProps> = ({
   id,
   label,
-  type = 'text',
+  type = "text",
   value,
   onChange,
   error,
@@ -32,8 +32,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   const baseClasses = `
     w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-400 
     focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors
-    ${showError ? 'border-red-500' : 'border-gray-600'}
-    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+    ${showError ? "border-red-500" : "border-gray-600"}
+    ${disabled ? "opacity-50 cursor-not-allowed" : ""}
   `;
 
   const handleBlur = () => {
@@ -48,10 +48,10 @@ export const FormField: React.FC<FormFieldProps> = ({
     <div className="space-y-2">
       <label htmlFor={id} className="block text-sm font-medium text-gray-300">
         {label}
-        {required && <span className="text-red-400 ml-1">*</span>}
+        {required && <span className="ml-1 text-red-400">*</span>}
       </label>
-      
-      {type === 'textarea' ? (
+
+      {type === "textarea" ? (
         <textarea
           id={id}
           value={value}
@@ -74,9 +74,9 @@ export const FormField: React.FC<FormFieldProps> = ({
           className={baseClasses}
         />
       )}
-      
+
       {showError && (
-        <div className="flex items-center space-x-2 text-red-400 text-sm">
+        <div className="flex items-center space-x-2 text-sm text-red-400">
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
         </div>

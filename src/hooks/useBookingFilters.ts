@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Booking } from '../types/booking';
+import { useState, useMemo } from "react";
+import { Booking } from "../types/booking";
 
 export interface BookingFilters {
   searchQuery: string;
@@ -19,10 +19,10 @@ export interface UseBookingFiltersReturn {
   filters: BookingFilters;
   filteredBookings: Booking[];
   setSearchQuery: (query: string) => void;
-  setDateRange: (range: BookingFilters['dateRange']) => void;
+  setDateRange: (range: BookingFilters["dateRange"]) => void;
   setStatusFilter: (status: string[]) => void;
   setServiceFilter: (services: string[]) => void;
-  setPriceRange: (range: BookingFilters['priceRange']) => void;
+  setPriceRange: (range: BookingFilters["priceRange"]) => void;
   clearFilters: () => void;
   getFilterStats: () => {
     total: number;
@@ -32,7 +32,7 @@ export interface UseBookingFiltersReturn {
 }
 
 const initialFilters: BookingFilters = {
-  searchQuery: '',
+  searchQuery: "",
   dateRange: null,
   status: [],
   services: [],
@@ -43,15 +43,15 @@ export const useBookingFilters = (bookings: Booking[]): UseBookingFiltersReturn 
   const [filters, setFilters] = useState<BookingFilters>(initialFilters);
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter(booking => {
+    return bookings.filter((booking) => {
       // Búsqueda por texto
       if (filters.searchQuery) {
         const searchLower = filters.searchQuery.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           booking.client.name.toLowerCase().includes(searchLower) ||
           booking.client.phone.includes(filters.searchQuery) ||
           booking.client.email.toLowerCase().includes(searchLower);
-        
+
         if (!matchesSearch) return false;
       }
 
@@ -60,7 +60,7 @@ export const useBookingFilters = (bookings: Booking[]): UseBookingFiltersReturn 
         const bookingDate = new Date(booking.date).getTime();
         const startDate = new Date(filters.dateRange.start).getTime();
         const endDate = new Date(filters.dateRange.end).getTime();
-        
+
         if (bookingDate < startDate || bookingDate > endDate) {
           return false;
         }
@@ -69,18 +69,18 @@ export const useBookingFilters = (bookings: Booking[]): UseBookingFiltersReturn 
       // Filtro por estado (futuro - por ahora solo confirmadas)
       if (filters.status.length > 0) {
         // Por ahora todas las reservas son "confirmed"
-        if (!filters.status.includes('confirmed')) {
+        if (!filters.status.includes("confirmed")) {
           return false;
         }
       }
 
       // Filtro por servicios
       if (filters.services.length > 0) {
-        const bookingServices = booking.services?.map(s => s.name) || [];
-        const hasMatchingService = filters.services.some(filterService =>
-          bookingServices.includes(filterService)
+        const bookingServices = booking.services?.map((s) => s.name) || [];
+        const hasMatchingService = filters.services.some((filterService) =>
+          bookingServices.includes(filterService),
         );
-        
+
         if (!hasMatchingService) return false;
       }
 
@@ -97,23 +97,23 @@ export const useBookingFilters = (bookings: Booking[]): UseBookingFiltersReturn 
   }, [bookings, filters]);
 
   const setSearchQuery = (query: string) => {
-    setFilters(prev => ({ ...prev, searchQuery: query }));
+    setFilters((prev) => ({ ...prev, searchQuery: query }));
   };
 
-  const setDateRange = (range: BookingFilters['dateRange']) => {
-    setFilters(prev => ({ ...prev, dateRange: range }));
+  const setDateRange = (range: BookingFilters["dateRange"]) => {
+    setFilters((prev) => ({ ...prev, dateRange: range }));
   };
 
   const setStatusFilter = (status: string[]) => {
-    setFilters(prev => ({ ...prev, status }));
+    setFilters((prev) => ({ ...prev, status }));
   };
 
   const setServiceFilter = (services: string[]) => {
-    setFilters(prev => ({ ...prev, services }));
+    setFilters((prev) => ({ ...prev, services }));
   };
 
-  const setPriceRange = (range: BookingFilters['priceRange']) => {
-    setFilters(prev => ({ ...prev, priceRange: range }));
+  const setPriceRange = (range: BookingFilters["priceRange"]) => {
+    setFilters((prev) => ({ ...prev, priceRange: range }));
   };
 
   const clearFilters = () => {

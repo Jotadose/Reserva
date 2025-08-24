@@ -8,11 +8,34 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "routes": [
-    { "src": "/api/availability", "dest": "/api/availability.ts" },
-    { "src": "/api/bookings", "dest": "/api/bookings.ts" },
-    { "src": "/api/(.*)", "dest": "/api/$1.ts" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/availability", "destination": "/api/availability.ts" },
+    { "source": "/api/bookings", "destination": "/api/bookings.ts" },
+    { "source": "/api/(.*)", "destination": "/api/$1.ts" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    }
   ]
 }

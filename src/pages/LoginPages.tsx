@@ -24,18 +24,13 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-gray-900/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
-        <h2 className="text-3xl font-bold text-white text-center mb-6">
-          Acceso Admin
-        </h2>
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-900/50 p-8 backdrop-blur-sm">
+        <h2 className="mb-6 text-center text-3xl font-bold text-white">Acceso Admin</h2>
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label
-              className="block text-white font-semibold mb-2"
-              htmlFor="password"
-            >
-              <Lock className="inline h-5 w-5 mr-2" />
+            <label className="mb-2 block font-semibold text-white" htmlFor="password">
+              <Lock className="mr-2 inline h-5 w-5" />
               Contraseña
             </label>
             <input
@@ -43,14 +38,14 @@ const LoginPage: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-yellow-500 focus:ring-yellow-500/20"
+              className="w-full rounded-xl border border-gray-600 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
               placeholder="••••••••"
             />
           </div>
-          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+          {error && <p className="text-center text-sm text-red-400">{error}</p>}
           <button
             type="submit"
-            className="w-full flex items-center justify-center space-x-2 bg-yellow-500 text-black px-6 py-3 rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors"
+            className="flex w-full items-center justify-center space-x-2 rounded-xl bg-yellow-500 px-6 py-3 text-lg font-bold text-black transition-colors hover:bg-yellow-400"
           >
             <LogIn className="h-5 w-5" />
             <span>Ingresar</span>

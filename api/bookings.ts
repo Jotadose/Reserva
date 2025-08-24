@@ -43,10 +43,7 @@ app.get("/api/bookings", async (req, res) => {
     const { date } = req.query;
     let result;
     if (date && typeof date === "string") {
-      result = await pool.query(
-        "SELECT * FROM bookings WHERE date = $1 ORDER BY time",
-        [date]
-      );
+      result = await pool.query("SELECT * FROM bookings WHERE date = $1 ORDER BY time", [date]);
     } else {
       result = await pool.query("SELECT * FROM bookings ORDER BY date DESC");
     }
@@ -54,8 +51,7 @@ app.get("/api/bookings", async (req, res) => {
   } catch (err: any) {
     console.error("Error fetching bookings:", err);
     const payload: any = { error: "Error fetching bookings" };
-    if (process.env.NODE_ENV !== "production" && err && err.message)
-      payload.detail = err.message;
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
     res.status(500).json(payload);
   }
 });
@@ -69,7 +65,7 @@ app.get("/api/bookings/availability", async (req, res) => {
     // Fetch all bookings for the date with duration info
     const result = await pool.query(
       "SELECT start_ts, end_ts, time, duration FROM bookings WHERE date = $1",
-      [date]
+      [date],
     );
 
     const startHour = 9;
@@ -83,9 +79,7 @@ app.get("/api/bookings/availability", async (req, res) => {
     while (currentMinutes < endMinutes) {
       const hour = Math.floor(currentMinutes / 60);
       const minute = currentMinutes % 60;
-      const time = `${hour.toString().padStart(2, "0")}:${minute
-        .toString()
-        .padStart(2, "0")}`;
+      const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 
       // Create slot time for comparison - use UTC to match database timestamps
       const slotDateTime = new Date(`${date}T${time}:00Z`); // Add Z for UTC
@@ -97,9 +91,7 @@ app.get("/api/bookings/availability", async (req, res) => {
           // Use precise start_ts/end_ts comparison
           const bookingStart = new Date(booking.start_ts);
           const bookingEnd = new Date(booking.end_ts);
-          const slotEnd = new Date(
-            slotDateTime.getTime() + intervalMinutes * 60000
-          );
+          const slotEnd = new Date(slotDateTime.getTime() + intervalMinutes * 60000);
 
           // Check for overlap: slot overlaps if it starts before booking ends AND ends after booking starts
           if (slotDateTime < bookingEnd && slotEnd > bookingStart) {
@@ -110,12 +102,8 @@ app.get("/api/bookings/availability", async (req, res) => {
           // Fallback: if no start_ts/end_ts, use time + duration
           const bookingDuration = booking.duration || 45;
           const bookingStartTime = new Date(`${date}T${booking.time}:00Z`); // Add Z for UTC
-          const bookingEndTime = new Date(
-            bookingStartTime.getTime() + bookingDuration * 60000
-          );
-          const slotEnd = new Date(
-            slotDateTime.getTime() + intervalMinutes * 60000
-          );
+          const bookingEndTime = new Date(bookingStartTime.getTime() + bookingDuration * 60000);
+          const slotEnd = new Date(slotDateTime.getTime() + intervalMinutes * 60000);
 
           if (slotDateTime < bookingEndTime && slotEnd > bookingStartTime) {
             available = false;
@@ -129,15 +117,12 @@ app.get("/api/bookings/availability", async (req, res) => {
     }
 
     // Return only available slots for the frontend
-    const availableSlots = slots
-      .filter((slot) => slot.available)
-      .map((slot) => slot.time);
+    const availableSlots = slots.filter((slot) => slot.available).map((slot) => slot.time);
     res.json({ availableSlots, allSlots: slots });
   } catch (err: any) {
     console.error("Error fetching availability:", err);
     const payload: any = { error: "Error fetching availability" };
-    if (process.env.NODE_ENV !== "production" && err && err.message)
-      payload.detail = err.message;
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
     res.status(500).json(payload);
   }
 });
@@ -145,8 +130,7 @@ app.get("/api/bookings/availability", async (req, res) => {
 // Create a new booking
 app.post("/api/bookings", async (req, res) => {
   try {
-    const { name, phone, email, date, time, service, services, notes } =
-      req.body;
+    const { name, phone, email, date, time, service, services, notes } = req.body;
 
     // Validate required fields
     if (!name || !phone || !email || !date || !time) {
@@ -165,9 +149,7 @@ app.post("/api/bookings", async (req, res) => {
       finalServices = [{ name: service, duration }];
     } else if (services && Array.isArray(services)) {
       // Old format: services array
-      duration =
-        services.reduce((s: number, it: any) => s + (it.duration || 0), 0) ||
-        45;
+      duration = services.reduce((s: number, it: any) => s + (it.duration || 0), 0) || 45;
       finalServices = services;
     } else {
       return res.status(400).json({ error: "Missing service or services" });
@@ -175,19 +157,12 @@ app.post("/api/bookings", async (req, res) => {
 
     // Normalize inputs
     const normalizedDate =
-      typeof date === "string"
-        ? date
-        : new Date(date).toISOString().slice(0, 10);
-    const normalizedTime =
-      typeof time === "string" ? time.padStart(5, "0") : time;
+      typeof date === "string" ? date : new Date(date).toISOString().slice(0, 10);
+    const normalizedTime = typeof time === "string" ? time.padStart(5, "0") : time;
 
     // Compute start_ts and end_ts using UTC to match database timestamps
-    const startTs = new Date(
-      `${normalizedDate}T${normalizedTime}:00Z`
-    ).toISOString();
-    const endDate = new Date(
-      new Date(startTs).getTime() + duration * 60000
-    ).toISOString();
+    const startTs = new Date(`${normalizedDate}T${normalizedTime}:00Z`).toISOString();
+    const endDate = new Date(new Date(startTs).getTime() + duration * 60000).toISOString();
 
     // Insert using start_ts/end_ts when columns exist; otherwise fallback to simple insert
     try {
@@ -203,35 +178,27 @@ app.post("/api/bookings", async (req, res) => {
           duration,
           startTs,
           endDate,
-        ]
+        ],
       );
       res.status(201).json(result.rows[0]);
     } catch (innerErr: any) {
       // Check for conflict (409)
       if (innerErr.code === "23P01") {
         // exclusion constraint violation
-        return res
-          .status(409)
-          .json({ error: "Time slot already booked or overlapping" });
+        return res.status(409).json({ error: "Time slot already booked or overlapping" });
       }
 
       // Exclusion constraint violation (overlap) or unique index violation
       // Exclusion constraint errors in Postgres use SQLSTATE '23P01'
-      if (
-        innerErr &&
-        (innerErr.code === "23P01" || innerErr.code === "23505")
-      ) {
-        return res
-          .status(409)
-          .json({ error: "Time slot already booked or overlapping" });
+      if (innerErr && (innerErr.code === "23P01" || innerErr.code === "23505")) {
+        return res.status(409).json({ error: "Time slot already booked or overlapping" });
       }
       throw innerErr;
     }
   } catch (err: any) {
     console.error("Error creating booking:", err);
     const payload: any = { error: "Error creating booking" };
-    if (process.env.NODE_ENV !== "production" && err && err.message)
-      payload.detail = err.message;
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
     res.status(500).json(payload);
   }
 });
@@ -245,8 +212,127 @@ app.delete("/api/bookings/:id", async (req, res) => {
   } catch (err: any) {
     console.error("Error deleting booking:", err);
     const payload: any = { error: "Error deleting booking" };
-    if (process.env.NODE_ENV !== "production" && err && err.message)
-      payload.detail = err.message;
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
+    res.status(500).json(payload);
+  }
+});
+
+// PATCH endpoint to update booking (reschedule)
+app.patch("/api/bookings/:id", async (req, res) => {
+  const { id } = req.params;
+  const { date, time, status } = req.body;
+
+  try {
+    console.log("Updating booking", id, "with data:", req.body);
+
+    // Update booking fields
+    const updateFields = [];
+    const updateValues = [];
+    let paramIndex = 1;
+
+    if (date) {
+      updateFields.push(`date = $${paramIndex++}`);
+      updateValues.push(date);
+    }
+
+    if (time) {
+      updateFields.push(`time = $${paramIndex++}`);
+      updateValues.push(time);
+
+      // Also update start_ts and end_ts if we have time
+      if (date) {
+        // We have both date and time, calculate new timestamps
+        const startTs = new Date(`${date}T${time}:00Z`);
+
+        // Get duration from existing booking
+        const durationResult = await pool.query("SELECT duration FROM bookings WHERE id = $1", [
+          id,
+        ]);
+        const duration = durationResult.rows[0]?.duration || 45;
+        const endTs = new Date(startTs.getTime() + duration * 60000);
+
+        updateFields.push(`start_ts = $${paramIndex++}`);
+        updateValues.push(startTs.toISOString());
+        updateFields.push(`end_ts = $${paramIndex++}`);
+        updateValues.push(endTs.toISOString());
+      } else {
+        // Only time changed, get existing date
+        const dateResult = await pool.query("SELECT date FROM bookings WHERE id = $1", [id]);
+        const existingDate = dateResult.rows[0]?.date;
+        if (existingDate) {
+          const dateStr = existingDate.toISOString().split("T")[0];
+          const startTs = new Date(`${dateStr}T${time}:00Z`);
+
+          const durationResult = await pool.query("SELECT duration FROM bookings WHERE id = $1", [
+            id,
+          ]);
+          const duration = durationResult.rows[0]?.duration || 45;
+          const endTs = new Date(startTs.getTime() + duration * 60000);
+
+          updateFields.push(`start_ts = $${paramIndex++}`);
+          updateValues.push(startTs.toISOString());
+          updateFields.push(`end_ts = $${paramIndex++}`);
+          updateValues.push(endTs.toISOString());
+        }
+      }
+    }
+
+    if (status) {
+      updateFields.push(`status = $${paramIndex++}`);
+      updateValues.push(status);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    updateValues.push(id);
+    const query = `UPDATE bookings SET ${updateFields.join(", ")} WHERE id = $${paramIndex} RETURNING *`;
+
+    console.log("Executing query:", query, "with values:", updateValues);
+    const result = await pool.query(query, updateValues);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    console.log("Booking updated successfully");
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    console.error("Error updating booking:", err);
+    const payload: any = { error: "Error updating booking" };
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
+    res.status(500).json(payload);
+  }
+});
+
+// PATCH endpoint to update booking status
+app.patch("/api/bookings/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  console.log("Updating booking status", id, "to", status);
+
+  if (!status) {
+    return res.status(400).json({ error: "Status is required" });
+  }
+
+  try {
+    const result = await pool.query("UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *", [
+      status,
+      id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    console.log("Booking status updated successfully");
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    console.error("Error updating booking status:", err);
+    const payload: any = { error: "Error updating booking status" };
+    if (process.env.NODE_ENV !== "production" && err && err.message) payload.detail = err.message;
     res.status(500).json(payload);
   }
 });

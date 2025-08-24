@@ -1,7 +1,7 @@
-import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Star } from 'lucide-react';
-import { Booking } from '../types/booking';
-import { calculateAnalytics, formatCurrency, formatPercentage } from '../utils/analytics';
+import React from "react";
+import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Star } from "lucide-react";
+import { Booking } from "../types/booking";
+import { calculateAnalytics, formatCurrency, formatPercentage } from "../utils/analytics";
 
 interface AnalyticsDashboardProps {
   bookings: Booking[];
@@ -17,19 +17,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ bookings
     icon: React.ReactNode;
     color: string;
   }> = ({ title, value, change, icon, color }) => (
-    <div className={`bg-gray-900/50 border border-gray-700 rounded-xl p-6 ${color}`}>
+    <div className={`rounded-xl border border-gray-700 bg-gray-900/50 p-6 ${color}`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-400 text-sm font-medium">{title}</p>
-          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          <p className="text-sm font-medium text-gray-400">{title}</p>
+          <p className="mt-1 text-2xl font-bold text-white">{value}</p>
           {change !== undefined && (
-            <div className="flex items-center mt-2">
+            <div className="mt-2 flex items-center">
               {change >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
+                <TrendingUp className="mr-1 h-4 w-4 text-green-400" />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-400 mr-1" />
+                <TrendingDown className="mr-1 h-4 w-4 text-red-400" />
               )}
-              <span className={`text-sm ${change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`text-sm ${change >= 0 ? "text-green-400" : "text-red-400"}`}>
                 {formatPercentage(Math.abs(change))}
               </span>
             </div>
@@ -43,7 +43,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ bookings
   return (
     <div className="space-y-6">
       {/* Main Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Reservas"
           value={analytics.totalBookings.toString()}
@@ -66,91 +66,117 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ bookings
         />
         <MetricCard
           title="Hora Pico"
-          value={analytics.peakHours[0]?.hour || 'N/A'}
+          value={analytics.peakHours?.[0]?.hour || "N/A"}
           icon={<Clock className="h-8 w-8" />}
           color="border-purple-500/20"
         />
       </div>
 
       {/* Charts and Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Popular Services */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Servicios Populares</h3>
+        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6">
+          <h3 className="mb-4 text-xl font-bold text-white">Servicios Populares</h3>
           <div className="space-y-3">
-            {analytics.popularServices.slice(0, 5).map((service, index) => (
-              <div key={service.name} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold text-sm">
-                    {index + 1}
+            {analytics.popularServices?.slice(0, 5).map((service, index) =>
+              service?.name ? (
+                <div key={service.name} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500 text-sm font-bold text-black">
+                      {index + 1}
+                    </div>
+                    <span className="text-white">{service.name}</span>
                   </div>
-                  <span className="text-white">{service.name}</span>
+                  <div className="text-right">
+                    <div className="font-semibold text-white">{service.count || 0} reservas</div>
+                    <div className="text-sm text-gray-400">
+                      {formatCurrency(service.revenue || 0)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-white font-semibold">{service.count} reservas</div>
-                  <div className="text-gray-400 text-sm">{formatCurrency(service.revenue)}</div>
-                </div>
+              ) : null,
+            ) || (
+              <div className="py-4 text-center text-gray-400">
+                No hay datos de servicios disponibles
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         {/* Peak Hours */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Horas Más Ocupadas</h3>
+        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6">
+          <h3 className="mb-4 text-xl font-bold text-white">Horas Más Ocupadas</h3>
           <div className="space-y-3">
-            {analytics.peakHours.slice(0, 5).map((hour, index) => (
-              <div key={hour.hour} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {index + 1}
+            {analytics.peakHours?.slice(0, 5).map((hour, index) =>
+              hour?.hour ? (
+                <div key={hour.hour} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-sm font-bold text-white">
+                      {index + 1}
+                    </div>
+                    <span className="text-white">{hour.hour}</span>
                   </div>
-                  <span className="text-white">{hour.hour}</span>
+                  <div className="font-semibold text-white">{hour.count || 0} reservas</div>
                 </div>
-                <div className="text-white font-semibold">{hour.count} reservas</div>
+              ) : null,
+            ) || (
+              <div className="py-4 text-center text-gray-400">
+                No hay datos de horarios disponibles
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         {/* Busy Days */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Días Más Ocupados</h3>
+        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6">
+          <h3 className="mb-4 text-xl font-bold text-white">Días Más Ocupados</h3>
           <div className="space-y-3">
-            {analytics.busyDays.map((day, index) => (
-              <div key={day.day} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {index + 1}
+            {analytics.busyDays?.map((day, index) =>
+              day?.day ? (
+                <div key={day.day} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-white">
+                      {index + 1}
+                    </div>
+                    <span className="capitalize text-white">{day.day}</span>
                   </div>
-                  <span className="text-white capitalize">{day.day}</span>
+                  <div className="font-semibold text-white">{day.count || 0} reservas</div>
                 </div>
-                <div className="text-white font-semibold">{day.count} reservas</div>
-              </div>
-            ))}
+              ) : null,
+            ) || (
+              <div className="py-4 text-center text-gray-400">No hay datos de días disponibles</div>
+            )}
           </div>
         </div>
 
         {/* Revenue by Service */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
-          <h3 className="text-xl font-bold text-white mb-4">Ingresos por Servicio</h3>
+        <div className="rounded-xl border border-gray-700 bg-gray-900/50 p-6">
+          <h3 className="mb-4 text-xl font-bold text-white">Ingresos por Servicio</h3>
           <div className="space-y-3">
-            {analytics.popularServices.slice(0, 5).map((service, index) => (
-              <div key={service.name} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {index + 1}
+            {analytics.popularServices?.slice(0, 5).map((service, index) =>
+              service?.name ? (
+                <div key={service.name} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white">
+                      {index + 1}
+                    </div>
+                    <span className="text-white">{service.name}</span>
                   </div>
-                  <span className="text-white">{service.name}</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-white font-semibold">{formatCurrency(service.revenue)}</div>
-                  <div className="text-gray-400 text-sm">
-                    {formatPercentage((service.revenue / analytics.totalRevenue) * 100)}
+                  <div className="text-right">
+                    <div className="font-semibold text-white">
+                      {formatCurrency(service.revenue || 0)}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {formatPercentage(((service.revenue || 0) / analytics.totalRevenue) * 100)}
+                    </div>
                   </div>
                 </div>
+              ) : null,
+            ) || (
+              <div className="py-4 text-center text-gray-400">
+                No hay datos de ingresos disponibles
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

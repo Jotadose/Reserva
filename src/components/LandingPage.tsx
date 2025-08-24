@@ -98,8 +98,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       id: 2,
       name: "Aleee Cut",
       specialty: "Especialista en Fades",
-      description:
-        "Con una precisión inigualable, Aleee es el maestro de los fades y degradados.",
+      description: "Con una precisión inigualable, Aleee es el maestro de los fades y degradados.",
       image:
         "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300",
       instagram: "@aleee.cut",
@@ -108,8 +107,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       id: 3,
       name: "Kevo Cuts",
       specialty: "Artista Freestyle",
-      description:
-        "El artista del freestyle, Kevo lleva la creatividad y el diseño a otro nivel.",
+      description: "El artista del freestyle, Kevo lleva la creatividad y el diseño a otro nivel.",
       image:
         "https://images.pexels.com/photos/1043475/pexels-photo-1043475.jpeg?auto=compress&cs=tinysrgb&w=300",
       instagram: "@kevo.cuts",
@@ -186,95 +184,86 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
   };
 
   const prevWork = () => {
-    setCurrentWork(
-      (prev) => (prev - 1 + featuredWorks.length) % featuredWorks.length
-    );
+    setCurrentWork((prev) => (prev - 1 + featuredWorks.length) % featuredWorks.length);
   };
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section className="relative flex min-h-screen items-center justify-center">
         {/* Background Video/Image */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-black/60 z-10"></div>
+          <div className="absolute inset-0 z-10 bg-black/60"></div>
           <img
             src="https://images.pexels.com/photos/1319460/pexels-photo-1319460.jpeg?auto=compress&cs=tinysrgb&w=1920"
             alt="Interior de barbería, ambiente moderno y profesional"
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             loading="lazy"
           />
         </div>
 
-        <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">
+        <div className="relative z-20 mx-auto max-w-4xl px-4 text-center">
+          <h1 className="mb-4 text-5xl font-bold tracking-tight text-white md:text-7xl">
             MICHAEL THE BARBER
           </h1>
-          <h2 className="text-2xl md:text-4xl font-light text-yellow-500 mb-6 tracking-widest">
+          <h2 className="mb-6 text-2xl font-light tracking-widest text-yellow-500 md:text-4xl">
             STUDIOS
           </h2>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto mb-8 max-w-2xl text-xl leading-relaxed text-gray-300 md:text-2xl">
             Servicios de barbería y formación de alto estándar en Coquimbo
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <button
               onClick={onStartBooking}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+              className="transform rounded-lg bg-yellow-500 px-8 py-4 text-lg font-bold text-black shadow-lg transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
             >
               RESERVAR AHORA
             </button>
-            <button className="border-2 border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300">
+            <button className="rounded-lg border-2 border-yellow-500 px-8 py-4 text-lg font-bold text-yellow-500 transition-all duration-300 hover:bg-yellow-500 hover:text-black">
               VER TRABAJOS
             </button>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 transform">
           <div className="animate-bounce">
-            <div className="w-6 h-10 border-2 border-yellow-500 rounded-full flex justify-center">
-              <div className="w-1 h-3 bg-yellow-500 rounded-full mt-2 animate-pulse"></div>
+            <div className="flex h-10 w-6 justify-center rounded-full border-2 border-yellow-500">
+              <div className="mt-2 h-3 w-1 animate-pulse rounded-full bg-yellow-500"></div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Featured Works Section */}
-      <section className="py-20 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              TRABAJOS DESTACADOS
-            </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Cada corte es una obra de arte. Descubre algunos de nuestros
-              trabajos más destacados.
+      <section className="bg-black py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">TRABAJOS DESTACADOS</h2>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
+            <p className="mx-auto max-w-2xl text-lg text-gray-400">
+              Cada corte es una obra de arte. Descubre algunos de nuestros trabajos más destacados.
             </p>
           </div>
 
           <div className="relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               {featuredWorks.map((work, index) => (
                 <div
                   key={work.id}
-                  className="group relative overflow-hidden rounded-xl bg-gray-900 hover:transform hover:scale-105 transition-all duration-300"
+                  className="group relative overflow-hidden rounded-xl bg-gray-900 transition-all duration-300 hover:scale-105 hover:transform"
                 >
                   <img
                     src={work.image}
                     alt={`Trabajo destacado: ${work.title}`}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-white font-bold text-lg mb-1">
-                        {work.title}
-                      </h3>
-                      <p className="text-gray-300 text-sm">
-                        {work.description}
-                      </p>
+                      <h3 className="mb-1 text-lg font-bold text-white">{work.title}</h3>
+                      <p className="text-sm text-gray-300">{work.description}</p>
                     </div>
                   </div>
                 </div>
@@ -285,49 +274,40 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              NUESTROS SERVICIOS
-            </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Ofrecemos una amplia gama de servicios profesionales con precios
-              transparentes.
+      <section className="bg-gray-900 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">NUESTROS SERVICIOS</h2>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
+            <p className="mx-auto max-w-2xl text-lg text-gray-400">
+              Ofrecemos una amplia gama de servicios profesionales con precios transparentes.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {services.map((category, index) => (
               <div
                 key={index}
-                className="bg-gray-800 rounded-xl p-8 border border-gray-700 hover:border-yellow-500/50 transition-colors"
+                className="rounded-xl border border-gray-700 bg-gray-800 p-8 transition-colors hover:border-yellow-500/50"
               >
-                <div className="flex items-center mb-6">
-                  <div className="p-3 bg-yellow-500/20 rounded-lg text-yellow-500 mr-4">
+                <div className="mb-6 flex items-center">
+                  <div className="mr-4 rounded-lg bg-yellow-500/20 p-3 text-yellow-500">
                     {category.icon}
                   </div>
-                  <h3 className="text-2xl font-bold text-white">
-                    {category.category}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-white">{category.category}</h3>
                 </div>
 
                 <div className="space-y-4">
                   {category.items.map((service, serviceIndex) => (
                     <div
                       key={serviceIndex}
-                      className="flex justify-between items-center py-2 border-b border-gray-700 last:border-b-0"
+                      className="flex items-center justify-between border-b border-gray-700 py-2 last:border-b-0"
                     >
                       <div>
-                        <span className="text-white font-medium">
-                          {service.name}
-                        </span>
-                        <span className="text-gray-400 text-sm block">
-                          {service.duration} min
-                        </span>
+                        <span className="font-medium text-white">{service.name}</span>
+                        <span className="block text-sm text-gray-400">{service.duration} min</span>
                       </div>
-                      <span className="text-yellow-500 font-bold">
+                      <span className="font-bold text-yellow-500">
                         ${service.price.toLocaleString()}
                       </span>
                     </div>
@@ -337,10 +317,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="mt-12 text-center">
             <button
               onClick={onStartBooking}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105"
+              className="transform rounded-lg bg-yellow-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
             >
               RESERVAR SERVICIO
             </button>
@@ -349,46 +329,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              NUESTRO EQUIPO
-            </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+      <section className="bg-black py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">NUESTRO EQUIPO</h2>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
+            <p className="mx-auto max-w-2xl text-lg text-gray-400">
               Conoce a los artistas detrás de cada corte perfecto.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {teamMembers.map((member) => (
               <div key={member.id} className="group">
-                <div className="relative overflow-hidden rounded-xl mb-6">
+                <div className="relative mb-6 overflow-hidden rounded-xl">
                   <img
                     src={member.image}
                     alt={`Barbero: ${member.name}, especialidad: ${member.specialty}`}
-                    className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="h-80 w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-gray-300 text-sm">
-                        {member.description}
-                      </p>
-                      <p className="text-yellow-500 text-sm mt-2">
-                        {member.instagram}
-                      </p>
+                      <p className="text-sm text-gray-300">{member.description}</p>
+                      <p className="mt-2 text-sm text-yellow-500">{member.instagram}</p>
                     </div>
                   </div>
                 </div>
                 <div className="text-center">
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {member.name}
-                  </h3>
-                  <p className="text-yellow-500 font-medium">
-                    {member.specialty}
-                  </p>
+                  <h3 className="mb-2 text-xl font-bold text-white">{member.name}</h3>
+                  <p className="font-medium text-yellow-500">{member.specialty}</p>
                 </div>
               </div>
             ))}
@@ -397,42 +367,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       </section>
 
       {/* Seminars Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              PRÓXIMOS SEMINARIOS
-            </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+      <section className="bg-gray-900 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">PRÓXIMOS SEMINARIOS</h2>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
+            <p className="mx-auto max-w-2xl text-lg text-gray-400">
               Perfecciona tus habilidades con nuestros seminarios profesionales.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {seminars.map((seminar) => (
               <div
                 key={seminar.id}
-                className="bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-yellow-500/50 transition-colors"
+                className="overflow-hidden rounded-xl border border-gray-700 bg-gray-800 transition-colors hover:border-yellow-500/50"
               >
                 <img
                   src={seminar.image}
                   alt={`Seminario: ${seminar.title}`}
-                  className="w-full h-48 object-cover"
+                  className="h-48 w-full object-cover"
                   loading="lazy"
                 />
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">
-                    {seminar.title}
-                  </h3>
-                  <div className="space-y-2 mb-6">
+                  <h3 className="mb-4 text-xl font-bold text-white">{seminar.title}</h3>
+                  <div className="mb-6 space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Fecha:</span>
                       <span className="text-white">{seminar.date}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Precio:</span>
-                      <span className="text-yellow-500 font-bold">
+                      <span className="font-bold text-yellow-500">
                         ${seminar.price.toLocaleString()}
                       </span>
                     </div>
@@ -443,7 +409,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                   </div>
                   <button
                     onClick={onStartBooking}
-                    className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-lg transition-colors"
+                    className="w-full rounded-lg bg-yellow-500 py-3 font-bold text-black transition-colors hover:bg-yellow-400"
                   >
                     INSCRIBIRSE
                   </button>
@@ -455,56 +421,49 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+      <section className="bg-black py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">
               QUÉ DICEN NUESTROS CLIENTES
             </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gray-900/50 rounded-2xl p-8 border border-gray-700">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-8">
               <div className="text-center">
                 <img
                   src={testimonials[currentTestimonial].image}
                   alt={`Testimonio de ${testimonials[currentTestimonial].name}`}
-                  className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-yellow-500"
+                  className="mx-auto mb-4 h-20 w-20 rounded-full border-4 border-yellow-500"
                   loading="lazy"
                 />
 
-                <div className="flex justify-center mb-4">
-                  {[...Array(testimonials[currentTestimonial].rating)].map(
-                    (_, i) => (
-                      <Star
-                        key={i}
-                        className="h-5 w-5 text-yellow-500 fill-current"
-                      />
-                    )
-                  )}
+                <div className="mb-4 flex justify-center">
+                  {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-current text-yellow-500" />
+                  ))}
                 </div>
 
-                <blockquote className="text-xl md:text-2xl text-white italic mb-4">
+                <blockquote className="mb-4 text-xl italic text-white md:text-2xl">
                   "{testimonials[currentTestimonial].comment}"
                 </blockquote>
 
-                <cite className="text-gray-400 font-medium">
+                <cite className="font-medium text-gray-400">
                   - {testimonials[currentTestimonial].name}
                 </cite>
               </div>
             </div>
 
             {/* Testimonial indicators */}
-            <div className="flex justify-center mt-6 space-x-2">
+            <div className="mt-6 flex justify-center space-x-2">
               {testimonials.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    index === currentTestimonial
-                      ? "bg-yellow-500"
-                      : "bg-gray-600"
+                  className={`h-3 w-3 rounded-full transition-colors ${
+                    index === currentTestimonial ? "bg-yellow-500" : "bg-gray-600"
                   }`}
                 />
               ))}
@@ -514,19 +473,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
       </section>
 
       {/* Location & Contact Section */}
-      <section className="py-20 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              VISÍTANOS
-            </h2>
-            <div className="w-24 h-1 bg-yellow-500 mx-auto mb-6"></div>
+      <section className="bg-gray-900 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-4xl font-bold text-white md:text-5xl">VISÍTANOS</h2>
+            <div className="mx-auto mb-6 h-1 w-24 bg-yellow-500"></div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             {/* Map */}
             <div className="relative">
-              <div className="bg-gray-800 rounded-xl p-2 border border-gray-700">
+              <div className="rounded-xl border border-gray-700 bg-gray-800 p-2">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d864.061178292458!2d-71.2546005853337!3d-29.972396471197104!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9691cbd5bc6baeb1%3A0x1d123d4fb99d5ba5!2sMICHAEL%20THE%20BARBER!5e0!3m2!1ses-419!2scl!4v1753654219301!5m2!1ses-419!2scl"
                   width="100%"
@@ -540,35 +497,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                 />
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-yellow-500/20 rounded-lg">
+                    <div className="rounded-lg bg-yellow-500/20 p-3">
                       <MapPin className="h-6 w-6 text-yellow-500" />
                     </div>
                     <div>
-                      <p className="text-white font-medium">Dirección</p>
-                      <p className="text-gray-400">
-                        Lago Blanco 1585, Coquimbo
-                      </p>
+                      <p className="font-medium text-white">Dirección</p>
+                      <p className="text-gray-400">Lago Blanco 1585, Coquimbo</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-yellow-500/20 rounded-lg">
+                    <div className="rounded-lg bg-yellow-500/20 p-3">
                       <Phone className="h-6 w-6 text-yellow-500" />
                     </div>
                     <div>
-                      <p className="text-white font-medium">
-                        Teléfono / WhatsApp
-                      </p>
+                      <p className="font-medium text-white">Teléfono / WhatsApp</p>
                       <p className="text-gray-400">+56 9 1234 5678</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-yellow-500/20 rounded-lg">
+                    <div className="rounded-lg bg-yellow-500/20 p-3">
                       <Clock className="h-6 w-6 text-yellow-500" />
                     </div>
                     <div>
-                      <p className="text-white font-medium">Horarios</p>
+                      <p className="font-medium text-white">Horarios</p>
                       <p className="text-gray-400">Lun - Sáb: 9:00 - 19:00</p>
                       <p className="text-gray-400">Domingo: Cerrado</p>
                     </div>
@@ -576,17 +529,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartBooking }) => {
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h4 className="text-lg font-bold text-white mb-4">
+              <div className="rounded-xl border border-gray-700 bg-gray-800 p-6">
+                <h4 className="mb-4 text-lg font-bold text-white">
                   ¿Listo para tu transformación?
                 </h4>
-                <p className="text-gray-400 mb-6">
-                  Reserva tu cita ahora y experimenta el mejor servicio de
-                  barbería en Coquimbo.
+                <p className="mb-6 text-gray-400">
+                  Reserva tu cita ahora y experimenta el mejor servicio de barbería en Coquimbo.
                 </p>
                 <button
                   onClick={onStartBooking}
-                  className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 rounded-lg text-lg transition-all duration-300 transform hover:scale-105"
+                  className="w-full transform rounded-lg bg-yellow-500 py-4 text-lg font-bold text-black transition-all duration-300 hover:scale-105 hover:bg-yellow-400"
                 >
                   RESERVAR AHORA
                 </button>

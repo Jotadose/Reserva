@@ -9,7 +9,7 @@ export interface Service {
   price: number;
   duration: number; // in minutes
   description?: string;
-  category: 'barberia' | 'colorimetria' | 'extras';
+  category: "barberia" | "colorimetria" | "extras";
 }
 
 export interface Booking {
@@ -25,6 +25,38 @@ export interface Booking {
   };
   totalPrice: number;
   duration: number;
-  status: 'confirmed' | 'cancelled' | 'completed';
+  status:
+    | "pending"
+    | "confirmed"
+    | "in-progress"
+    | "completed"
+    | "cancelled"
+    | "no-show"
+    | "rescheduled";
   createdAt: string;
+  updatedAt?: string;
+  cancelReason?: string;
+  rescheduleHistory?: {
+    originalDate: string;
+    originalTime: string;
+    reason: string;
+    timestamp: string;
+  }[];
+}
+
+export interface BookingFilters {
+  dateRange: [Date, Date] | null;
+  status: Booking["status"][];
+  services: string[];
+  priceRange: [number, number] | null;
+  searchQuery: string;
+}
+
+export interface AdminPanelState {
+  bookings: Booking[];
+  filters: BookingFilters;
+  selectedBookings: string[];
+  viewMode: "overview" | "bookings" | "analytics";
+  loading: boolean;
+  error: string | null;
 }

@@ -1,10 +1,10 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Booking, Service, TimeSlot } from '../types/booking';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { Booking, Service, TimeSlot } from "../types/booking";
 
 interface BookingState {
   // State
-  currentStep: 'calendar' | 'service' | 'form' | 'confirmation';
+  currentStep: "calendar" | "service" | "form" | "confirmation";
   selectedDate: string;
   selectedTime: TimeSlot | null;
   selectedServices: Service[];
@@ -14,7 +14,7 @@ interface BookingState {
   error: string | null;
 
   // Actions
-  setStep: (step: 'calendar' | 'service' | 'form' | 'confirmation') => void;
+  setStep: (step: "calendar" | "service" | "form" | "confirmation") => void;
   setSelectedDate: (date: string) => void;
   setSelectedTime: (time: TimeSlot | null) => void;
   setSelectedServices: (services: Service[]) => void;
@@ -22,26 +22,26 @@ interface BookingState {
   setBookings: (bookings: Booking[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  
+
   // Complex actions
   resetBookingFlow: () => void;
   nextStep: () => void;
   prevStep: () => void;
-  
+
   // API actions
   fetchBookings: () => Promise<void>;
-  createBooking: (bookingData: Omit<Booking, 'id'>) => Promise<void>;
+  createBooking: (bookingData: Omit<Booking, "id">) => Promise<void>;
   cancelBooking: (bookingId: string) => Promise<void>;
 }
 
-const stepOrder = ['calendar', 'service', 'form', 'confirmation'] as const;
+const stepOrder = ["calendar", "service", "form", "confirmation"] as const;
 
 export const useBookingStore = create<BookingState>()(
   persist(
     (set, get) => ({
       // Initial state
-      currentStep: 'calendar',
-      selectedDate: '',
+      currentStep: "calendar",
+      selectedDate: "",
       selectedTime: null,
       selectedServices: [],
       currentBooking: null,
@@ -60,14 +60,15 @@ export const useBookingStore = create<BookingState>()(
       setError: (error) => set({ error }),
 
       // Complex actions
-      resetBookingFlow: () => set({
-        currentStep: 'calendar',
-        selectedDate: '',
-        selectedTime: null,
-        selectedServices: [],
-        currentBooking: null,
-        error: null,
-      }),
+      resetBookingFlow: () =>
+        set({
+          currentStep: "calendar",
+          selectedDate: "",
+          selectedTime: null,
+          selectedServices: [],
+          currentBooking: null,
+          error: null,
+        }),
 
       nextStep: () => {
         const { currentStep } = get();
@@ -88,20 +89,20 @@ export const useBookingStore = create<BookingState>()(
       // API actions
       fetchBookings: async () => {
         const { setLoading, setError, setBookings } = get();
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
-          const response = await fetch('/api/bookings');
+          const response = await fetch("/api/bookings");
           if (!response.ok) {
-            throw new Error('Error al cargar reservas');
+            throw new Error("Error al cargar reservas");
           }
-          
+
           const bookings = await response.json();
           setBookings(bookings);
         } catch (error) {
-          setError(error instanceof Error ? error.message : 'Error desconocido');
+          setError(error instanceof Error ? error.message : "Error desconocido");
           setBookings([]);
         } finally {
           setLoading(false);
@@ -110,14 +111,14 @@ export const useBookingStore = create<BookingState>()(
 
       createBooking: async (bookingData) => {
         const { setLoading, setError, setCurrentBooking, fetchBookings, setStep } = get();
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
-          const response = await fetch('/api/bookings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/bookings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               name: bookingData.client.name,
               phone: bookingData.client.phone,
@@ -130,17 +131,19 @@ export const useBookingStore = create<BookingState>()(
 
           if (!response.ok) {
             if (response.status === 409) {
-              throw new Error('Este horario ya fue reservado. Por favor elige otro horario disponible.');
+              throw new Error(
+                "Este horario ya fue reservado. Por favor elige otro horario disponible.",
+              );
             }
-            throw new Error('Error al guardar la reserva');
+            throw new Error("Error al guardar la reserva");
           }
 
           const saved = await response.json();
           setCurrentBooking({ ...bookingData, id: saved.id });
-          setStep('confirmation');
+          setStep("confirmation");
           await fetchBookings();
         } catch (error) {
-          setError(error instanceof Error ? error.message : 'Error al crear la reserva');
+          setError(error instanceof Error ? error.message : "Error al crear la reserva");
           throw error;
         } finally {
           setLoading(false);
@@ -149,22 +152,22 @@ export const useBookingStore = create<BookingState>()(
 
       cancelBooking: async (bookingId) => {
         const { setLoading, setError, fetchBookings } = get();
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
           const response = await fetch(`/api/bookings/${bookingId}`, {
-            method: 'DELETE',
+            method: "DELETE",
           });
 
           if (!response.ok) {
-            throw new Error('No se pudo cancelar la reserva');
+            throw new Error("No se pudo cancelar la reserva");
           }
 
           await fetchBookings();
         } catch (error) {
-          setError(error instanceof Error ? error.message : 'Error al cancelar la reserva');
+          setError(error instanceof Error ? error.message : "Error al cancelar la reserva");
           throw error;
         } finally {
           setLoading(false);
@@ -172,7 +175,7 @@ export const useBookingStore = create<BookingState>()(
       },
     }),
     {
-      name: 'booking-store',
+      name: "booking-store",
       partialize: (state) => ({
         // Solo persistir el estado de la reserva actual
         currentStep: state.currentStep,
@@ -180,6 +183,6 @@ export const useBookingStore = create<BookingState>()(
         selectedTime: state.selectedTime,
         selectedServices: state.selectedServices,
       }),
-    }
-  )
+    },
+  ),
 );

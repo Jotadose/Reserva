@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { useEffect } from "react";
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 
 export interface ToastProps {
   id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+  type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   duration?: number;
@@ -18,10 +18,10 @@ const iconMap = {
 };
 
 const colorMap = {
-  success: 'bg-green-50 border-green-200 text-green-800',
-  error: 'bg-red-50 border-red-200 text-red-800',
-  warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-  info: 'bg-blue-50 border-blue-200 text-blue-800',
+  success: "bg-green-50 border-green-200 text-green-800",
+  error: "bg-red-50 border-red-200 text-red-800",
+  warning: "bg-yellow-50 border-yellow-200 text-yellow-800",
+  info: "bg-blue-50 border-blue-200 text-blue-800",
 };
 
 export const Toast: React.FC<ToastProps> = ({
@@ -46,11 +46,7 @@ export const Toast: React.FC<ToastProps> = ({
 
   return (
     <div
-      className={`
-        max-w-sm w-full shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden
-        transform transition-all duration-300 ease-in-out
-        ${colorMap[type]}
-      `}
+      className={`pointer-events-auto w-full max-w-sm transform overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-300 ease-in-out ${colorMap[type]} `}
     >
       <div className="p-4">
         <div className="flex items-start">
@@ -59,13 +55,11 @@ export const Toast: React.FC<ToastProps> = ({
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             <p className="text-sm font-medium">{title}</p>
-            {message && (
-              <p className="mt-1 text-sm opacity-90">{message}</p>
-            )}
+            {message && <p className="mt-1 text-sm opacity-90">{message}</p>}
           </div>
-          <div className="ml-4 flex-shrink-0 flex">
+          <div className="ml-4 flex flex-shrink-0">
             <button
-              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               onClick={() => onClose(id)}
             >
               <span className="sr-only">Close</span>

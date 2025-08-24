@@ -47,8 +47,7 @@ export const testimonials = [
     id: 2,
     name: "Diego Ramírez",
     rating: 5,
-    comment:
-      "El ambiente del estudio es increíble y la atención, de primera. Volveré sin dudarlo.",
+    comment: "El ambiente del estudio es increíble y la atención, de primera. Volveré sin dudarlo.",
     image:
       "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150",
   },
@@ -78,8 +77,7 @@ export const teamMembers = [
     id: 2,
     name: "Aleee Cut",
     specialty: "Especialista en Fades",
-    description:
-      "Con una precisión inigualable, Aleee es el maestro de los fades y degradados.",
+    description: "Con una precisión inigualable, Aleee es el maestro de los fades y degradados.",
     image:
       "https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300",
     instagram: "@aleee.cut",
@@ -88,8 +86,7 @@ export const teamMembers = [
     id: 3,
     name: "Kevo Cuts",
     specialty: "Artista Freestyle",
-    description:
-      "El artista del freestyle, Kevo lleva la creatividad y el diseño a otro nivel.",
+    description: "El artista del freestyle, Kevo lleva la creatividad y el diseño a otro nivel.",
     image:
       "https://images.pexels.com/photos/1043475/pexels-photo-1043475.jpeg?auto=compress&cs=tinysrgb&w=300",
     instagram: "@kevo.cuts",

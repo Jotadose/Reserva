@@ -5,13 +5,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const NotFoundPage: React.FC = () => (
-  <div className="min-h-[calc(100vh-80px)] flex items-center justify-center">
+  <div className="flex min-h-[calc(100vh-80px)] items-center justify-center">
     <div className="text-center">
-      <h1 className="text-6xl font-bold text-yellow-500 mb-4">404</h1>
-      <p className="text-white text-xl mb-8">Página no encontrada</p>
+      <h1 className="mb-4 text-6xl font-bold text-yellow-500">404</h1>
+      <p className="mb-8 text-xl text-white">Página no encontrada</p>
       <Link
         to="/"
-        className="bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+        className="rounded-lg bg-yellow-500 px-6 py-3 font-semibold text-black transition-colors hover:bg-yellow-400"
       >
         Volver al Inicio
       </Link>

@@ -28,15 +28,10 @@ export const useAdminStats = (bookings: Booking[]): AdminStats => {
 
     const monthlyBookings = bookings.filter((booking) => {
       const bookingDate = new Date(booking.date);
-      return (
-        bookingDate.getMonth() === currentMonth &&
-        bookingDate.getFullYear() === currentYear
-      );
+      return bookingDate.getMonth() === currentMonth && bookingDate.getFullYear() === currentYear;
     });
 
-    const completed = monthlyBookings.filter(
-      (b) => b.status === "completed"
-    ).length;
+    const completed = monthlyBookings.filter((b) => b.status === "completed").length;
     const revenue = monthlyBookings
       .filter((b) => b.status === "completed")
       .reduce((sum, booking) => sum + booking.totalPrice, 0);
@@ -45,10 +40,7 @@ export const useAdminStats = (bookings: Booking[]): AdminStats => {
       bookings: monthlyBookings.length,
       revenue,
       completed,
-      completionRate:
-        monthlyBookings.length > 0
-          ? (completed / monthlyBookings.length) * 100
-          : 0,
+      completionRate: monthlyBookings.length > 0 ? (completed / monthlyBookings.length) * 100 : 0,
     };
   }, [bookings]);
 
@@ -76,10 +68,7 @@ export const useAdminStats = (bookings: Booking[]): AdminStats => {
 
   const recentBookings = useMemo(() => {
     return [...bookings]
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 20); // Los últimos 20 creados
   }, [bookings]);
 

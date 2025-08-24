@@ -70,8 +70,7 @@ export const useAppStore = create<AppState>()(
       // --- ACCIONES ---
       setView: (view) => set({ currentView: view, mobileMenuOpen: false }),
       setBookingStep: (step) => set({ bookingStep: step }),
-      toggleMobileMenu: () =>
-        set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
+      toggleMobileMenu: () => set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
 
       addBooking: (booking) => {
         set((state) => ({
@@ -84,7 +83,7 @@ export const useAppStore = create<AppState>()(
       updateBookingStatus: (bookingId, status) => {
         set((state) => ({
           bookings: state.bookings.map((booking) =>
-            booking.id === bookingId ? { ...booking, status } : booking
+            booking.id === bookingId ? { ...booking, status } : booking,
           ),
         }));
       },
@@ -143,6 +142,6 @@ export const useAppStore = create<AppState>()(
         selectedServices: state.selectedServices,
         currentBooking: state.currentBooking,
       }),
-    }
-  )
+    },
+  ),
 );

@@ -1,4 +1,4 @@
-import { Booking } from '../types/booking';
+import { Booking } from "../types/booking";
 
 export interface AnalyticsData {
   totalBookings: number;
@@ -16,11 +16,26 @@ export interface AnalyticsData {
 }
 
 export const calculateAnalytics = (bookings: Booking[]): AnalyticsData => {
-  const totalBookings = bookings.length;
-  const totalRevenue = bookings.reduce((sum, booking) => {
-    return sum + (booking.services?.reduce((serviceSum, service) => serviceSum + service.price, 0) || 0);
+  // Filtrar bookings válidos para evitar errores
+  const validBookings = bookings.filter(
+    (booking) =>
+      booking &&
+      typeof booking === "object" &&
+      booking.date &&
+      booking.time &&
+      Array.isArray(booking.services),
+  );
+
+  const totalBookings = validBookings.length;
+  const totalRevenue = validBookings.reduce((sum, booking) => {
+    return (
+      sum +
+      (booking.services?.reduce((serviceSum, service) => {
+        return serviceSum + (typeof service?.price === "number" ? service.price : 0);
+      }, 0) || 0)
+    );
   }, 0);
-  
+
   const averageBookingValue = totalBookings > 0 ? totalRevenue / totalBookings : 0;
 
   // Reservas por día
@@ -28,23 +43,37 @@ export const calculateAnalytics = (bookings: Booking[]): AnalyticsData => {
   const hourlyDistribution: { [key: string]: number } = {};
   const serviceStats: { [key: string]: { count: number; revenue: number } } = {};
 
-  bookings.forEach(booking => {
+  validBookings.forEach((booking) => {
+    // Validar que booking y sus propiedades existen
+    if (!booking || !booking.date || !booking.time) return;
+
     // Por día
-    const day = new Date(booking.date).toLocaleDateString('es-ES', { weekday: 'long' });
-    bookingsByDay[day] = (bookingsByDay[day] || 0) + 1;
+    try {
+      const day = new Date(booking.date).toLocaleDateString("es-ES", { weekday: "long" });
+      bookingsByDay[day] = (bookingsByDay[day] || 0) + 1;
+    } catch (error) {
+      console.warn("Error parsing date for booking:", booking.date);
+    }
 
     // Por hora
-    const hour = booking.time.split(':')[0] + ':00';
-    hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+    if (booking.time) {
+      const hour = booking.time.split(":")[0] + ":00";
+      hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+    }
 
-    // Por servicio
-    booking.services?.forEach(service => {
-      if (!serviceStats[service.name]) {
-        serviceStats[service.name] = { count: 0, revenue: 0 };
-      }
-      serviceStats[service.name].count += 1;
-      serviceStats[service.name].revenue += service.price;
-    });
+    // Por servicio - validar que services existe y es un array
+    if (booking.services && Array.isArray(booking.services)) {
+      booking.services.forEach((service) => {
+        // Validar que service y service.name existen
+        if (service && service.name && typeof service.price === "number") {
+          if (!serviceStats[service.name]) {
+            serviceStats[service.name] = { count: 0, revenue: 0 };
+          }
+          serviceStats[service.name].count += 1;
+          serviceStats[service.name].revenue += service.price;
+        }
+      });
+    }
   });
 
   // Servicios populares
@@ -66,10 +95,10 @@ export const calculateAnalytics = (bookings: Booking[]): AnalyticsData => {
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  
-  const thisWeekBookings = bookings.filter(b => new Date(b.date) >= oneWeekAgo).length;
-  const thisMonthBookings = bookings.filter(b => new Date(b.date) >= oneMonthAgo).length;
-  
+
+  const thisWeekBookings = validBookings.filter((b) => new Date(b.date) >= oneWeekAgo).length;
+  const thisMonthBookings = validBookings.filter((b) => new Date(b.date) >= oneMonthAgo).length;
+
   const weeklyGrowth = totalBookings > 0 ? (thisWeekBookings / totalBookings) * 100 : 0;
   const monthlyGrowth = totalBookings > 0 ? (thisMonthBookings / totalBookings) * 100 : 0;
 
@@ -79,10 +108,10 @@ export const calculateAnalytics = (bookings: Booking[]): AnalyticsData => {
     averageBookingValue,
     bookingsByDay,
     bookingsByService: Object.fromEntries(
-      Object.entries(serviceStats).map(([name, stats]) => [name, stats.count])
+      Object.entries(serviceStats).map(([name, stats]) => [name, stats.count]),
     ),
     revenueByService: Object.fromEntries(
-      Object.entries(serviceStats).map(([name, stats]) => [name, stats.revenue])
+      Object.entries(serviceStats).map(([name, stats]) => [name, stats.revenue]),
     ),
     hourlyDistribution,
     monthlyGrowth,
@@ -94,9 +123,9 @@ export const calculateAnalytics = (bookings: Booking[]): AnalyticsData => {
 };
 
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
+  return new Intl.NumberFormat("es-CL", {
+    style: "currency",
+    currency: "CLP",
     minimumFractionDigits: 0,
   }).format(amount);
 };

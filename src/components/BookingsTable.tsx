@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import React, { useState } from "react";
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Clock,
   Calendar,
   Phone,
   Mail,
   DollarSign,
-  User
-} from 'lucide-react';
-import { Booking } from '../types/booking';
-import { LoadingSpinner } from './common/LoadingSpinner';
-import { useBookingActions } from '../hooks/useBookingActions';
+  User,
+} from "lucide-react";
+import { Booking } from "../types/booking";
+import { LoadingSpinner } from "./common/LoadingSpinner";
+import { useBookingActions } from "../hooks/useBookingActions";
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -30,12 +30,13 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   onSelectionChange,
 }) => {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-  const { loading, cancelBooking, markAsCompleted, markAsNoShow } = useBookingActions(onBookingChange);
+  const { loading, cancelBooking, markAsCompleted, markAsNoShow } =
+    useBookingActions(onBookingChange);
 
   const toggleMenu = (bookingId: string) => {
-    setOpenMenus(prev => ({
+    setOpenMenus((prev) => ({
       ...prev,
-      [bookingId]: !prev[bookingId]
+      [bookingId]: !prev[bookingId],
     }));
   };
 
@@ -43,37 +44,49 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     if (selectedBookings.length === bookings.length) {
       onSelectionChange([]);
     } else {
-      onSelectionChange(bookings.map(b => b.id));
+      onSelectionChange(bookings.map((b) => b.id));
     }
   };
 
   const handleSelectBooking = (bookingId: string) => {
     if (selectedBookings.includes(bookingId)) {
-      onSelectionChange(selectedBookings.filter(id => id !== bookingId));
+      onSelectionChange(selectedBookings.filter((id) => id !== bookingId));
     } else {
       onSelectionChange([...selectedBookings, bookingId]);
     }
   };
 
-  const getStatusColor = (status: string = 'confirmed') => {
+  const getStatusColor = (status: string = "confirmed") => {
     switch (status) {
-      case 'confirmed': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'cancelled': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'completed': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'no-show': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      case "confirmed":
+        return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "cancelled":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "completed":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "no-show":
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+      default:
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
   };
 
-  const getStatusText = (status: string = 'confirmed') => {
+  const getStatusText = (status: string = "confirmed") => {
     switch (status) {
-      case 'confirmed': return 'Confirmada';
-      case 'pending': return 'Pendiente';
-      case 'cancelled': return 'Cancelada';
-      case 'completed': return 'Completada';
-      case 'no-show': return 'No Show';
-      default: return 'Confirmada';
+      case "confirmed":
+        return "Confirmada";
+      case "pending":
+        return "Pendiente";
+      case "cancelled":
+        return "Cancelada";
+      case "completed":
+        return "Completada";
+      case "no-show":
+        return "No Show";
+      default:
+        return "Confirmada";
     }
   };
 
@@ -81,60 +94,60 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     <div className="relative">
       <button
         onClick={() => toggleMenu(booking.id)}
-        className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+        className="rounded-lg p-2 transition-colors hover:bg-gray-700"
       >
         <MoreVertical className="h-4 w-4 text-gray-400" />
       </button>
-      
+
       {openMenus[booking.id] && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-10">
+        <div className="absolute right-0 top-full z-10 mt-1 w-48 rounded-lg border border-gray-700 bg-gray-800 shadow-lg">
           <div className="py-1">
             <button
               onClick={() => {
                 // TODO: Implementar modal de edición
                 setOpenMenus({});
               }}
-              className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center"
+              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
             >
-              <Edit className="h-4 w-4 mr-2" />
+              <Edit className="mr-2 h-4 w-4" />
               Editar
             </button>
-            
+
             <button
               onClick={async () => {
                 await markAsCompleted(booking.id);
                 setOpenMenus({});
               }}
               disabled={loading[booking.id]}
-              className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center disabled:opacity-50"
+              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-50"
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle className="mr-2 h-4 w-4" />
               Marcar Completada
             </button>
-            
+
             <button
               onClick={async () => {
                 await markAsNoShow(booking.id);
                 setOpenMenus({});
               }}
               disabled={loading[booking.id]}
-              className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center disabled:opacity-50"
+              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 disabled:opacity-50"
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className="mr-2 h-4 w-4" />
               Marcar No-Show
             </button>
-            
+
             <button
               onClick={async () => {
-                if (confirm('¿Estás seguro de cancelar esta reserva?')) {
+                if (confirm("¿Estás seguro de cancelar esta reserva?")) {
                   await cancelBooking(booking.id);
                   setOpenMenus({});
                 }
               }}
               disabled={loading[booking.id]}
-              className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/20 flex items-center disabled:opacity-50"
+              className="flex w-full items-center px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/20 disabled:opacity-50"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Cancelar
             </button>
           </div>
@@ -145,10 +158,10 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
 
   if (bookings.length === 0) {
     return (
-      <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700 p-12">
+      <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-12 backdrop-blur-sm">
         <div className="text-center">
-          <Calendar className="mx-auto h-12 w-12 text-gray-500 mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">No hay reservas</h3>
+          <Calendar className="mx-auto mb-4 h-12 w-12 text-gray-500" />
+          <h3 className="mb-2 text-lg font-medium text-gray-300">No hay reservas</h3>
           <p className="text-gray-500">No se encontraron reservas con los filtros aplicados.</p>
         </div>
       </div>
@@ -156,14 +169,12 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
   }
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700 overflow-hidden">
+    <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-900/50 backdrop-blur-sm">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="border-b border-gray-700 p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">
-            Reservas ({bookings.length})
-          </h3>
-          
+          <h3 className="text-xl font-bold text-white">Reservas ({bookings.length})</h3>
+
           {selectedBookings.length > 0 && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-400">
@@ -173,7 +184,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 onClick={() => {
                   // TODO: Implementar acciones masivas
                 }}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
               >
                 Cancelar Seleccionadas
               </button>
@@ -183,7 +194,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden lg:block overflow-x-auto">
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full">
           <thead className="bg-gray-800">
             <tr>
@@ -195,22 +206,22 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                   className="rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500"
                 />
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Cliente
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Fecha & Hora
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Servicios
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Total
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Estado
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Acciones
               </th>
             </tr>
@@ -228,20 +239,20 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <div className="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <div className="h-10 w-10 flex-shrink-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500">
                         <User className="h-5 w-5 text-black" />
                       </div>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-white">{booking.client.name}</div>
-                      <div className="text-sm text-gray-400 flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 text-sm text-gray-400">
                         <span className="flex items-center">
-                          <Phone className="h-3 w-3 mr-1" />
+                          <Phone className="mr-1 h-3 w-3" />
                           {booking.client.phone}
                         </span>
                         <span className="flex items-center">
-                          <Mail className="h-3 w-3 mr-1" />
+                          <Mail className="mr-1 h-3 w-3" />
                           {booking.client.email}
                         </span>
                       </div>
@@ -250,8 +261,8 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-white">{booking.date}</div>
-                  <div className="text-sm text-gray-400 flex items-center">
-                    <Clock className="h-3 w-3 mr-1" />
+                  <div className="flex items-center text-sm text-gray-400">
+                    <Clock className="mr-1 h-3 w-3" />
                     {booking.time}
                   </div>
                 </td>
@@ -260,19 +271,21 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                     {booking.services?.map((service, idx) => (
                       <div key={idx} className="text-sm">
                         <span className="text-white">{service.name}</span>
-                        <span className="text-gray-400 ml-2">${service.price}</span>
+                        <span className="ml-2 text-gray-400">${service.price}</span>
                       </div>
                     ))}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm font-semibold text-white flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1" />
+                  <div className="flex items-center text-sm font-semibold text-white">
+                    <DollarSign className="mr-1 h-4 w-4" />
                     {booking.services?.reduce((sum, s) => sum + s.price, 0) || 0}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor()}`}>
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${getStatusColor()}`}
+                  >
                     {getStatusText()}
                   </span>
                 </td>
@@ -290,9 +303,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
       </div>
 
       {/* Mobile Cards */}
-      <div className="lg:hidden divide-y divide-gray-700">
+      <div className="divide-y divide-gray-700 lg:hidden">
         {bookings.map((booking) => (
-          <div key={booking.id} className="p-6 space-y-4">
+          <div key={booking.id} className="space-y-4 p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">
                 <input
@@ -303,7 +316,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 />
                 <div>
                   <h4 className="text-lg font-medium text-white">{booking.client.name}</h4>
-                  <p className="text-sm text-gray-400">{booking.date} a las {booking.time}</p>
+                  <p className="text-sm text-gray-400">
+                    {booking.date} a las {booking.time}
+                  </p>
                 </div>
               </div>
               {loading[booking.id] ? (
@@ -312,7 +327,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 <ActionMenu booking={booking} />
               )}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-400">Teléfono:</span>
@@ -323,9 +338,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 <p className="text-white">{booking.client.email}</p>
               </div>
             </div>
-            
+
             <div>
-              <span className="text-gray-400 text-sm">Servicios:</span>
+              <span className="text-sm text-gray-400">Servicios:</span>
               <div className="mt-1 space-y-1">
                 {booking.services?.map((service, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
@@ -335,9 +350,11 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
                 ))}
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor()}`}>
+              <span
+                className={`inline-flex rounded-full border px-2 py-1 text-xs font-semibold ${getStatusColor()}`}
+              >
                 {getStatusText()}
               </span>
               <div className="text-lg font-semibold text-white">

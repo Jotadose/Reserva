@@ -12,7 +12,7 @@ const Layout: React.FC = () => {
   const showFooter = location.pathname === "/";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Header />
       {/* El 'pt-20' compensa la altura del header que es 'h-20' y 'fixed' */}
       <main className="flex-grow pt-20">

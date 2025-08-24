@@ -32,9 +32,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     setLoadingBookings(true);
     try {
       console.log("Fetching available slots for date:", date); // Debug
-      const resp = await fetch(
-        `/api/availability?date=${encodeURIComponent(date)}`
-      );
+      const resp = await fetch(`/api/availability?date=${encodeURIComponent(date)}`);
       if (resp.ok) {
         const payload = await resp.json();
         console.log("Availability payload:", payload);
@@ -63,8 +61,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   }, [selectedDate, fetchAvailableSlots]);
 
   /** ---------- Utilidades ---------- **/
-  const isValidDate = (date: Date) =>
-    date instanceof Date && !isNaN(date.getTime());
+  const isValidDate = (date: Date) => date instanceof Date && !isNaN(date.getTime());
 
   const formatDateString = useCallback((y: number, m: number, d: number) => {
     if (!y || !Number.isInteger(m) || !Number.isInteger(d)) return "";
@@ -102,10 +99,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   }, []);
 
   const getBookingsForDate = useCallback(
-    (date: string) =>
-      bookings.filter((b) => b?.date === date && b?.status === "confirmed")
-        .length,
-    [bookings]
+    (date: string) => bookings.filter((b) => b?.date === date && b?.status === "confirmed").length,
+    [bookings],
   );
 
   const generateTimeSlots = useCallback(
@@ -116,9 +111,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       const today = new Date();
       const selectedDateObj = new Date(date + "T12:00:00"); // Usar mediodía para consistencia
       const isToday = today.toDateString() === selectedDateObj.toDateString();
-      const currentHourMinutes = isToday
-        ? today.getHours() * 60 + today.getMinutes()
-        : 0;
+      const currentHourMinutes = isToday ? today.getHours() * 60 + today.getMinutes() : 0;
 
       return availableSlots
         .map((time) => {
@@ -138,7 +131,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         })
         .filter((slot) => slot.available); // Solo devolver slots verdaderamente disponibles
     },
-    [availableSlots]
+    [availableSlots],
   );
 
   const getDaysInMonth = useCallback((date: Date) => {
@@ -161,50 +154,40 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   /** ---------- Navegación ---------- **/
   const changeMonth = (offset: number) =>
-    setCurrentMonth(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1)
-    );
+    setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
 
   /** ---------- Memos ---------- **/
-  const daysInMonth = useMemo(
-    () => getDaysInMonth(currentMonth),
-    [currentMonth, getDaysInMonth]
-  );
+  const daysInMonth = useMemo(() => getDaysInMonth(currentMonth), [currentMonth, getDaysInMonth]);
   const timeSlots = useMemo(
     () => (selectedDate ? generateTimeSlots(selectedDate) : []),
-    [selectedDate, generateTimeSlots]
+    [selectedDate, generateTimeSlots],
   );
   const canProceed = Boolean(selectedDate && selectedTime?.time);
 
   /** ---------- Handlers ---------- **/
   const handleDateSelect = useCallback(
     (date: string) => isDateAvailable(date) && onDateSelect(date),
-    [isDateAvailable, onDateSelect]
+    [isDateAvailable, onDateSelect],
   );
 
-  const handleTimeSelect = useCallback(
-    (slot: TimeSlot) => onTimeSelect(slot),
-    [onTimeSelect]
-  );
+  const handleTimeSelect = useCallback((slot: TimeSlot) => onTimeSelect(slot), [onTimeSelect]);
 
   /** ---------- Render ---------- **/
   return (
     <div className="space-y-6">
       {/* Calendar */}
-      <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-700 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            Selecciona una fecha
-          </h2>
+      <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Selecciona una fecha</h2>
           <div className="flex items-center space-x-4">
             <button
               onClick={() => changeMonth(-1)}
               aria-label="Mes anterior"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white"
+              className="rounded-lg bg-gray-800 p-2 text-white hover:bg-gray-700"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="text-xl font-semibold text-white min-w-[200px] text-center">
+            <h3 className="min-w-[200px] text-center text-xl font-semibold text-white">
               {currentMonth.toLocaleDateString("es-ES", {
                 month: "long",
                 year: "numeric",
@@ -213,7 +196,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             <button
               onClick={() => changeMonth(1)}
               aria-label="Mes siguiente"
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white"
+              className="rounded-lg bg-gray-800 p-2 text-white hover:bg-gray-700"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -221,12 +204,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         </div>
 
         {/* Days of week */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="mb-4 grid grid-cols-7 gap-2">
           {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((day) => (
-            <div
-              key={day}
-              className="p-3 text-center text-gray-400 font-semibold text-sm"
-            >
+            <div key={day} className="p-3 text-center text-sm font-semibold text-gray-400">
               {day}
             </div>
           ))}
@@ -240,12 +220,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             const dateString = formatDateString(
               currentMonth.getFullYear(),
               currentMonth.getMonth(),
-              day
+              day,
             );
-            if (!dateString)
-              return (
-                <div key={`invalid-${(cell as any).key}`} className="p-3" />
-              );
+            if (!dateString) return <div key={`invalid-${(cell as any).key}`} className="p-3" />;
 
             const isAvailable = isDateAvailable(dateString);
             const isSelected = selectedDate === dateString;
@@ -264,8 +241,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             const isTodayTooLate = isToday && new Date().getHours() >= 17;
 
             // compute className without nested ternary
-            let dayBtnClass =
-              "p-3 rounded-lg font-semibold relative transition-all duration-200 ";
+            let dayBtnClass = "p-3 rounded-lg font-semibold relative transition-all duration-200 ";
 
             if (isSelected) {
               dayBtnClass += "bg-yellow-500 text-black shadow-lg scale-105";
@@ -274,17 +250,14 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 dayBtnClass +=
                   "bg-blue-800 text-white hover:bg-blue-700 hover:scale-105 border border-blue-500";
               } else {
-                dayBtnClass +=
-                  "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105";
+                dayBtnClass += "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105";
               }
             } else if (isPast) {
-              dayBtnClass +=
-                "bg-gray-900 text-gray-600 cursor-not-allowed opacity-50";
+              dayBtnClass += "bg-gray-900 text-gray-600 cursor-not-allowed opacity-50";
             } else if (isSunday) {
               dayBtnClass += "bg-red-900/30 text-red-400 cursor-not-allowed";
             } else if (isTodayTooLate) {
-              dayBtnClass +=
-                "bg-orange-900/30 text-orange-400 cursor-not-allowed";
+              dayBtnClass += "bg-orange-900/30 text-orange-400 cursor-not-allowed";
             } else {
               dayBtnClass += "bg-gray-900 text-gray-600 cursor-not-allowed";
             }
@@ -296,11 +269,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             } else if (isSunday) {
               buttonTitle = "Cerrado los domingos";
             } else if (isTodayTooLate) {
-              buttonTitle =
-                "Muy tarde para reservar hoy (se necesitan 2 horas de anticipación)";
+              buttonTitle = "Muy tarde para reservar hoy (se necesitan 2 horas de anticipación)";
             } else if (isToday) {
-              buttonTitle =
-                "Hoy - Horarios limitados (2 horas de anticipación mínima)";
+              buttonTitle = "Hoy - Horarios limitados (2 horas de anticipación mínima)";
             }
 
             return (
@@ -315,15 +286,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 {day}
                 {/* Indicadores especiales */}
                 {isToday && isAvailable && (
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-400"></div>
                 )}
-                {isSunday && (
-                  <div className="absolute top-1 right-1 text-red-400 text-xs">
-                    ✕
-                  </div>
-                )}
+                {isSunday && <div className="absolute right-1 top-1 text-xs text-red-400">✕</div>}
                 {bookingCount > 0 && isAvailable && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-black text-xs rounded-full flex items-center justify-center font-bold">
+                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-black">
                     {bookingCount > 9 ? "9+" : bookingCount}
                   </div>
                 )}
@@ -333,71 +300,65 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         </div>
 
         {/* Leyenda de información */}
-        <div className="mt-4 bg-gray-800/30 rounded-xl p-4">
-          <h4 className="text-sm font-semibold text-gray-300 mb-2">
-            ℹ️ Información importante:
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-400">
+        <div className="mt-4 rounded-xl bg-gray-800/30 p-4">
+          <h4 className="mb-2 text-sm font-semibold text-gray-300">ℹ️ Información importante:</h4>
+          <div className="grid grid-cols-1 gap-2 text-xs text-gray-400 md:grid-cols-2">
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-800 rounded border border-blue-500"></div>
+              <div className="h-3 w-3 rounded border border-blue-500 bg-blue-800"></div>
               <span>Hoy (horarios limitados)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-900/30 rounded flex items-center justify-center">
-                <span className="text-red-400 text-[8px]">✕</span>
+              <div className="flex h-3 w-3 items-center justify-center rounded bg-red-900/30">
+                <span className="text-[8px] text-red-400">✕</span>
               </div>
               <span>Cerrado (domingos)</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gray-900 rounded opacity-50"></div>
+              <div className="h-3 w-3 rounded bg-gray-900 opacity-50"></div>
               <span>Fechas pasadas</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+              <div className="h-3 w-3 rounded bg-yellow-500"></div>
               <span>Con reservas</span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            • Reservas del mismo día requieren mínimo 2 horas de anticipación •
-            Horario de atención: Lunes a Sábado de 9:00 a 19:00
+          <p className="mt-2 text-xs text-gray-500">
+            • Reservas del mismo día requieren mínimo 2 horas de anticipación • Horario de atención:
+            Lunes a Sábado de 9:00 a 19:00
           </p>
         </div>
       </div>
 
       {/* Time Slots */}
       {selectedDate && (
-        <div className="bg-gray-900/50 p-6 rounded-2xl border border-gray-700 backdrop-blur-sm">
-          <div className="flex items-center space-x-2 mb-6">
+        <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
+          <div className="mb-6 flex items-center space-x-2">
             <Clock className="h-6 w-6 text-yellow-500" />
             <h2 className="text-2xl font-bold text-white">
               Horarios disponibles -{" "}
-              {new Date(selectedDate + "T12:00:00").toLocaleDateString(
-                "es-ES",
-                {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }
-              )}
+              {new Date(selectedDate + "T12:00:00").toLocaleDateString("es-ES", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </h2>
           </div>
 
           {(() => {
             const today = new Date();
             const selectedDateObj = new Date(selectedDate + "T12:00:00");
-            const isToday =
-              today.toDateString() === selectedDateObj.toDateString();
+            const isToday = today.toDateString() === selectedDateObj.toDateString();
 
             if (timeSlots.length > 0) {
               return (
                 <>
                   {loadingBookings && (
-                    <div className="text-center text-gray-400 mb-4">
+                    <div className="mb-4 text-center text-gray-400">
                       Cargando horarios disponibles...
                     </div>
                   )}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {timeSlots.map((slot) => {
                       const isSelectedSlot = selectedTime?.time === slot.time;
                       const slotClass = isSelectedSlot
@@ -416,12 +377,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                       );
                     })}
                   </div>
-                  <div className="mt-4 text-center text-gray-400 text-sm">
+                  <div className="mt-4 text-center text-sm text-gray-400">
                     {timeSlots.length} horarios disponibles
                     {isToday && (
-                      <div className="mt-2 text-yellow-500 text-xs">
-                        ⚠️ Para reservas del día de hoy, necesitas al menos 2
-                        horas de anticipación
+                      <div className="mt-2 text-xs text-yellow-500">
+                        ⚠️ Para reservas del día de hoy, necesitas al menos 2 horas de anticipación
                       </div>
                     )}
                   </div>
@@ -430,8 +390,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             }
             if (loadingBookings) {
               return (
-                <div className="text-center text-gray-400 py-8">
-                  <div className="animate-spin w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <div className="py-8 text-center text-gray-400">
+                  <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-yellow-500 border-t-transparent"></div>
                   Consultando horarios disponibles...
                 </div>
               );
@@ -442,24 +402,19 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               const currentHour = today.getHours();
               if (currentHour >= 17) {
                 return (
-                  <div className="text-center py-8">
-                    <p className="text-red-400 mb-2">
-                      ⏰ Ya es muy tarde para reservar hoy
-                    </p>
-                    <p className="text-gray-400 text-sm">
+                  <div className="py-8 text-center">
+                    <p className="mb-2 text-red-400">⏰ Ya es muy tarde para reservar hoy</p>
+                    <p className="text-sm text-gray-400">
                       Selecciona una fecha futura para ver horarios disponibles
                     </p>
                   </div>
                 );
               } else {
                 return (
-                  <div className="text-center py-8">
-                    <p className="text-yellow-500 mb-2">
-                      ⚠️ No hay horarios disponibles para hoy
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      Los horarios de hoy requieren al menos 2 horas de
-                      anticipación
+                  <div className="py-8 text-center">
+                    <p className="mb-2 text-yellow-500">⚠️ No hay horarios disponibles para hoy</p>
+                    <p className="text-sm text-gray-400">
+                      Los horarios de hoy requieren al menos 2 horas de anticipación
                     </p>
                   </div>
                 );
@@ -467,11 +422,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             }
 
             return (
-              <div className="text-center py-8">
-                <p className="text-gray-400 mb-2">
-                  📅 No hay horarios disponibles para esta fecha
-                </p>
-                <p className="text-gray-500 text-sm">
+              <div className="py-8 text-center">
+                <p className="mb-2 text-gray-400">📅 No hay horarios disponibles para esta fecha</p>
+                <p className="text-sm text-gray-500">
                   Todos los slots están ocupados. Intenta con otra fecha.
                 </p>
               </div>
@@ -485,7 +438,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         <div className="flex justify-end">
           <button
             onClick={onNext}
-            className="flex items-center space-x-2 bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-400 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex transform items-center space-x-2 rounded-xl bg-yellow-500 px-8 py-4 text-lg font-bold text-black shadow-lg hover:scale-105 hover:bg-yellow-400 hover:shadow-xl"
           >
             <span>Continuar</span>
             <ArrowRight className="h-5 w-5" />
