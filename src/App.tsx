@@ -59,6 +59,13 @@ function AppContent() {
     isLoading: isLoadingBookings,
   } = useSupabaseNormalized();
 
+  // 🛠️ DEBUG: Verificar datos de Supabase
+  console.log("🔍 App.tsx - Datos de Supabase:", {
+    bookingsCount: bookings?.length || 0,
+    isLoading: isLoadingBookings,
+    rawBookings: bookings,
+  });
+
   // Transformar datos de Supabase al formato esperado por los componentes
   const transformedBookings =
     bookings?.map((booking) => ({
@@ -79,7 +86,7 @@ function AppContent() {
       },
       // ✅ COMPATIBILIDAD: Mantener servicios vacíos por simplicidad
       services: [],
-      totalPrice: (booking.total || 0) / 100, // Convertir de centavos
+      totalPrice: (booking.total || 0) / 100, // CORREGIDO: Convertir de centavos a pesos
       createdAt: booking.created_at || new Date().toISOString(),
       notes: booking.notes || "",
     })) || []; // ✅ NUEVA IMPLEMENTACIÓN - Crear reserva con Supabase
@@ -115,14 +122,14 @@ function AppContent() {
         scheduled_time: booking.time,
         estimated_duration: totalDuration,
         status: "confirmed",
-        subtotal: totalPrice * 100, // Convertir a centavos
+        subtotal: totalPrice, // Directamente en pesos chilenos
         taxes: 0,
         discounts: 0,
-        total: totalPrice * 100,
+        total: totalPrice, // Directamente en pesos chilenos
         notes: booking.client.notes,
         services: bookingServices.map((service, index) => ({
           service_id: service.id,
-          price: service.price * 100, // Convertir a centavos
+          price: service.price, // Directamente en pesos chilenos
           duration: service.duration,
           execution_order: index + 1,
         })),

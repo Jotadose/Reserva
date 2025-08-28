@@ -35,18 +35,38 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
     error: null,
   });
 
-  // ✅ BARBERÍA-FRIENDLY: Validar solo campos esenciales
+  // 💰 Función para formatear moneda chilena - CONSISTENTE con SimpleAnalytics
+  const formatChileanPesos = (amount: number) => {
+    return new Intl.NumberFormat("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // ✅ BARBERÍA-FRIENDLY: Validar solo campos esenciales con más tolerancia
   const validBookings = bookings.filter((booking) => {
     const isValid =
       booking &&
       typeof booking === "object" &&
-      booking.id &&
-      booking.date &&
-      booking.time &&
-      booking.clientName; // Solo validar que existe clientName
+      (booking.id || booking.ID) && // Permitir ID en mayúsculas también
+      (booking.date || booking.scheduled_date) && // Permitir ambos formatos
+      (booking.time || booking.scheduled_time) && // Permitir ambos formatos
+      (booking.clientName || booking.client?.name || booking.client_name); // Permitir múltiples formatos
 
     if (!isValid) {
-      console.log("❌ Booking inválido:", booking);
+      console.log("❌ Booking inválido:", {
+        booking,
+        hasId: !!(booking.id || booking.ID),
+        hasDate: !!(booking.date || booking.scheduled_date),
+        hasTime: !!(booking.time || booking.scheduled_time),
+        hasClientName: !!(
+          booking.clientName ||
+          booking.client?.name ||
+          booking.client_name
+        ),
+      });
     }
     return isValid;
   });
@@ -70,23 +90,132 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
     ];
   }, []);
 
-  // 📱 ESTADÍSTICAS SIMPLIFICADAS PARA BARBERÍA
+  // 📱 ESTADÍSTICAS SIMPLIFICADAS PARA BARBERÍA - OPTIMIZADAS
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
-    const thisMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    // 🛠️ NORMALIZACIÓN DE FECHAS - Evita problemas de zona horaria
+    const normalizeDate = (dateStr?: string) =>
+      dateStr ? new Date(dateStr).toISOString().split("T")[0] : "";
+
+    const today = normalizeDate(new Date().toISOString());
+    const thisWeek = normalizeDate(
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    );
+    const thisMonth = normalizeDate(
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    );
+
+    // 🎯 FILTRAR SOLO RESERVAS VÁLIDAS PARA MÉTRICAS (confirmadas/completadas)
+    const validForStats = validBookings.filter(
+      (b) => b.status === "confirmed" || b.status === "completed"
+    );
+
+    // 📊 FILTROS POR PERÍODO CON FECHAS NORMALIZADAS
+    const todayBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) === today
+    );
+    const weekBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) >= thisWeek
+    );
+    const monthBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) >= thisMonth
+    );
+
+    // 💰 CÁLCULOS DE INGRESOS POR PERÍODO - CORREGIDO: Ya no dividir, se arregló en App.tsx
+    const revenueToday = todayBookings.reduce(
+      (sum, b) => sum + (b.totalPrice || 0),
+      0
+    );
+    const revenueWeek = weekBookings.reduce(
+      (sum, b) => sum + (b.totalPrice || 0),
+      0
+    );
+    const revenueMonth = monthBookings.reduce(
+      (sum, b) => sum + (b.totalPrice || 0),
+      0
+    );
+    const revenueTotal = validForStats.reduce(
+      (sum, b) => sum + (b.totalPrice || 0),
+      0
+    );
+
+    // 🔍 DEBUG: Revisar valores de totalPrice después de la corrección en App.tsx
+    const samplePrices = validForStats.slice(0, 3).map((b) => ({
+      id: b.id,
+      totalPrice: b.totalPrice,
+      service: b.service,
+    }));
+
+    console.log("🔍 DEBUG PRECIOS (POST-CORRECCIÓN EN APP.TSX):", {
+      samplePrices,
+      revenueTotal,
+      validForStatsCount: validForStats.length,
+      averagePrice:
+        validForStats.length > 0 ? revenueTotal / validForStats.length : 0,
+    });
+
+    // 🔥 SERVICIO MÁS POPULAR ESTA SEMANA
+    const serviceCounts = weekBookings.reduce<Record<string, number>>(
+      (acc, b) => {
+        const serviceName =
+          b.service || b.services?.[0]?.name || "Servicio General";
+        acc[serviceName] = (acc[serviceName] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
+
+    const popularService =
+      Object.entries(serviceCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ||
+      "Ninguno";
+
+    // ⏰ HORA PICO HOY (más frecuente)
+    const hourCounts = todayBookings.reduce<Record<string, number>>(
+      (acc, b) => {
+        const hour = b.time?.split(":")[0] + ":00" || "N/A";
+        if (hour !== "N/A") acc[hour] = (acc[hour] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
+
+    const peakHour =
+      Object.entries(hourCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || "N/A";
+
+    console.log("📊 Stats calculados:", {
+      totalBookings: validBookings.length,
+      validForStats: validForStats.length,
+      todayCount: todayBookings.length,
+      revenueToday,
+      revenueWeek,
+      revenueTotal,
+      popularService,
+      peakHour,
+    });
 
     return {
-      total: validBookings.length,
-      today: validBookings.filter((b) => b.date === today).length,
-      thisWeek: validBookings.filter((b) => b.date >= thisWeek).length,
-      thisMonth: validBookings.filter((b) => b.date >= thisMonth).length,
-      // ✅ Calcular ingresos desde el campo 'total' directamente
-      revenue: validBookings.reduce((sum, b) => sum + (b.total || 0), 0),
+      // Contadores
+      total: validForStats.length,
+      today: todayBookings.length,
+      thisWeek: weekBookings.length,
+      thisMonth: monthBookings.length,
+
+      // Ingresos separados por período
+      revenue: revenueTotal, // Para la tarjeta general
+      revenueToday,
+      revenueWeek,
+      revenueMonth,
+
+      // Métricas adicionales
+      popularService,
+      peakHour,
+
+      // Estados
+      completedToday: todayBookings.filter((b) => b.status === "completed")
+        .length,
+      confirmedToday: todayBookings.filter((b) => b.status === "confirmed")
+        .length,
+
+      // Filtros
       filtered: bookingFilters.filteredBookings.length,
     };
   }, [validBookings, bookingFilters.filteredBookings]);
@@ -210,7 +339,7 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
           <div>
             <p className="text-sm font-medium text-emerald-400">Ingresos</p>
             <p className="text-2xl font-bold text-white">
-              ${stats.revenue.toLocaleString()}
+              {formatChileanPesos(stats.revenue)}
             </p>
           </div>
           <BarChart3 className="h-8 w-8 text-emerald-400" />

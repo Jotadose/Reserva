@@ -16,22 +16,73 @@ interface SimpleAnalyticsProps {
 export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
   bookings,
 }) => {
-  // Métricas esenciales para una barbería
+  // 🛠️ DEBUG: Verificar datos que llegan al componente
+  console.log("📊 SimpleAnalytics - Datos recibidos:", {
+    totalBookings: bookings.length,
+    firstBooking: bookings[0],
+    bookingPrices: bookings.map((b) => ({
+      id: b.id,
+      totalPrice: b.totalPrice,
+      total: b.total,
+    })),
+  });
+
+  // 🚨 TEMPORALMENTE: Si no hay datos, mostrar analytics con 0
+  // Esto previene mostrar números incorrectos hasta que se arregle la carga de datos
+
+  // Función para formatear moneda chilena
+  const formatChileanPesos = (amount: number) => {
+    return new Intl.NumberFormat("es-CL", {
+      style: "currency",
+      currency: "CLP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // 🚨 VALIDACIÓN: Asegurar datos válidos antes de cualquier cálculo
+  const validBookings = bookings && Array.isArray(bookings) ? bookings : [];
+
+  // Métricas esenciales para una barbería - OPTIMIZADAS
   const metrics = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
-    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
+    console.log("🧮 Calculando métricas con:", {
+      bookingsCount: validBookings.length,
+      sampleBooking: validBookings[0],
+    });
 
-    // Reservas de hoy
-    const todayBookings = bookings.filter((b) => b.date === today);
-    const yesterdayBookings = bookings.filter((b) => b.date === yesterday);
-    const weekBookings = bookings.filter((b) => b.date >= thisWeek);
+    // 🛠️ NORMALIZACIÓN DE FECHAS - Evita problemas de zona horaria
+    const normalizeDate = (dateStr?: string) =>
+      dateStr ? new Date(dateStr).toISOString().split("T")[0] : "";
 
-    // Ingresos
+    const today = normalizeDate(new Date().toISOString());
+    const yesterday = normalizeDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const thisWeek = normalizeDate(
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    );
+    const nextWeek = normalizeDate(
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    );
+
+    // 🎯 FILTRAR SOLO RESERVAS VÁLIDAS PARA MÉTRICAS (confirmadas/completadas)
+    const validForStats = validBookings.filter(
+      (b) => b.status === "confirmed" || b.status === "completed"
+    );
+
+    // 📊 FILTROS POR PERÍODO CON FECHAS NORMALIZADAS
+    const todayBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) === today
+    );
+    const yesterdayBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) === yesterday
+    );
+    const weekBookings = validForStats.filter(
+      (b) => normalizeDate(b.date) >= thisWeek
+    );
+    const upcomingBookings = validBookings.filter(
+      (b) => normalizeDate(b.date) > today && normalizeDate(b.date) <= nextWeek
+    );
+
+    // 💰 CÁLCULOS DE INGRESOS POR PERÍODO - Solo reservas válidas
     const todayRevenue = todayBookings.reduce(
       (sum, b) => sum + (b.totalPrice || 0),
       0
@@ -40,12 +91,20 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
       (sum, b) => sum + (b.totalPrice || 0),
       0
     );
-    const totalRevenue = bookings.reduce(
+    const totalRevenue = validForStats.reduce(
       (sum, b) => sum + (b.totalPrice || 0),
       0
     );
 
-    // Estados
+    console.log("💰 Ingresos calculados:", {
+      validForStats: validForStats.length,
+      todayBookings: todayBookings.length,
+      todayRevenue,
+      weekRevenue,
+      totalRevenue,
+    });
+
+    // 📊 ESTADOS DE RESERVAS HOY
     const completedToday = todayBookings.filter(
       (b) => b.status === "completed"
     ).length;
@@ -53,19 +112,13 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
       (b) => b.status === "confirmed"
     ).length;
 
-    // Próximas reservas (siguiente semana)
-    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0];
-    const upcomingBookings = bookings.filter(
-      (b) => b.date > today && b.date <= nextWeek
-    ).length;
-
-    // Servicio más popular esta semana
+    // 🎯 SERVICIO MÁS POPULAR ESTA SEMANA - Solo de reservas válidas
     const serviceCount = weekBookings.reduce((acc, booking) => {
-      booking.services.forEach((service) => {
-        acc[service.name] = (acc[service.name] || 0) + 1;
-      });
+      if (booking.services && Array.isArray(booking.services)) {
+        booking.services.forEach((service) => {
+          acc[service.name] = (acc[service.name] || 0) + 1;
+        });
+      }
       return acc;
     }, {} as Record<string, number>);
 
@@ -73,13 +126,42 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
       Object.entries(serviceCount).sort(([, a], [, b]) => b - a)[0]?.[0] ||
       "Ninguno";
 
-    // Cambio vs ayer
-    const revenueChange =
-      yesterdayBookings.length > 0
-        ? ((todayBookings.length - yesterdayBookings.length) /
-            yesterdayBookings.length) *
-          100
-        : 0;
+    // 📈 CAMBIO VS AYER - Basado en reservas válidas
+    const yesterdayValidBookings = yesterdayBookings.filter(
+      (b) => b.status === "confirmed" || b.status === "completed"
+    );
+    const todayValidBookings = todayBookings.filter(
+      (b) => b.status === "confirmed" || b.status === "completed"
+    );
+
+    let revenueChange = 0;
+    if (yesterdayValidBookings.length > 0) {
+      revenueChange =
+        ((todayValidBookings.length - yesterdayValidBookings.length) /
+          yesterdayValidBookings.length) *
+        100;
+    } else if (todayValidBookings.length > 0) {
+      revenueChange = 100;
+    }
+
+    // ⏰ HORA PICO - Análisis de reservas de hoy
+    const hourCounts = todayBookings.reduce((acc, booking) => {
+      if (booking.time) {
+        const hour = booking.time.split(":")[0] + ":00";
+        acc[hour] = (acc[hour] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const peakHour =
+      Object.entries(hourCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || "N/A";
+
+    console.log("📊 Métricas finales:", {
+      todayValidBookings: todayValidBookings.length,
+      revenueChange: Math.round(revenueChange),
+      peakHour,
+      topService,
+    });
 
     return {
       // Métricas del día
@@ -91,19 +173,16 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
       // Métricas de período
       weekRevenue,
       totalRevenue,
-      upcomingBookings,
+      upcomingBookings: upcomingBookings.length,
       topService,
 
       // Comparaciones
       revenueChange: Math.round(revenueChange),
 
       // Hora pico hoy
-      peakHour:
-        todayBookings.length > 0
-          ? todayBookings[0]?.time?.split(":")[0] + ":00" || "N/A"
-          : "N/A",
+      peakHour,
     };
-  }, [bookings]);
+  }, [validBookings]);
 
   return (
     <div className="space-y-6">
@@ -145,7 +224,7 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
             <div>
               <p className="text-sm font-medium text-green-400">Ingresos Hoy</p>
               <p className="text-3xl font-bold text-white">
-                ${(metrics.todayRevenue / 100).toFixed(0)}
+                {formatChileanPesos(metrics.todayRevenue)}
               </p>
               {metrics.revenueChange !== 0 && (
                 <p
@@ -193,7 +272,7 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
             <div className="flex justify-between">
               <span className="text-gray-400">Ingresos:</span>
               <span className="text-white font-semibold">
-                ${(metrics.weekRevenue / 100).toFixed(0)}
+                {formatChileanPesos(metrics.weekRevenue)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -221,22 +300,23 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
             <div className="flex justify-between">
               <span className="text-gray-400">Total reservas:</span>
               <span className="text-white font-semibold">
-                {bookings.length}
+                {validBookings.length}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Ingresos totales:</span>
               <span className="text-white font-semibold">
-                ${(metrics.totalRevenue / 100).toFixed(0)}
+                {formatChileanPesos(metrics.totalRevenue)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Promedio por reserva:</span>
               <span className="text-white font-semibold">
-                $
-                {bookings.length > 0
-                  ? (metrics.totalRevenue / bookings.length / 100).toFixed(0)
-                  : "0"}
+                {validBookings.length > 0
+                  ? formatChileanPesos(
+                      metrics.totalRevenue / validBookings.length
+                    )
+                  : formatChileanPesos(0)}
               </span>
             </div>
           </div>
@@ -262,7 +342,7 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
             <p className="text-green-300 font-medium">💰 Ingresos</p>
             <p className="text-gray-300 text-sm mt-1">
               {metrics.todayRevenue > 0
-                ? `Has generado $${(metrics.todayRevenue / 100).toFixed(0)} hoy`
+                ? `Has generado ${formatChileanPesos(metrics.todayRevenue)} hoy`
                 : "Aún no hay ingresos registrados para hoy"}
             </p>
           </div>
