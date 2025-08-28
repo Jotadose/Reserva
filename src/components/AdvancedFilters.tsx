@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Search, Calendar, Filter, X, DollarSign, Tag, RotateCcw } from "lucide-react";
+import {
+  Search,
+  Calendar,
+  Filter,
+  X,
+  DollarSign,
+  Tag,
+  RotateCcw,
+} from "lucide-react";
 import { useBookingFilters } from "../hooks/useBookingFilters";
 
 interface AdvancedFiltersProps {
@@ -26,8 +34,12 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   filteredResults,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [priceMin, setPriceMin] = useState(filters.priceRange?.min.toString() || "");
-  const [priceMax, setPriceMax] = useState(filters.priceRange?.max.toString() || "");
+  const [priceMin, setPriceMin] = useState(
+    filters.priceRange?.min.toString() || ""
+  );
+  const [priceMax, setPriceMax] = useState(
+    filters.priceRange?.max.toString() || ""
+  );
 
   const handlePriceRangeSubmit = () => {
     const min = parseInt(priceMin) || 0;
@@ -47,8 +59,29 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     onServiceFilterChange(updated);
   };
 
+  // 🔧 MEJOR DETECCIÓN: Solo mostrar "Filtrado" si hay filtros activos Y afectan los resultados
   const hasActiveFilters =
-    filters.searchQuery || filters.dateRange || filters.services.length > 0 || filters.priceRange;
+    (filters.searchQuery && filters.searchQuery.trim().length > 0) ||
+    filters.dateRange ||
+    filters.services.length > 0 ||
+    filters.priceRange;
+
+  const isActuallyFiltered =
+    hasActiveFilters && filteredResults !== totalResults;
+
+  // 🔍 DEBUG: Revisar estado de filtros
+  console.log("🎯 AdvancedFilters DEBUG:", {
+    hasActiveFilters,
+    isActuallyFiltered,
+    filteredResults,
+    totalResults,
+    filters: {
+      searchQuery: filters.searchQuery,
+      dateRange: filters.dateRange,
+      services: filters.services,
+      priceRange: filters.priceRange,
+    },
+  });
 
   return (
     <div className="space-y-4 rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
@@ -58,7 +91,7 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           <h3 className="text-xl font-bold text-white">Filtros de Búsqueda</h3>
           <div className="text-sm text-gray-400">
             Mostrando {filteredResults} de {totalResults} reservas
-            {filteredResults !== totalResults && (
+            {isActuallyFiltered && (
               <span className="ml-2 rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-400">
                 Filtrado
               </span>
@@ -162,7 +195,9 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   }`}
                 >
                   {service}
-                  {filters.services.includes(service) && <X className="ml-1 inline h-3 w-3" />}
+                  {filters.services.includes(service) && (
+                    <X className="ml-1 inline h-3 w-3" />
+                  )}
                 </button>
               ))}
             </div>
@@ -208,7 +243,10 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           {filters.searchQuery && (
             <span className="flex items-center rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-400">
               Búsqueda: "{filters.searchQuery}"
-              <button onClick={() => onSearchChange("")} className="ml-2 hover:text-blue-300">
+              <button
+                onClick={() => onSearchChange("")}
+                className="ml-2 hover:text-blue-300"
+              >
                 <X className="h-3 w-3" />
               </button>
             </span>
@@ -217,7 +255,10 @@ export const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
           {filters.dateRange && (
             <span className="flex items-center rounded-full bg-green-500/20 px-3 py-1 text-sm text-green-400">
               Fechas: {filters.dateRange.start} - {filters.dateRange.end}
-              <button onClick={() => onDateRangeChange(null)} className="ml-2 hover:text-green-300">
+              <button
+                onClick={() => onDateRangeChange(null)}
+                className="ml-2 hover:text-green-300"
+              >
                 <X className="h-3 w-3" />
               </button>
             </span>

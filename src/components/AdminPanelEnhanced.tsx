@@ -193,8 +193,8 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
     });
 
     return {
-      // Contadores
-      total: validForStats.length,
+      // Contadores - CORREGIDO: usar misma base para total y filtered
+      total: validBookings.length, // Total de bookings válidos
       today: todayBookings.length,
       thisWeek: weekBookings.length,
       thisMonth: monthBookings.length,
@@ -215,7 +215,7 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
       confirmedToday: todayBookings.filter((b) => b.status === "confirmed")
         .length,
 
-      // Filtros
+      // Filtros - CORREGIDO: usar misma base que total
       filtered: bookingFilters.filteredBookings.length,
     };
   }, [validBookings, bookingFilters.filteredBookings]);
