@@ -1,3 +1,15 @@
+/**
+ * TABLA DE RESERVAS - Componente principal para mostrar y gestionar reservas
+ *
+ * Funcionalidades:
+ * - Mostrar todas las reservas en formato tabla
+ * - Editar, cancelar, marcar como completada
+ * - Selección múltiple para acciones en lote
+ * - Filtros y búsqueda
+ *
+ * Mantiene simplicidad y funcionalidad para barbería
+ */
+
 import React, { useState } from "react";
 import {
   MoreVertical,

@@ -1,4 +1,17 @@
-import React, { useState } from "react";
+/**
+ * APLICACIÓN PRINCIPAL - Sistema de Reservas para Barbería
+ *
+ * Este es el componente raíz que maneja:
+ * - Autenticación de administrador
+ * - Estados principales de la aplicación (landing, reservas, admin)
+ * - Integración con Supabase para datos
+ * - Gestión de reservas completa
+ *
+ * Diseñado para ser simple, funcional y escalable
+ * Comentarios en español para facilitar mantenimiento
+ */
+
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Scissors,

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, User, Phone, Mail, MessageSquare } from "lucide-react";
 import { Service, TimeSlot, Booking } from "../types/booking";
+import { formatDateString } from "../utils/dateUtils";
 
 interface ClientFormProps {
   selectedDate: string;
@@ -163,7 +164,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
             <div>
               <p className="text-sm text-gray-400">Fecha</p>
               <p className="font-semibold text-white">
-                {new Date(selectedDate).toLocaleDateString("es-ES", {
+                {formatDateString(selectedDate, {
                   weekday: "long",
                   day: "numeric",
                   month: "long",

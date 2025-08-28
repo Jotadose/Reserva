@@ -6,7 +6,7 @@ import { useBookingFilters } from "../hooks/useBookingFilters";
 import { useBookingActions } from "../hooks/useBookingActions";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { BookingsTable } from "./BookingsTable";
-import { AdvancedAnalytics } from "./AdvancedAnalytics";
+import { SimpleAnalytics } from "./SimpleAnalytics";
 
 interface AdminPanelEnhancedProps {
   bookings: Booking[];
@@ -332,7 +332,7 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
       )}
 
       {panelState.viewMode === "analytics" && (
-        <AdvancedAnalytics bookings={validBookings} />
+        <SimpleAnalytics bookings={validBookings} />
       )}
     </div>
   );

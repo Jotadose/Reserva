@@ -34,7 +34,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ booking, onNe
             </div>
             <div>
               <p className="font-semibold text-white">
-                {new Date(booking.date).toLocaleDateString("es-ES", {
+                {new Date(booking.date + "T12:00:00").toLocaleDateString("es-ES", {
                   weekday: "long",
                   day: "numeric",
                   month: "long",
@@ -149,7 +149,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ booking, onNe
             <p className="text-gray-300">Contáctanos directamente por WhatsApp</p>
           </div>
           <a
-            href={`https://wa.me/56912345678?text=Hola! Tengo una consulta sobre mi reserva del ${new Date(booking.date).toLocaleDateString("es-ES")} a las ${booking.time}`}
+            href={`https://wa.me/56912345678?text=Hola! Tengo una consulta sobre mi reserva del ${new Date(booking.date + "T12:00:00").toLocaleDateString("es-ES")} a las ${booking.time}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-2 rounded-lg bg-green-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-400"
