@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { BarChart3, Download, Users, TrendingUp } from "lucide-react";
+import { BarChart3, Download, Users, TrendingUp, Plus } from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import { Booking, AdminPanelState } from "../types/booking";
 import { useBookingFilters } from "../hooks/useBookingFilters";
@@ -7,10 +7,12 @@ import { useBookingActions } from "../hooks/useBookingActions";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { BookingsTable } from "./BookingsTable";
 import { SimpleAnalytics } from "./SimpleAnalytics";
+import { CreateBookingModal } from "./CreateBookingModal";
 
 interface AdminPanelEnhancedProps {
   bookings: Booking[];
   onCancelBooking: (bookingId: string) => Promise<void>;
+  onCreateBooking?: (booking: any) => Promise<void>;
 }
 
 type ViewMode = "overview" | "bookings" | "analytics";
@@ -18,6 +20,7 @@ type ViewMode = "overview" | "bookings" | "analytics";
 export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
   bookings = [], // Default a array vacío
   onCancelBooking,
+  onCreateBooking,
 }) => {
   const { addToast } = useToast();
 
@@ -34,6 +37,25 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
     loading: false,
     error: null,
   });
+
+  // Estado para el modal de crear reserva
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // 📝 FUNCIÓN: Crear nueva reserva manualmente
+  const handleCreateBooking = async (newBooking: any) => {
+    try {
+      if (onCreateBooking) {
+        await onCreateBooking(newBooking);
+        addToast("Reserva creada exitosamente", "success");
+      } else {
+        console.warn("onCreateBooking no está definido");
+        addToast("Función de crear reserva no disponible", "error");
+      }
+    } catch (error) {
+      console.error("Error creating booking:", error);
+      addToast("Error al crear la reserva", "error");
+    }
+  };
 
   // 💰 Función para formatear moneda chilena - CONSISTENTE con SimpleAnalytics
   const formatChileanPesos = (amount: number) => {
@@ -79,14 +101,13 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
   const bookingFilters = useBookingFilters(validBookings);
   const { exportBookings, bulkCancelBookings, loading } = useBookingActions();
 
-  // 🔧 SERVICIOS SIMPLIFICADOS (temporal)
+  // 🎯 SERVICIOS DISPONIBLES - Historia #1: Crear reserva manualmente
   const availableServices = useMemo(() => {
-    // Por ahora retornar servicios básicos hasta que se implemente correctamente
     return [
-      "Corte de Cabello",
-      "Corte + Barba",
-      "Solo Barba",
-      "Servicio General",
+      { id: "1", name: "Corte de Cabello", price: 15000, duration: 45 },
+      { id: "2", name: "Corte + Barba", price: 20000, duration: 60 },
+      { id: "3", name: "Solo Barba", price: 8000, duration: 30 },
+      { id: "4", name: "Servicio General", price: 12000, duration: 45 },
     ];
   }, []);
 
@@ -361,7 +382,16 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
               Gestiona las reservas y analiza el rendimiento
             </p>
           </div>
-          <ViewSelector />
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nueva Reserva</span>
+            </button>
+            <ViewSelector />
+          </div>
         </div>
       </div>
 
@@ -463,6 +493,14 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
       {panelState.viewMode === "analytics" && (
         <SimpleAnalytics bookings={validBookings} />
       )}
+
+      {/* Modal de Crear Reserva - Historia #1 */}
+      <CreateBookingModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateBooking}
+        availableServices={availableServices}
+      />
     </div>
   );
 };

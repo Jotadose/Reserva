@@ -24,12 +24,14 @@ import {
   DollarSign,
   User,
   Scissors,
+  History,
 } from "lucide-react";
 import { Booking } from "../types/booking";
 import { LoadingSpinner } from "./common/LoadingSpinner";
 import { useBookingActions } from "../hooks/useBookingActions";
 import { BookingEditModal } from "./BookingEditModal";
 import { ConfirmationModal } from "./common/ConfirmationModal";
+import { ClientHistoryModal } from "./ClientHistoryModal";
 
 interface BookingsTableProps {
   bookings: Booking[];
@@ -51,6 +53,11 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
     isOpen: boolean;
   } | null>(null);
   const [confirmingBulkCancel, setConfirmingBulkCancel] = useState(false);
+  const [clientHistoryData, setClientHistoryData] = useState<{
+    clientName: string;
+    clientPhone: string;
+    isOpen: boolean;
+  } | null>(null);
   const { loading, cancelBooking, markAsCompleted, markAsNoShow, editBooking } =
     useBookingActions(onBookingChange);
 
@@ -132,6 +139,23 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
             >
               <Edit className="mr-3 h-4 w-4 transition-transform group-hover:scale-110" />
               Editar Reserva
+            </button>
+
+            <button
+              onClick={() => {
+                setClientHistoryData({
+                  clientName:
+                    booking.clientName || booking.client?.name || "Cliente",
+                  clientPhone:
+                    booking.clientPhone || booking.client?.phone || "",
+                  isOpen: true,
+                });
+                setOpenMenus({});
+              }}
+              className="flex w-full items-center px-4 py-3 text-left text-sm text-gray-300 transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-600/20 hover:to-purple-500/10 hover:text-purple-400 group"
+            >
+              <History className="mr-3 h-4 w-4 transition-transform group-hover:scale-110" />
+              Ver Historial
             </button>
 
             <button
@@ -527,6 +551,14 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({
         cancelText="No, Mantener Todas"
         type="danger"
         loading={selectedBookings.some((id) => loading[id])}
+      />
+
+      {/* Modal de Historial del Cliente */}
+      <ClientHistoryModal
+        isOpen={clientHistoryData?.isOpen || false}
+        onClose={() => setClientHistoryData(null)}
+        clientName={clientHistoryData?.clientName || ""}
+        clientPhone={clientHistoryData?.clientPhone || ""}
       />
     </div>
   );

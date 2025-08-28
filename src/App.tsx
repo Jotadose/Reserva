@@ -472,6 +472,7 @@ function AppContent() {
             <AdminPanelEnhanced
               bookings={transformedBookings}
               onCancelBooking={handleBookingCancel}
+              onCreateBooking={handleBookingComplete}
               isLoading={isLoadingBookings}
             />
           </div>
