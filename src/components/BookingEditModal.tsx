@@ -1,69 +1,98 @@
-import React, { useState } from "react";
-import { Calendar, User, Save, X } from "lucide-react";
-import { Booking, Service } from "../types/booking";
-import { useBookingActions } from "../hooks/useBookingActions";
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  User,
+  Save,
+  X,
+  Clock,
+  Phone,
+  Mail,
+  Scissors,
+  DollarSign,
+  AlertCircle,
+} from "lucide-react";
+import { Booking } from "../types/booking";
 import { LoadingSpinner } from "./common/LoadingSpinner";
 
 interface BookingEditModalProps {
-  booking: Booking;
+  booking: Booking | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: () => void;
-  availableServices: Service[];
+  onSave: (bookingId: string, updates: Partial<Booking>) => Promise<void>;
+  loading?: boolean;
 }
 
 export const BookingEditModal: React.FC<BookingEditModalProps> = ({
   booking,
   isOpen,
   onClose,
-  onUpdate,
-  availableServices,
+  onSave,
+  loading = false,
 }) => {
-  const { loading } = useBookingActions(onUpdate);
   const [formData, setFormData] = useState({
-    date: booking.date,
-    time: booking.time,
-    clientName: booking.client.name,
-    clientPhone: booking.client.phone,
-    clientEmail: booking.client.email,
-    clientNotes: booking.client.notes || "",
-    selectedServices: booking.services.map((s) => s.id),
-    status: booking.status,
+    clientName: "",
+    phone: "",
+    email: "",
+    date: "",
+    time: "",
+    service: "",
+    total: "",
+    notes: "",
+    status: "confirmed",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (booking) {
+      setFormData({
+        clientName: booking.clientName || booking.client?.name || "",
+        phone: booking.client?.phone || "",
+        email: booking.client?.email || "",
+        date: booking.date || "",
+        time: booking.time || "",
+        service: booking.service || "",
+        total: ((booking.total || 0) / 100).toString(),
+        notes: booking.notes || "",
+        status: booking.status || "confirmed",
+      });
+      setErrors({});
+    }
+  }, [booking]);
+
+  if (!isOpen || !booking) return null;
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.clientName.trim()) {
-      newErrors.clientName = "El nombre es requerido";
+      newErrors.clientName = "El nombre es obligatorio";
     }
 
-    if (!formData.clientPhone.trim()) {
-      newErrors.clientPhone = "El teléfono es requerido";
-    } else if (!/^\+?[\d\s-()]+$/.test(formData.clientPhone)) {
-      newErrors.clientPhone = "Formato de teléfono inválido";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "El teléfono es obligatorio";
+    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone)) {
+      newErrors.phone = "Formato de teléfono inválido";
     }
 
-    if (!formData.clientEmail.trim()) {
-      newErrors.clientEmail = "El email es requerido";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.clientEmail)) {
-      newErrors.clientEmail = "Formato de email inválido";
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Formato de email inválido";
     }
 
     if (!formData.date) {
-      newErrors.date = "La fecha es requerida";
+      newErrors.date = "La fecha es obligatoria";
     }
 
     if (!formData.time) {
-      newErrors.time = "La hora es requerida";
+      newErrors.time = "La hora es obligatoria";
     }
 
-    if (formData.selectedServices.length === 0) {
-      newErrors.services = "Debe seleccionar al menos un servicio";
+    if (!formData.service.trim()) {
+      newErrors.service = "El servicio es obligatorio";
+    }
+
+    if (!formData.total || parseFloat(formData.total) <= 0) {
+      newErrors.total = "El precio debe ser mayor a 0";
     }
 
     setErrors(newErrors);
@@ -73,51 +102,41 @@ export const BookingEditModal: React.FC<BookingEditModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
-    try {
-      const selectedServiceObjects = availableServices.filter((s) =>
-        formData.selectedServices.includes(s.id),
-      );
+    const updates: Partial<Booking> = {
+      clientName: formData.clientName.trim(),
+      date: formData.date,
+      time: formData.time,
+      service: formData.service.trim(),
+      total: Math.round(parseFloat(formData.total) * 100), // Convertir a centavos
+      notes: formData.notes.trim(),
+      status: formData.status as any,
+      client: {
+        ...booking.client,
+        name: formData.clientName.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+      },
+    };
 
-      const updatedBooking: Booking = {
-        ...booking,
-        date: formData.date,
-        time: formData.time,
-        client: {
-          name: formData.clientName,
-          phone: formData.clientPhone,
-          email: formData.clientEmail,
-          notes: formData.clientNotes,
-        },
-        services: selectedServiceObjects,
-        totalPrice: selectedServiceObjects.reduce((sum, s) => sum + s.price, 0),
-        duration: selectedServiceObjects.reduce((sum, s) => sum + s.duration, 0),
-        status: formData.status,
-        updatedAt: new Date().toISOString(),
-      };
+    await onSave(booking.id, updates);
+  };
 
-      // Simular actualización API
-      const response = await fetch(`/api/bookings/${booking.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedBooking),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al actualizar la reserva");
-      }
-
-      onUpdate();
-      onClose();
-    } catch (error) {
-      console.error("Error updating booking:", error);
-      setErrors({ submit: "Error al actualizar la reserva" });
-    }
+  const handleClose = () => {
+    setFormData({
+      clientName: "",
+      phone: "",
+      email: "",
+      date: "",
+      time: "",
+      service: "",
+      total: "",
+      notes: "",
+      status: "confirmed",
+    });
+    setErrors({});
+    onClose();
   };
 
   const handleServiceToggle = (serviceId: string) => {
@@ -133,7 +152,9 @@ export const BookingEditModal: React.FC<BookingEditModalProps> = ({
     const slots = [];
     for (let hour = 9; hour <= 18; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
-        const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        const timeString = `${hour.toString().padStart(2, "0")}:${minute
+          .toString()
+          .padStart(2, "0")}`;
         slots.push(timeString);
       }
     }
@@ -141,17 +162,19 @@ export const BookingEditModal: React.FC<BookingEditModalProps> = ({
   })();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 p-6">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Editar Reserva</h2>
-            <p className="text-sm text-gray-600">ID: {booking.id}</p>
+        <div className="flex items-center justify-between border-b border-gray-700 p-6">
+          <div className="flex items-center space-x-3">
+            <div className="rounded-lg bg-yellow-500/20 p-2">
+              <Scissors className="h-5 w-5 text-yellow-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white">Editar Reserva</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
@@ -159,270 +182,264 @@ export const BookingEditModal: React.FC<BookingEditModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Cliente Information */}
-            <div className="space-y-4">
-              <h3 className="flex items-center text-lg font-semibold text-gray-900">
-                <User className="mr-2 h-5 w-5" />
-                Información del Cliente
-              </h3>
-
+          <div className="space-y-6">
+            {/* Cliente Info */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label
-                  htmlFor="client-name"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Nombre Completo *
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <User className="mr-2 h-4 w-4" />
+                  Nombre del Cliente *
                 </label>
                 <input
-                  id="client-name"
                   type="text"
                   value={formData.clientName}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, clientName: e.target.value }))}
-                  className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientName ? "border-red-500" : "border-gray-300"
+                  onChange={(e) =>
+                    setFormData({ ...formData, clientName: e.target.value })
+                  }
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.clientName
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
                   }`}
-                  placeholder="Nombre del cliente"
+                  placeholder="Nombre completo"
                 />
                 {errors.clientName && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientName}</p>
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.clientName}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label
-                  htmlFor="client-phone"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <Phone className="mr-2 h-4 w-4" />
                   Teléfono *
                 </label>
                 <input
-                  id="client-phone"
                   type="tel"
-                  value={formData.clientPhone}
+                  value={formData.phone}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))
+                    setFormData({ ...formData, phone: e.target.value })
                   }
-                  className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientPhone ? "border-red-500" : "border-gray-300"
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.phone
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
                   }`}
-                  placeholder="+57 300 123 4567"
+                  placeholder="+1 234 567 8900"
                 />
-                {errors.clientPhone && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientPhone}</p>
+                {errors.phone && (
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.phone}
+                  </p>
                 )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="client-email"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Email *
-                </label>
-                <input
-                  id="client-email"
-                  type="email"
-                  value={formData.clientEmail}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, clientEmail: e.target.value }))
-                  }
-                  className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientEmail ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="cliente@email.com"
-                />
-                {errors.clientEmail && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientEmail}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="client-notes"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Notas del Cliente
-                </label>
-                <textarea
-                  id="client-notes"
-                  value={formData.clientNotes}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, clientNotes: e.target.value }))
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Notas adicionales sobre el cliente..."
-                />
               </div>
             </div>
 
-            {/* Appointment Information */}
-            <div className="space-y-4">
-              <h3 className="flex items-center text-lg font-semibold text-gray-900">
-                <Calendar className="mr-2 h-5 w-5" />
-                Información de la Cita
-              </h3>
+            <div>
+              <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                <Mail className="mr-2 h-4 w-4" />
+                Email (opcional)
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                  errors.email
+                    ? "border-red-500"
+                    : "border-gray-600 hover:border-gray-500"
+                }`}
+                placeholder="cliente@email.com"
+              />
+              {errors.email && (
+                <p className="mt-1 flex items-center text-sm text-red-400">
+                  <AlertCircle className="mr-1 h-3 w-3" />
+                  {errors.email}
+                </p>
+              )}
+            </div>
 
+            {/* Fecha y Hora */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label
-                  htmlFor="booking-date"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <Calendar className="mr-2 h-4 w-4" />
                   Fecha *
                 </label>
                 <input
-                  id="booking-date"
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
-                  min={new Date().toISOString().split("T")[0]}
-                  className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.date ? "border-red-500" : "border-gray-300"
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.date
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
                   }`}
                 />
-                {errors.date && <p className="mt-1 text-sm text-red-500">{errors.date}</p>}
+                {errors.date && (
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.date}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label
-                  htmlFor="booking-time"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <Clock className="mr-2 h-4 w-4" />
                   Hora *
                 </label>
-                <select
-                  id="booking-time"
+                <input
+                  type="time"
                   value={formData.time}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, time: e.target.value }))}
-                  className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.time ? "border-red-500" : "border-gray-300"
+                  onChange={(e) =>
+                    setFormData({ ...formData, time: e.target.value })
+                  }
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.time
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
+                  }`}
+                />
+                {errors.time && (
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.time}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Servicio y Precio */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <Scissors className="mr-2 h-4 w-4" />
+                  Servicio *
+                </label>
+                <select
+                  value={formData.service}
+                  onChange={(e) =>
+                    setFormData({ ...formData, service: e.target.value })
+                  }
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.service
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
                   }`}
                 >
-                  <option value="">Seleccionar hora</option>
-                  {timeSlots.map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
+                  <option value="">Seleccionar servicio</option>
+                  <option value="Corte de Cabello">Corte de Cabello</option>
+                  <option value="Barba">Barba</option>
+                  <option value="Corte + Barba">Corte + Barba</option>
+                  <option value="Afeitado Clásico">Afeitado Clásico</option>
+                  <option value="Lavado + Corte">Lavado + Corte</option>
+                  <option value="Diseño Especial">Diseño Especial</option>
                 </select>
-                {errors.time && <p className="mt-1 text-sm text-red-500">{errors.time}</p>}
+                {errors.service && (
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.service}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label
-                  htmlFor="booking-status"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Estado
+                <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Precio *
                 </label>
-                <select
-                  id="booking-status"
-                  value={formData.status}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="pending">Pendiente</option>
-                  <option value="confirmed">Confirmada</option>
-                  <option value="in-progress">En Progreso</option>
-                  <option value="completed">Completada</option>
-                  <option value="cancelled">Cancelada</option>
-                  <option value="no-show">No Show</option>
-                  <option value="rescheduled">Reagendada</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Services Selection */}
-          <div className="mt-6">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Servicios *</h3>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {availableServices.map((service) => (
-                <button
-                  key={service.id}
-                  type="button"
-                  className={`rounded-lg border-2 p-4 text-left transition-all ${
-                    formData.selectedServices.includes(service.id)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.total}
+                  onChange={(e) =>
+                    setFormData({ ...formData, total: e.target.value })
+                  }
+                  className={`w-full rounded-lg border bg-gray-800 px-3 py-2 text-white transition-colors focus:border-yellow-500 focus:outline-none ${
+                    errors.total
+                      ? "border-red-500"
+                      : "border-gray-600 hover:border-gray-500"
                   }`}
-                  onClick={() => handleServiceToggle(service.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-gray-900">{service.name}</h4>
-                      <p className="text-sm text-gray-600">{service.duration} min</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900">
-                        ${service.price.toLocaleString("es-CO")}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  placeholder="0.00"
+                />
+                {errors.total && (
+                  <p className="mt-1 flex items-center text-sm text-red-400">
+                    <AlertCircle className="mr-1 h-3 w-3" />
+                    {errors.total}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {errors.services && <p className="mt-2 text-sm text-red-500">{errors.services}</p>}
+            {/* Estado */}
+            <div>
+              <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                Estado
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white transition-colors hover:border-gray-500 focus:border-yellow-500 focus:outline-none"
+              >
+                <option value="confirmed">Confirmada</option>
+                <option value="pending">Pendiente</option>
+                <option value="completed">Completada</option>
+                <option value="cancelled">Cancelada</option>
+                <option value="no-show">No Show</option>
+              </select>
+            </div>
 
-            {/* Total */}
-            {formData.selectedServices.length > 0 && (
-              <div className="mt-4 rounded-lg bg-gray-50 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">Total:</span>
-                  <span className="text-xl font-bold text-blue-600">
-                    $
-                    {availableServices
-                      .filter((s) => formData.selectedServices.includes(s.id))
-                      .reduce((sum, s) => sum + s.price, 0)
-                      .toLocaleString("es-CO")}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>Duración total:</span>
-                  <span>
-                    {availableServices
-                      .filter((s) => formData.selectedServices.includes(s.id))
-                      .reduce((sum, s) => sum + s.duration, 0)}{" "}
-                    minutos
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Notas */}
+            <div>
+              <label className="mb-2 flex items-center text-sm font-medium text-gray-300">
+                Notas adicionales
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                rows={3}
+                className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-white transition-colors hover:border-gray-500 focus:border-yellow-500 focus:outline-none"
+                placeholder="Observaciones, preferencias del cliente, etc."
+              />
+            </div>
           </div>
 
-          {/* Error Message */}
-          {errors.submit && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-red-600">{errors.submit}</p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="mt-8 flex justify-end space-x-4">
+          {/* Footer */}
+          <div className="mt-8 flex justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-gray-200 px-6 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+              className="rounded-lg border border-gray-600 px-4 py-2 text-gray-300 transition-colors hover:bg-gray-800"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={loading["update-booking"]}
-              className="flex items-center space-x-2 rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              disabled={loading}
+              className="flex items-center rounded-lg bg-yellow-500 px-4 py-2 text-black font-medium transition-colors hover:bg-yellow-400 disabled:opacity-50"
             >
-              {loading["update-booking"] ? (
+              {loading ? (
                 <>
-                  <LoadingSpinner size="sm" />
-                  <span>Actualizando...</span>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Guardando...
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
-                  <span>Guardar Cambios</span>
+                  <Save className="mr-2 h-4 w-4" />
+                  Guardar Cambios
                 </>
               )}
             </button>

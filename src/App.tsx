@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Calendar,
-  Clock,
   Scissors,
   Users,
   Settings,
@@ -22,146 +21,121 @@ import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
 import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
+import { useSupabaseNormalized } from "./hooks/useSupabaseNormalized";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
 function AppContent() {
   const { addToast } = useToast();
-  const [currentView, setCurrentView] = useState<"landing" | "booking" | "admin">("landing");
-  const [bookingStep, setBookingStep] = useState<"calendar" | "service" | "form" | "confirmation">(
-    "calendar",
-  );
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [currentView, setCurrentView] = useState<
+    "landing" | "booking" | "admin"
+  >("landing");
+  const [bookingStep, setBookingStep] = useState<
+    "calendar" | "service" | "form" | "confirmation"
+  >("calendar");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isCreatingBooking, setIsCreatingBooking] = useState(false);
-  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
-  // Función para cargar reservas desde la API
-  const fetchBookings = async () => {
-    setIsLoadingBookings(true);
-    try {
-      console.log("🔍 Fetching bookings from /api/bookings...");
-      const res = await fetch("/api/bookings");
-      console.log("📡 Response status:", res.status, res.statusText);
+  // ✅ HOOKS DE SUPABASE - Reemplaza las APIs Express
+  const {
+    bookings_new: bookings,
+    createBooking,
+    cancelBooking: deleteBooking,
+    isLoading: isLoadingBookings,
+  } = useSupabaseNormalized();
 
-      if (res.ok) {
-        const apiData = await res.json();
-        console.log("✅ Raw API data:", apiData.length, "bookings");
-        console.log("📋 First raw booking:", apiData[0]);
-
-        // Transform API data to frontend format
-        const transformedBookings = apiData.map((booking: any) => ({
-          id: booking.id,
-          date: booking.date,
-          time: booking.time,
-          status: booking.status || "confirmed",
-          duration: booking.duration || 45,
-          client: {
-            name: booking.name,
-            phone: booking.phone,
-            email: booking.email,
-            notes: booking.notes || "",
-          },
-          services: Array.isArray(booking.services)
-            ? booking.services
-                .filter((s) => s !== null)
-                .map((service: any) => ({
-                  id: service.id || "",
-                  name: service.name || "Servicio",
-                  price: service.price || 0,
-                  duration: service.duration || 45,
-                  category: service.category || "general",
-                  description: service.description || "",
-                }))
-            : [],
-          totalPrice: Array.isArray(booking.services)
-            ? booking.services
-                .filter((s) => s !== null)
-                .reduce((sum: number, s: any) => sum + (s.price || 0), 0)
-            : 0,
-          createdAt: booking.created_at || new Date().toISOString(),
-        }));
-
-        console.log("🔄 Transformed bookings:", transformedBookings.length);
-        console.log("� First transformed booking:", transformedBookings[0]);
-
-        setBookings(transformedBookings);
-      } else {
-        console.log("❌ Failed to load bookings:", res.status);
-        setBookings([]);
-        addToast({
-          type: "error",
-          title: "Error al cargar reservas",
-          message: "No se pudieron cargar las reservas existentes",
-        });
-      }
-    } catch (error) {
-      console.log("💥 Network error:", error);
-      setBookings([]);
-      addToast({
-        type: "error",
-        title: "Error de conexión",
-        message: "No se pudo conectar con el servidor",
-      });
-    } finally {
-      setIsLoadingBookings(false);
-    }
-  };
-
-  // Cargar reservas al montar
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
+  // Transformar datos de Supabase al formato esperado por los componentes
+  const transformedBookings =
+    bookings?.map((booking) => ({
+      id: booking.id,
+      clientName: booking.client?.name || "Cliente",
+      service: booking.services[0]?.name || "Servicio",
+      date: booking.scheduled_date,
+      time: booking.scheduled_time,
+      status: booking.status,
+      total: booking.total || 0,
+      duration: booking.estimated_duration || 60,
+      // ✅ ARREGLAR: Agregar datos completos del cliente
+      client: {
+        name: booking.client?.name || "Cliente",
+        phone: booking.client?.phone || "No disponible",
+        email: booking.client?.email || "No disponible",
+        notes: booking.notes || "",
+      },
+      // ✅ COMPATIBILIDAD: Mantener servicios vacíos por simplicidad
+      services: [],
+      totalPrice: (booking.total || 0) / 100, // Convertir de centavos
+      createdAt: booking.created_at || new Date().toISOString(),
+      notes: booking.notes || "",
+    })) || []; // ✅ NUEVA IMPLEMENTACIÓN - Crear reserva con Supabase
   const handleBookingComplete = async (booking: Booking) => {
-    setIsCreatingBooking(true);
     try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: booking.client.name,
-          phone: booking.client.phone,
-          email: booking.client.email,
-          date: booking.date,
-          time: booking.time,
-          services: booking.services,
-        }),
+      console.log("💾 Creando reserva con Supabase:", booking);
+
+      // Obtener servicios (usar datos por defecto si no están definidos)
+      const bookingServices = booking.services || [
+        {
+          id: "default-service",
+          name: "Servicio General",
+          price: booking.totalPrice || 50,
+          duration: booking.duration || 60,
+          category: "barberia" as const,
+        },
+      ];
+
+      // Calcular métricas de servicios
+      const totalDuration = bookingServices.reduce(
+        (total, service) => total + service.duration,
+        0
+      );
+      const totalPrice = bookingServices.reduce(
+        (total, service) => total + service.price,
+        0
+      );
+
+      // Usar hook de Supabase para crear reserva
+      const result = await createBooking.mutateAsync({
+        client_id: null, // Se creará el cliente automáticamente
+        scheduled_date: booking.date,
+        scheduled_time: booking.time,
+        estimated_duration: totalDuration,
+        status: "confirmed",
+        subtotal: totalPrice * 100, // Convertir a centavos
+        taxes: 0,
+        discounts: 0,
+        total: totalPrice * 100,
+        notes: booking.client.notes,
+        services: bookingServices.map((service, index) => ({
+          service_id: service.id,
+          price: service.price * 100, // Convertir a centavos
+          duration: service.duration,
+          execution_order: index + 1,
+        })),
+        // Datos del cliente
+        client_name: booking.client.name,
+        client_phone: booking.client.phone,
+        client_email: booking.client.email,
       });
-      if (res.ok) {
-        await fetchBookings(); // Refresca reservas desde la API
-        const saved = await res.json();
-        setCurrentBooking({ ...booking, id: saved.id });
+
+      if (result) {
+        console.log("✅ Reserva creada en Supabase:", result);
+        setCurrentBooking({ ...booking, id: result.id });
         setBookingStep("confirmation");
         addToast({
           type: "success",
           title: "¡Reserva confirmada!",
           message: "Tu cita ha sido agendada exitosamente",
         });
-      } else if (res.status === 409) {
-        addToast({
-          type: "error",
-          title: "Horario no disponible",
-          message: "Este horario ya fue reservado. Por favor elige otro horario disponible.",
-        });
-      } else {
-        addToast({
-          type: "error",
-          title: "Error al guardar",
-          message: "No se pudo guardar la reserva. Intenta nuevamente.",
-        });
       }
-    } catch {
+    } catch (error) {
+      console.error("❌ Error creando reserva:", error);
       addToast({
         type: "error",
-        title: "Error de conexión",
-        message: "No se pudo conectar con el servidor.",
+        title: "Error al guardar",
+        message: "No se pudo guardar la reserva. Intenta nuevamente.",
       });
-    } finally {
-      setIsCreatingBooking(false);
     }
   };
 
@@ -173,30 +147,22 @@ function AppContent() {
     setCurrentBooking(null);
   };
 
+  // ✅ NUEVA IMPLEMENTACIÓN - Cancelar reserva con Supabase
   const handleBookingCancel = async (bookingId: string) => {
     try {
-      const res = await fetch(`/api/bookings/${bookingId}`, {
-        method: "DELETE",
+      console.log("🗑️ Cancelando reserva:", bookingId);
+      await deleteBooking.mutateAsync(bookingId);
+      addToast({
+        type: "success",
+        title: "Reserva cancelada",
+        message: "La reserva ha sido cancelada exitosamente",
       });
-      if (res.ok) {
-        await fetchBookings(); // Refresca reservas desde la API
-        addToast({
-          type: "success",
-          title: "Reserva cancelada",
-          message: "La reserva ha sido cancelada exitosamente",
-        });
-      } else {
-        addToast({
-          type: "error",
-          title: "Error al cancelar",
-          message: "No se pudo cancelar la reserva.",
-        });
-      }
-    } catch {
+    } catch (error) {
+      console.error("❌ Error cancelando reserva:", error);
       addToast({
         type: "error",
-        title: "Error de conexión",
-        message: "No se pudo conectar con el servidor.",
+        title: "Error al cancelar",
+        message: "No se pudo cancelar la reserva.",
       });
     }
   };
@@ -231,12 +197,17 @@ function AppContent() {
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center justify-between">
-            <div className="flex cursor-pointer items-center space-x-3" onClick={goToLanding}>
+            <div
+              className="flex cursor-pointer items-center space-x-3"
+              onClick={goToLanding}
+            >
               <div className="rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 p-3">
                 <Scissors className="h-8 w-8 text-black" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Michael The Barber</h1>
+                <h1 className="text-2xl font-bold text-white">
+                  Michael The Barber
+                </h1>
                 <p className="text-sm text-gray-400">Studios</p>
               </div>
             </div>
@@ -282,7 +253,11 @@ function AppContent() {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 text-white md:hidden"
             >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
 
@@ -327,7 +302,9 @@ function AppContent() {
       </header>
 
       <main className="min-h-screen">
-        {currentView === "landing" && <LandingPage onStartBooking={startBookingProcess} />}
+        {currentView === "landing" && (
+          <LandingPage onStartBooking={startBookingProcess} />
+        )}
 
         {currentView === "booking" && (
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -339,21 +316,27 @@ function AppContent() {
                     className={`flex items-center space-x-3 ${
                       bookingStep === "calendar"
                         ? "text-yellow-500"
-                        : ["service", "form", "confirmation"].includes(bookingStep)
-                          ? "text-green-500"
-                          : "text-gray-500"
+                        : ["service", "form", "confirmation"].includes(
+                            bookingStep
+                          )
+                        ? "text-green-500"
+                        : "text-gray-500"
                     }`}
                   >
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
                         bookingStep === "calendar"
                           ? "border-yellow-500 bg-yellow-500/20"
-                          : ["service", "form", "confirmation"].includes(bookingStep)
-                            ? "border-green-500 bg-green-500/20"
-                            : "border-gray-500"
+                          : ["service", "form", "confirmation"].includes(
+                              bookingStep
+                            )
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
                       }`}
                     >
-                      {["service", "form", "confirmation"].includes(bookingStep) ? (
+                      {["service", "form", "confirmation"].includes(
+                        bookingStep
+                      ) ? (
                         <CheckCircle className="h-5 w-5" />
                       ) : (
                         <Calendar className="h-5 w-5" />
@@ -369,8 +352,8 @@ function AppContent() {
                       bookingStep === "service"
                         ? "text-yellow-500"
                         : ["form", "confirmation"].includes(bookingStep)
-                          ? "text-green-500"
-                          : "text-gray-500"
+                        ? "text-green-500"
+                        : "text-gray-500"
                     }`}
                   >
                     <div
@@ -378,8 +361,8 @@ function AppContent() {
                         bookingStep === "service"
                           ? "border-yellow-500 bg-yellow-500/20"
                           : ["form", "confirmation"].includes(bookingStep)
-                            ? "border-green-500 bg-green-500/20"
-                            : "border-gray-500"
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
                       }`}
                     >
                       {["form", "confirmation"].includes(bookingStep) ? (
@@ -398,8 +381,8 @@ function AppContent() {
                       bookingStep === "form"
                         ? "text-yellow-500"
                         : bookingStep === "confirmation"
-                          ? "text-green-500"
-                          : "text-gray-500"
+                        ? "text-green-500"
+                        : "text-gray-500"
                     }`}
                   >
                     <div
@@ -407,8 +390,8 @@ function AppContent() {
                         bookingStep === "form"
                           ? "border-yellow-500 bg-yellow-500/20"
                           : bookingStep === "confirmation"
-                            ? "border-green-500 bg-green-500/20"
-                            : "border-gray-500"
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
                       }`}
                     >
                       {bookingStep === "confirmation" ? (
@@ -427,7 +410,7 @@ function AppContent() {
                 <BookingCalendar
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
-                  bookings={bookings}
+                  bookings={transformedBookings}
                   onDateSelect={setSelectedDate}
                   onTimeSelect={setSelectedTime}
                   onNext={() => setBookingStep("service")}
@@ -450,12 +433,15 @@ function AppContent() {
                   selectedServices={selectedServices}
                   onBack={() => setBookingStep("service")}
                   onSubmit={handleBookingComplete}
-                  isSubmitting={isCreatingBooking}
+                  isSubmitting={createBooking.isLoading}
                 />
               )}
 
               {bookingStep === "confirmation" && currentBooking && (
-                <BookingConfirmation booking={currentBooking} onNewBooking={handleNewBooking} />
+                <BookingConfirmation
+                  booking={currentBooking}
+                  onNewBooking={handleNewBooking}
+                />
               )}
             </div>
           </div>
@@ -463,7 +449,11 @@ function AppContent() {
 
         {currentView === "admin" && (
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <AdminPanelEnhanced bookings={bookings} onCancelBooking={handleBookingCancel} />
+            <AdminPanelEnhanced
+              bookings={transformedBookings}
+              onCancelBooking={handleBookingCancel}
+              isLoading={isLoadingBookings}
+            />
           </div>
         )}
       </main>
@@ -480,13 +470,15 @@ function AppContent() {
                     <Scissors className="h-6 w-6 text-black" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">Michael The Barber</h3>
+                    <h3 className="text-xl font-bold text-white">
+                      Michael The Barber
+                    </h3>
                     <p className="text-sm text-gray-400">Studios</p>
                   </div>
                 </div>
                 <p className="mb-4 text-gray-400">
-                  Servicios de barbería y formación de alto estándar en Coquimbo. Donde tu estilo
-                  encuentra precisión.
+                  Servicios de barbería y formación de alto estándar en
+                  Coquimbo. Donde tu estilo encuentra precisión.
                 </p>
                 <div className="flex space-x-4">
                   <a
@@ -510,7 +502,9 @@ function AppContent() {
 
               {/* Contact Info */}
               <div>
-                <h4 className="mb-4 text-lg font-semibold text-white">Contacto</h4>
+                <h4 className="mb-4 text-lg font-semibold text-white">
+                  Contacto
+                </h4>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3 text-gray-400">
                     <MapPin className="h-5 w-5" />
@@ -529,7 +523,9 @@ function AppContent() {
 
               {/* Quick Links */}
               <div>
-                <h4 className="mb-4 text-lg font-semibold text-white">Enlaces</h4>
+                <h4 className="mb-4 text-lg font-semibold text-white">
+                  Enlaces
+                </h4>
                 <div className="space-y-2">
                   <button
                     onClick={startBookingProcess}
@@ -548,10 +544,13 @@ function AppContent() {
             </div>
 
             <div className="mt-8 border-t border-gray-700 pt-8 text-center text-gray-400">
-              <p>&copy; 2025 Michael The Barber Studios. Todos los derechos reservados.</p>
+              <p>
+                &copy; 2025 Michael The Barber Studios. Todos los derechos
+                reservados.
+              </p>
               <p className="mt-2 text-sm">
-                ✂️ Diseñado por Juan Emilio Elgueda Lillo — Para la barbería que marca estilo en
-                Coquimbo.
+                ✂️ Diseñado por Juan Emilio Elgueda Lillo — Para la barbería que
+                marca estilo en Coquimbo.
               </p>
             </div>
           </div>

@@ -1,5 +1,12 @@
 import React from "react";
-import { Scissors, Palette, Plus, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import {
+  Scissors,
+  Palette,
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+} from "lucide-react";
 import { Service } from "../types/booking";
 
 interface ServiceSelectionProps {
@@ -122,15 +129,23 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
     }
   };
 
-  const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
-  const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, service) => sum + service.price,
+    0
+  );
+  const totalDuration = selectedServices.reduce(
+    (sum, service) => sum + service.duration,
+    0
+  );
 
   const canProceed = selectedServices.length > 0;
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-        <h2 className="mb-6 text-2xl font-bold text-white">Selecciona tus servicios</h2>
+        <h2 className="mb-6 text-2xl font-bold text-white">
+          Selecciona tus servicios
+        </h2>
 
         <div className="space-y-8">
           {["barberia", "colorimetria", "extras"].map((category) => (
@@ -139,12 +154,16 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
                 <div className="rounded-lg bg-yellow-500/20 p-2 text-yellow-500">
                   {getCategoryIcon(category)}
                 </div>
-                <h3 className="text-xl font-semibold text-white">{getCategoryName(category)}</h3>
+                <h3 className="text-xl font-semibold text-white">
+                  {getCategoryName(category)}
+                </h3>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {getServicesByCategory(category).map((service) => {
-                  const isSelected = selectedServices.some((s) => s.id === service.id);
+                  const isSelected = selectedServices.some(
+                    (s) => s.id === service.id
+                  );
 
                   return (
                     <div
@@ -163,17 +182,23 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
                       )}
 
                       <div className="mb-2 flex items-start justify-between">
-                        <h4 className="text-lg font-semibold text-white">{service.name}</h4>
+                        <h4 className="text-lg font-semibold text-white">
+                          {service.name}
+                        </h4>
                         <div className="text-right">
                           <p className="text-lg font-bold text-yellow-500">
                             ${service.price.toLocaleString()}
                           </p>
-                          <p className="text-sm text-gray-400">{service.duration} min</p>
+                          <p className="text-sm text-gray-400">
+                            {service.duration} min
+                          </p>
                         </div>
                       </div>
 
                       {service.description && (
-                        <p className="text-sm text-gray-300">{service.description}</p>
+                        <p className="text-sm text-gray-300">
+                          {service.description}
+                        </p>
                       )}
                     </div>
                   );
@@ -187,7 +212,9 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
       {/* Summary */}
       {selectedServices.length > 0 && (
         <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-          <h3 className="mb-4 text-xl font-semibold text-white">Resumen de servicios</h3>
+          <h3 className="mb-4 text-xl font-semibold text-white">
+            Resumen de servicios
+          </h3>
 
           <div className="mb-6 space-y-3">
             {selectedServices.map((service) => (
@@ -197,7 +224,9 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
               >
                 <div>
                   <span className="font-medium text-white">{service.name}</span>
-                  <span className="ml-2 text-sm text-gray-400">({service.duration} min)</span>
+                  <span className="ml-2 text-sm text-gray-400">
+                    ({service.duration} min)
+                  </span>
                 </div>
                 <span className="font-semibold text-yellow-500">
                   ${service.price.toLocaleString()}
@@ -210,9 +239,13 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
             <div className="flex items-center justify-between text-lg font-bold">
               <div className="text-white">
                 <span>Total: </span>
-                <span className="text-sm text-gray-400">({totalDuration} min aprox.)</span>
+                <span className="text-sm text-gray-400">
+                  ({totalDuration} min aprox.)
+                </span>
               </div>
-              <span className="text-2xl text-yellow-500">${totalPrice.toLocaleString()}</span>
+              <span className="text-2xl text-yellow-500">
+                ${totalPrice.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { useBookingFilters } from "../hooks/useBookingFilters";
 import { useBookingActions } from "../hooks/useBookingActions";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { BookingsTable } from "./BookingsTable";
-import { AnalyticsDashboard } from "./AnalyticsDashboard";
+import { AdvancedAnalytics } from "./AdvancedAnalytics";
 
 interface AdminPanelEnhancedProps {
   bookings: Booking[];
@@ -35,54 +35,58 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
     error: null,
   });
 
-  // Validar y filtrar bookings válidos
-  const validBookings = bookings.filter(
-    (booking) =>
+  // ✅ BARBERÍA-FRIENDLY: Validar solo campos esenciales
+  const validBookings = bookings.filter((booking) => {
+    const isValid =
       booking &&
       typeof booking === "object" &&
       booking.id &&
       booking.date &&
       booking.time &&
-      booking.client &&
-      Array.isArray(booking.services),
+      booking.clientName; // Solo validar que existe clientName
+
+    if (!isValid) {
+      console.log("❌ Booking inválido:", booking);
+    }
+    return isValid;
+  });
+
+  console.log(
+    `✅ Bookings válidos: ${validBookings.length} de ${bookings.length}`
   );
 
   // Use custom hooks
   const bookingFilters = useBookingFilters(validBookings);
   const { exportBookings, bulkCancelBookings, loading } = useBookingActions();
 
-  // Get available services for filters
+  // 🔧 SERVICIOS SIMPLIFICADOS (temporal)
   const availableServices = useMemo(() => {
-    const services = new Set<string>();
-    validBookings.forEach((booking) => {
-      booking.services?.forEach((service) => {
-        if (service?.name) {
-          services.add(service.name);
-        }
-      });
-    });
-    return Array.from(services);
-  }, [validBookings]);
+    // Por ahora retornar servicios básicos hasta que se implemente correctamente
+    return [
+      "Corte de Cabello",
+      "Corte + Barba",
+      "Solo Barba",
+      "Servicio General",
+    ];
+  }, []);
 
-  // Calculate stats
+  // 📱 ESTADÍSTICAS SIMPLIFICADAS PARA BARBERÍA
   const stats = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
-    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-    const thisMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+    const thisMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
 
     return {
       total: validBookings.length,
       today: validBookings.filter((b) => b.date === today).length,
       thisWeek: validBookings.filter((b) => b.date >= thisWeek).length,
       thisMonth: validBookings.filter((b) => b.date >= thisMonth).length,
-      revenue: validBookings.reduce((sum, b) => {
-        return (
-          sum +
-          (b.services?.reduce((s, svc) => {
-            return s + (typeof svc?.price === "number" ? svc.price : 0);
-          }, 0) || 0)
-        );
-      }, 0),
+      // ✅ Calcular ingresos desde el campo 'total' directamente
+      revenue: validBookings.reduce((sum, b) => sum + (b.total || 0), 0),
       filtered: bookingFilters.filteredBookings.length,
     };
   }, [validBookings, bookingFilters.filteredBookings]);
@@ -98,7 +102,11 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
         return;
       }
 
-      if (confirm(`¿Estás seguro de cancelar ${panelState.selectedBookings.length} reserva(s)?`)) {
+      if (
+        confirm(
+          `¿Estás seguro de cancelar ${panelState.selectedBookings.length} reserva(s)?`
+        )
+      ) {
         await bulkCancelBookings(panelState.selectedBookings);
         setPanelState((prev) => ({ ...prev, selectedBookings: [] }));
       }
@@ -106,7 +114,7 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
       const dataToExport =
         panelState.selectedBookings.length > 0
           ? bookingFilters.filteredBookings.filter((b) =>
-              panelState.selectedBookings.includes(b.id),
+              panelState.selectedBookings.includes(b.id)
             )
           : bookingFilters.filteredBookings;
 
@@ -117,7 +125,9 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
   const ViewSelector = () => (
     <div className="flex space-x-1 rounded-lg bg-gray-800 p-1">
       <button
-        onClick={() => setPanelState((prev) => ({ ...prev, viewMode: "overview" }))}
+        onClick={() =>
+          setPanelState((prev) => ({ ...prev, viewMode: "overview" }))
+        }
         className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           panelState.viewMode === "overview"
             ? "bg-yellow-500 text-black"
@@ -127,7 +137,9 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
         Resumen
       </button>
       <button
-        onClick={() => setPanelState((prev) => ({ ...prev, viewMode: "bookings" }))}
+        onClick={() =>
+          setPanelState((prev) => ({ ...prev, viewMode: "bookings" }))
+        }
         className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           panelState.viewMode === "bookings"
             ? "bg-yellow-500 text-black"
@@ -137,7 +149,9 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
         Reservas
       </button>
       <button
-        onClick={() => setPanelState((prev) => ({ ...prev, viewMode: "analytics" }))}
+        onClick={() =>
+          setPanelState((prev) => ({ ...prev, viewMode: "analytics" }))
+        }
         className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           panelState.viewMode === "analytics"
             ? "bg-yellow-500 text-black"
@@ -195,7 +209,9 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-emerald-400">Ingresos</p>
-            <p className="text-2xl font-bold text-white">${stats.revenue.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-white">
+              ${stats.revenue.toLocaleString()}
+            </p>
           </div>
           <BarChart3 className="h-8 w-8 text-emerald-400" />
         </div>
@@ -209,8 +225,12 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="mb-2 text-2xl font-bold text-white">Panel de Administración</h2>
-            <p className="text-gray-400">Gestiona las reservas y analiza el rendimiento</p>
+            <h2 className="mb-2 text-2xl font-bold text-white">
+              Panel de Administración
+            </h2>
+            <p className="text-gray-400">
+              Gestiona las reservas y analiza el rendimiento
+            </p>
           </div>
           <ViewSelector />
         </div>
@@ -236,7 +256,9 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
 
           {/* Quick Actions */}
           <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-            <h3 className="mb-4 text-xl font-bold text-white">Acciones Rápidas</h3>
+            <h3 className="mb-4 text-xl font-bold text-white">
+              Acciones Rápidas
+            </h3>
             <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => handleBulkAction("export")}
@@ -252,7 +274,10 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
                   disabled={loading["bulk-cancel"]}
                   className="flex items-center space-x-2 rounded-lg bg-red-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-red-700 disabled:bg-red-400"
                 >
-                  <span>Cancelar Seleccionadas ({panelState.selectedBookings.length})</span>
+                  <span>
+                    Cancelar Seleccionadas ({panelState.selectedBookings.length}
+                    )
+                  </span>
                 </button>
               )}
             </div>
@@ -267,7 +292,10 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
             }}
             selectedBookings={panelState.selectedBookings}
             onSelectionChange={(selections) =>
-              setPanelState((prev) => ({ ...prev, selectedBookings: selections }))
+              setPanelState((prev) => ({
+                ...prev,
+                selectedBookings: selections,
+              }))
             }
           />
         </div>
@@ -294,13 +322,18 @@ export const AdminPanelEnhanced: React.FC<AdminPanelEnhancedProps> = ({
             }}
             selectedBookings={panelState.selectedBookings}
             onSelectionChange={(selections) =>
-              setPanelState((prev) => ({ ...prev, selectedBookings: selections }))
+              setPanelState((prev) => ({
+                ...prev,
+                selectedBookings: selections,
+              }))
             }
           />
         </div>
       )}
 
-      {panelState.viewMode === "analytics" && <AnalyticsDashboard bookings={validBookings} />}
+      {panelState.viewMode === "analytics" && (
+        <AdvancedAnalytics bookings={validBookings} />
+      )}
     </div>
   );
 };

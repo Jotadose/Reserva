@@ -160,7 +160,9 @@ const BookingFlow: React.FC = () => {
                 <span
                   key={name}
                   className={`${
-                    index + 1 <= getStepNumber() ? "font-medium text-yellow-500" : "text-gray-500"
+                    index + 1 <= getStepNumber()
+                      ? "font-medium text-yellow-500"
+                      : "text-gray-500"
                   }`}
                 >
                   {name}

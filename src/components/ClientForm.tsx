@@ -28,7 +28,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
@@ -82,9 +84,11 @@ const ClientForm: React.FC<ClientFormProps> = ({
     selectedDateOnly.setHours(0, 0, 0, 0);
 
     if (selectedDateOnly < today) {
-      newErrors.general = "La fecha seleccionada ya no es válida. Por favor selecciona otra fecha.";
+      newErrors.general =
+        "La fecha seleccionada ya no es válida. Por favor selecciona otra fecha.";
     } else if (selectedDateObj.getDay() === 0) {
-      newErrors.general = "Los domingos estamos cerrados. Por favor selecciona otra fecha.";
+      newErrors.general =
+        "Los domingos estamos cerrados. Por favor selecciona otra fecha.";
     } else if (selectedTime && selectedDateOnly.getTime() === today.getTime()) {
       // Si es hoy, validar que no sea muy tarde
       const now = new Date();
@@ -108,8 +112,14 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
     if (!validateForm()) return;
 
-    const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
-    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+    const totalPrice = selectedServices.reduce(
+      (sum, service) => sum + service.price,
+      0
+    );
+    const totalDuration = selectedServices.reduce(
+      (sum, service) => sum + service.duration,
+      0
+    );
 
     const booking: Booking = {
       id: `booking-${Date.now()}`,
@@ -131,13 +141,21 @@ const ClientForm: React.FC<ClientFormProps> = ({
     onSubmit(booking);
   };
 
-  const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
-  const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration, 0);
+  const totalPrice = selectedServices.reduce(
+    (sum, service) => sum + service.price,
+    0
+  );
+  const totalDuration = selectedServices.reduce(
+    (sum, service) => sum + service.duration,
+    0
+  );
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-        <h2 className="mb-6 text-2xl font-bold text-white">Datos del cliente</h2>
+        <h2 className="mb-6 text-2xl font-bold text-white">
+          Datos del cliente
+        </h2>
 
         {/* Booking Summary */}
         <div className="mb-8 rounded-xl bg-gray-800/50 p-4">
@@ -166,11 +184,15 @@ const ClientForm: React.FC<ClientFormProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-400">Servicios seleccionados</p>
-                <p className="text-white">{selectedServices.map((s) => s.name).join(", ")}</p>
+                <p className="text-white">
+                  {selectedServices.map((s) => s.name).join(", ")}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-400">Total</p>
-                <p className="text-xl font-bold text-yellow-500">${totalPrice.toLocaleString()}</p>
+                <p className="text-xl font-bold text-yellow-500">
+                  ${totalPrice.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -179,7 +201,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
         {/* Error general */}
         {errors.general && (
           <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
-            <p className="text-sm font-medium text-red-400">⚠️ {errors.general}</p>
+            <p className="text-sm font-medium text-red-400">
+              ⚠️ {errors.general}
+            </p>
           </div>
         )}
 
@@ -203,7 +227,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
                 }`}
                 placeholder="Ingresa tu nombre completo"
               />
-              {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -223,7 +249,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
                 }`}
                 placeholder="+56 9 1234 5678"
               />
-              {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
+              )}
             </div>
           </div>
 
@@ -244,7 +272,9 @@ const ClientForm: React.FC<ClientFormProps> = ({
               }`}
               placeholder="tu.email@ejemplo.com"
             />
-            {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -266,10 +296,14 @@ const ClientForm: React.FC<ClientFormProps> = ({
               placeholder="¿Tienes alguna preferencia especial o comentario?"
             />
             <div className="mt-1 flex items-center justify-between">
-              {errors.notes && <p className="text-sm text-red-400">{errors.notes}</p>}
+              {errors.notes && (
+                <p className="text-sm text-red-400">{errors.notes}</p>
+              )}
               <p
                 className={`ml-auto text-xs ${
-                  formData.notes.length > 450 ? "text-yellow-500" : "text-gray-500"
+                  formData.notes.length > 450
+                    ? "text-yellow-500"
+                    : "text-gray-500"
                 }`}
               >
                 {formData.notes.length}/500 caracteres

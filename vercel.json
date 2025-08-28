@@ -1,19 +1,13 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/*.ts", "use": "@vercel/node" },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
     }
   ],
-  "rewrites": [
-    { "source": "/api/availability", "destination": "/api/availability.ts" },
-    { "source": "/api/bookings", "destination": "/api/bookings.ts" },
-    { "source": "/api/(.*)", "destination": "/api/$1.ts" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
     {
       "source": "/sw.js",

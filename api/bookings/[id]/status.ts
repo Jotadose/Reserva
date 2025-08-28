@@ -11,22 +11,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Enable CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== "PATCH") {
+  // Accept PATCH primarily, but allow POST for clients or proxies that don't support PATCH
+  if (!(req.method === "PATCH" || req.method === "POST")) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const { status } = req.body;
 
-    if (!status) {
+    const VALID_STATUSES = [
+      "confirmed",
+      "pending",
+      "in-progress",
+      "completed",
+      "cancelled",
+      "no-show",
+      "rescheduled",
+    ];
+
+    if (!status || typeof status !== "string") {
       return res.status(400).json({ error: "Status is required" });
+    }
+
+    if (!VALID_STATUSES.includes(status)) {
+      return res
+        .status(400)
+        .json({ error: "Invalid status value", valid: VALID_STATUSES });
     }
 
     const result = await pool.query(
@@ -41,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    return res.json(result.rows[0]);
+    return res.json({ message: "Status updated", booking: result.rows[0] });
   } catch (error) {
     console.error("Database error:", error);
     return res.status(500).json({ error: "Internal server error" });
