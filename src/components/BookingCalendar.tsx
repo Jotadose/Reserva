@@ -29,7 +29,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   // 🔥 HOOKS MVP PARA DISPONIBILIDAD REAL
   const { barberos } = useBarberos();
-  const { obtenerDisponibilidadPorFecha } = useDisponibilidad();
+  const { getSlotsDisponibles, loading } = useDisponibilidad();
 
   // 🎯 USAR PRIMER BARBERO SI NO HAY UNO SELECCIONADO
   const barberoId =
@@ -41,19 +41,21 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       if (!date || !barberoId) return [];
 
       try {
-        const disponibilidades = await obtenerDisponibilidadPorFecha(
-          barberoId,
-          date
-        );
-        return disponibilidades
-          .filter((disp) => disp.disponible)
-          .map((disp) => disp.hora_inicio.slice(0, 5)); // Formato HH:MM
+        // Duración promedio de servicios (puede ser dinámico basado en selectedServices)
+        const duracion = selectedServices.length > 0 
+          ? selectedServices.reduce((acc, service) => acc + service.duration, 0)
+          : 60; // Default 60 minutos
+
+        const slots = await getSlotsDisponibles(barberoId, date, duracion);
+        return slots
+          .filter((slot) => slot.disponible)
+          .map((slot) => slot.hora_inicio.slice(0, 5)); // Formato HH:MM
       } catch (error) {
         console.error("Error cargando disponibilidad MVP:", error);
         return [];
       }
     },
-    [obtenerDisponibilidadPorFecha, barberoId]
+    [getSlotsDisponibles, barberoId, selectedServices]
   );
 
   // Obtener slots disponibles para la fecha seleccionada
@@ -396,7 +398,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             if (timeSlots && timeSlots.length > 0) {
               return (
                 <>
-                  {loadingBookings && (
+                  {loading && (
                     <div className="mb-4 text-center text-gray-400">
                       Cargando horarios disponibles...
                     </div>
@@ -432,7 +434,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 </>
               );
             }
-            if (loadingBookings) {
+            if (loading) {
               return (
                 <div className="py-8 text-center text-gray-400">
                   <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-yellow-500 border-t-transparent"></div>
