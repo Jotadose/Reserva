@@ -1,14 +1,15 @@
 import React, { useMemo, useCallback, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { TimeSlot, Booking } from "../types/booking";
-import { useAvailabilitySimple } from "../hooks/useAvailabilitySimple";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
+import { useBarberos } from "../hooks/useBarberos";
 
 interface BookingCalendarProps {
   selectedDate: string;
   selectedTime: TimeSlot | null;
   bookings?: Booking[];
   selectedServices?: Array<{ duration: number }>; // Para determinar duración del servicio
+  selectedBarberId?: string; // ID del barbero seleccionado
   onDateSelect: (date: string) => void;
   onTimeSelect: (timeSlot: TimeSlot) => void;
   onNext: () => void;
@@ -19,19 +20,34 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   selectedTime,
   bookings = [],
   selectedServices = [],
+  selectedBarberId,
   onDateSelect,
   onTimeSelect,
   onNext,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
-  const { getAvailableSlots, loading: loadingAvailability } = useAvailabilitySimple();
+  
+  // 🔥 HOOKS MVP PARA DISPONIBILIDAD REAL
+  const { barberos } = useBarberos();
+  const { obtenerDisponibilidadPorFecha } = useDisponibilidad();
 
-  // Función para cargar disponibilidad para una fecha específica
+  // 🎯 USAR PRIMER BARBERO SI NO HAY UNO SELECCIONADO
+  const barberoId = selectedBarberId || (barberos.length > 0 ? barberos[0].id : null);
+
+  // 🔥 FUNCIÓN MVP PARA CARGAR DISPONIBILIDAD
   const loadAvailabilityForDate = useCallback(async (date: string) => {
-    if (!date) return [];
-    const slots = await getAvailableSlots(date);
-    return slots.filter(slot => slot.available).map(slot => slot.time);
-  }, [getAvailableSlots]);
+    if (!date || !barberoId) return [];
+    
+    try {
+      const disponibilidades = await obtenerDisponibilidadPorFecha(barberoId, date);
+      return disponibilidades
+        .filter(disp => disp.disponible)
+        .map(disp => disp.hora_inicio.slice(0, 5)); // Formato HH:MM
+    } catch (error) {
+      console.error('Error cargando disponibilidad MVP:', error);
+      return [];
+    }
+  }, [obtenerDisponibilidadPorFecha, barberoId]);
 
   // Obtener slots disponibles para la fecha seleccionada
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);

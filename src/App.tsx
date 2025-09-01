@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
+import BarberSelection from "./components/BarberSelection";
 import ClientForm from "./components/ClientForm";
 import { AdminPanelSimpleUpdated } from "./components/AdminPanelSimpleUpdated";
 import BookingConfirmation from "./components/BookingConfirmation";
@@ -36,9 +37,7 @@ import { TestMVPHooks } from "./components/TestMVPHooks";
 import { BookingSystemMVP } from "./components/BookingSystemMVP";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
 import { useReservasMVP } from "./hooks/useReservasMVP";
-import { useBarberos } from "./hooks/useBarberos";
-import { useServicios } from "./hooks/useServicios";
-import { useBookingsSimple } from "./hooks/useBookingsSimple";
+import { useUsuarios } from "./hooks/useUsuarios";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
 function AppContent() {
@@ -47,108 +46,99 @@ function AppContent() {
     "landing" | "booking" | "admin" | "test" | "mvp"
   >("test");
   const [bookingStep, setBookingStep] = useState<
-    "calendar" | "service" | "form" | "confirmation"
-  >("calendar");
+    "barbero" | "calendar" | "service" | "form" | "confirmation"
+  >("barbero");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [selectedBarberId, setSelectedBarberId] = useState<string>("");
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // ✅ HOOKS DE SUPABASE SIMPLIFICADOS
-  const {
-    bookings,
-    createBooking,
-    deleteBooking,
-    loading: isLoadingBookings,
-    stats
-  } = useBookingsSimple();
+  // ✅ HOOKS MVP PARA SISTEMA COMPLETO
+  const { createReserva, loading: isCreatingReserva } = useReservasMVP();
+  const { createUser } = useUsuarios();
 
   // 🛠️ DEBUG: Verificar datos de Supabase
-  console.log("🔍 App.tsx - Datos de Supabase:", {
-    bookingsCount: bookings?.length || 0,
-    isLoading: isLoadingBookings,
-    stats,
+  console.log("🔍 App.tsx - Sistema MVP:", {
+    isCreatingReserva,
+    selectedBarberId,
+    selectedServices: selectedServices.length
   });
 
-  // Los datos ya vienen en el formato correcto del hook simplificado
-  const transformedBookings = bookings?.map((booking) => ({
-    id: booking.id,
-    clientName: booking.name,
-    service: booking.service,
-    date: booking.date,
-    time: booking.time,
-    status: booking.status,
-    total: 25000, // Precio fijo por ahora
-    duration: 45, // Duración fija por ahora
-    client: {
-      name: booking.name,
-      phone: booking.phone,
-      email: booking.email,
-      notes: booking.notes || "",
-    },
-    services: [],
-    totalPrice: 25000,
-    createdAt: booking.created_at,
-    notes: booking.notes || "",
-  })) || [];  // ✅ CREAR RESERVA SIMPLIFICADA
+  // Los datos ahora vienen de useReservasMVP (implementar cuando se necesite mostrar reservas)
+  const transformedBookings: any[] = []; // Por ahora vacío, se implementará cuando migremos el admin
+
+  // ✅ CREAR RESERVA MVP COMPLETA
   const handleBookingComplete = async (booking: Booking) => {
     try {
-      console.log("💾 Creando reserva:", booking);
+      console.log("💾 Creando reserva MVP:", booking);
 
-      const success = await createBooking({
-        name: booking.client.name,
-        phone: booking.client.phone,
+      // 1. Crear/buscar usuario
+      const usuarioData = {
+        nombre: booking.client.name,
+        telefono: booking.client.phone,
         email: booking.client.email,
-        date: booking.date,
-        time: booking.time,
-        service: booking.service || "Corte de Cabello",
-        notes: booking.client.notes
-      });
+        rol: "cliente" as const
+      };
+
+      const usuario = await createUser(usuarioData);
+      if (!usuario) {
+        addToast("Error al crear el usuario", "error");
+        return;
+      }
+
+      // 2. Crear reserva con servicios
+      const reservaData = {
+        usuario_id: usuario.id,
+        barbero_id: selectedBarberId,
+        fecha: booking.date,
+        hora_inicio: booking.time,
+        estado: "confirmada" as const,
+        notas: booking.client.notes || "",
+        servicios: selectedServices.map(service => ({
+          servicio_id: service.id,
+          precio_acordado: service.price
+        }))
+      };
+
+      const success = await createReserva(reservaData);
 
       if (success) {
         setCurrentBooking(booking);
         setBookingStep("confirmation");
-        addToast("¡Reserva creada exitosamente!", "success");
+        addToast("¡Reserva creada exitosamente en el sistema MVP!", "success");
       } else {
         addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
       }
     } catch (error) {
-      console.error("Error creando reserva:", error);
+      console.error("Error creando reserva MVP:", error);
       addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
     }
   };
 
   const handleNewBooking = () => {
-    setBookingStep("calendar");
+    setBookingStep("barbero");
     setSelectedDate("");
     setSelectedTime(null);
     setSelectedServices([]);
+    setSelectedBarberId("");
     setCurrentBooking(null);
   };
 
-  // ✅ CANCELAR RESERVA SIMPLIFICADA
+  // ✅ CANCELAR RESERVA MVP (TODO: Implementar cuando se migre el admin)
   const handleBookingCancel = async (bookingId: string) => {
-    try {
-      console.log("🗑️ Cancelando reserva:", bookingId);
-      const success = await deleteBooking(bookingId);
-      if (success) {
-        addToast("Reserva cancelada exitosamente", "success");
-      } else {
-        addToast("Error al cancelar la reserva", "error");
-      }
-    } catch (error) {
-      console.error("❌ Error cancelando reserva:", error);
-      addToast("Error al cancelar la reserva", "error");
-    }
+    console.log("🗑️ Cancelar reserva MVP (pendiente):", bookingId);
+    addToast("Funcionalidad de cancelación pendiente de migración", "info");
   };
 
   const startBookingProcess = () => {
     setCurrentView("booking");
-    setBookingStep("calendar");
+    setBookingStep("barbero");
     setSelectedDate("");
     setSelectedTime(null);
     setSelectedServices([]);
+    setSelectedBarberId("");
     setCurrentBooking(null);
   };
 
@@ -313,6 +303,41 @@ function AppContent() {
                 <div className="flex items-center justify-between">
                   <div
                     className={`flex items-center space-x-3 ${
+                      bookingStep === "barbero"
+                        ? "text-yellow-500"
+                        : ["calendar", "service", "form", "confirmation"].includes(
+                            bookingStep
+                          )
+                        ? "text-green-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+                        bookingStep === "barbero"
+                          ? "border-yellow-500 bg-yellow-500/20"
+                          : ["calendar", "service", "form", "confirmation"].includes(
+                              bookingStep
+                            )
+                          ? "border-green-500 bg-green-500/20"
+                          : "border-gray-500"
+                      }`}
+                    >
+                      {["calendar", "service", "form", "confirmation"].includes(
+                        bookingStep
+                      ) ? (
+                        <CheckCircle className="h-5 w-5" />
+                      ) : (
+                        <Users className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span className="font-semibold">Barbero</span>
+                  </div>
+
+                  <div className="mx-4 h-px flex-1 bg-gray-600"></div>
+
+                  <div
+                    className={`flex items-center space-x-3 ${
                       bookingStep === "calendar"
                         ? "text-yellow-500"
                         : ["service", "form", "confirmation"].includes(
@@ -405,11 +430,20 @@ function AppContent() {
               </div>
 
               {/* Content */}
+              {bookingStep === "barbero" && (
+                <BarberSelection
+                  selectedBarberId={selectedBarberId}
+                  onBarberSelect={setSelectedBarberId}
+                  onNext={() => setBookingStep("calendar")}
+                />
+              )}
+
               {bookingStep === "calendar" && (
                 <BookingCalendar
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   bookings={transformedBookings}
+                  selectedBarberId={selectedBarberId}
                   onDateSelect={setSelectedDate}
                   onTimeSelect={setSelectedTime}
                   onNext={() => setBookingStep("service")}
@@ -432,7 +466,7 @@ function AppContent() {
                   selectedServices={selectedServices}
                   onBack={() => setBookingStep("service")}
                   onSubmit={handleBookingComplete}
-                  isSubmitting={isLoadingBookings}
+                  isSubmitting={isCreatingReserva}
                 />
               )}
 
