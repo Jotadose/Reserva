@@ -55,6 +55,9 @@ export const supabase: SupabaseClient<Database> = createClient(supabaseUrl, supa
   }
 });
 
+// Export supabaseClient as an alias for compatibility
+export const supabaseClient = supabase;
+
 // =============================================================================
 // TIPOS DERIVADOS PARA LA APLICACIÓN
 // =============================================================================

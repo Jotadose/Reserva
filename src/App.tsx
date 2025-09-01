@@ -32,15 +32,19 @@ import ClientForm from "./components/ClientForm";
 import { AdminPanelSimpleUpdated } from "./components/AdminPanelSimpleUpdated";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
+import { TestMVPHooks } from "./components/TestMVPHooks";
+import { BookingSystemMVP } from "./components/BookingSystemMVP";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
-import { useBookingsSimple } from "./hooks/useBookingsSimple";
+import { useReservasMVP } from "./hooks/useReservasMVP";
+import { useBarberos } from "./hooks/useBarberos";
+import { useServicios } from "./hooks/useServicios";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
 function AppContent() {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<
-    "landing" | "booking" | "admin"
-  >("landing");
+    "landing" | "booking" | "admin" | "test" | "mvp"
+  >("test");
   const [bookingStep, setBookingStep] = useState<
     "calendar" | "service" | "form" | "confirmation"
   >("calendar");
@@ -257,7 +261,7 @@ function AppContent() {
                   Reservas
                 </button>
                 <button
-                  onClick={goToAdmin}
+                  onClick={() => setCurrentView("admin")}
                   className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
                     currentView === "admin"
                       ? "bg-yellow-500 text-black"
@@ -266,6 +270,26 @@ function AppContent() {
                 >
                   Admin
                 </button>
+                <button
+                  onClick={() => setCurrentView("mvp")}
+                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
+                    currentView === "mvp"
+                      ? "bg-yellow-500 text-black"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  Sistema MVP
+                </button>
+                <button
+                  onClick={() => setCurrentView("test")}
+                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
+                    currentView === "test"
+                      ? "bg-yellow-500 text-black"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  Test Hooks
+                </button>
               </div>
             </div>
           )}
@@ -273,6 +297,9 @@ function AppContent() {
       </header>
 
       <main className="min-h-screen">
+        {currentView === "test" && <TestMVPHooks />}
+        {currentView === "mvp" && <BookingSystemMVP />}
+        
         {currentView === "landing" && (
           <LandingPage onStartBooking={startBookingProcess} />
         )}
@@ -526,9 +553,6 @@ function AppContent() {
           </div>
         </footer>
       )}
-
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
     </div>
   );
 }
