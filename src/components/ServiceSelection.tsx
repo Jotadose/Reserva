@@ -8,6 +8,7 @@ import {
   Check,
 } from "lucide-react";
 import { Service } from "../types/booking";
+import { useServicios } from "../hooks/useServicios";
 
 interface ServiceSelectionProps {
   selectedServices: Service[];
@@ -22,72 +23,37 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
   onBack,
   onNext,
 }) => {
-  const services: Service[] = [
-    {
-      id: "1",
-      name: "Corte de Cabello",
-      price: 12000,
-      duration: 30,
-      category: "barberia",
-      description: "Corte clásico o moderno personalizado",
-    },
-    {
-      id: "2",
-      name: "Corte + Barba",
-      price: 16000,
-      duration: 45,
-      category: "barberia",
-      description: "Corte completo con arreglo y perfilado de barba",
-    },
-    {
-      id: "3",
-      name: "Corte + Barba + Limpieza",
-      price: 22000,
-      duration: 60,
-      category: "barberia",
-      description: "Servicio completo con limpieza facial",
-    },
-    {
-      id: "4",
-      name: "Solo Barba",
-      price: 6000,
-      duration: 20,
-      category: "barberia",
-      description: "Arreglo y perfilado de barba",
-    },
-    {
-      id: "5",
-      name: "Bloque de Color",
-      price: 60000,
-      duration: 120,
-      category: "colorimetria",
-      description: "Color uniforme en todo el cabello",
-    },
-    {
-      id: "6",
-      name: "Platinado Global",
-      price: 70000,
-      duration: 150,
-      category: "colorimetria",
-      description: "Decoloración completa y tinte platino",
-    },
-    {
-      id: "7",
-      name: "Visos",
-      price: 60000,
-      duration: 90,
-      category: "colorimetria",
-      description: "Mechas y reflejos profesionales",
-    },
-    {
-      id: "8",
-      name: "Ondulación Permanente",
-      price: 55000,
-      duration: 90,
-      category: "extras",
-      description: "Permanente para crear ondas naturales",
-    },
-  ];
+  // 🔥 USAR SERVICIOS MVP DINÁMICOS
+  const { servicios, loading: loadingServicios } = useServicios();
+
+  // 🔄 CONVERTIR SERVICIOS MVP AL FORMATO ESPERADO
+  const services: Service[] = servicios.map(servicio => ({
+    id: servicio.id,
+    name: servicio.nombre,
+    price: servicio.precio,
+    duration: servicio.duracion_estimada,
+    category: servicio.categoria.toLowerCase(),
+    description: servicio.descripcion || `${servicio.nombre} profesional`
+  }));
+
+  // 📊 OBTENER CATEGORÍAS DINÁMICAMENTE
+  const availableCategories = [...new Set(services.map(s => s.category))];
+
+  // 🎯 MOSTRAR LOADING SI ESTÁ CARGANDO
+  if (loadingServicios) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-yellow-500 border-t-transparent"></div>
+              <p className="text-gray-400">Cargando servicios...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const toggleService = (service: Service) => {
     const isSelected = selectedServices.some((s) => s.id === service.id);
@@ -148,19 +114,23 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
         </h2>
 
         <div className="space-y-8">
-          {["barberia", "colorimetria", "extras"].map((category) => (
-            <div key={category}>
-              <div className="mb-4 flex items-center space-x-3">
-                <div className="rounded-lg bg-yellow-500/20 p-2 text-yellow-500">
-                  {getCategoryIcon(category)}
+          {availableCategories.map((category) => {
+            const categoryServices = getServicesByCategory(category);
+            if (categoryServices.length === 0) return null;
+            
+            return (
+              <div key={category}>
+                <div className="mb-4 flex items-center space-x-3">
+                  <div className="rounded-lg bg-yellow-500/20 p-2 text-yellow-500">
+                    {getCategoryIcon(category)}
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">
+                    {getCategoryName(category)}
+                  </h3>
                 </div>
-                <h3 className="text-xl font-semibold text-white">
-                  {getCategoryName(category)}
-                </h3>
-              </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {getServicesByCategory(category).map((service) => {
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {categoryServices.map((service) => {
                   const isSelected = selectedServices.some(
                     (s) => s.id === service.id
                   );
@@ -205,7 +175,8 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
                 })}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
 

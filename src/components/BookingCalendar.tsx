@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { TimeSlot, Booking } from "../types/booking";
 import { useAvailabilitySimple } from "../hooks/useAvailabilitySimple";
+import { useDisponibilidad } from "../hooks/useDisponibilidad";
 
 interface BookingCalendarProps {
   selectedDate: string;

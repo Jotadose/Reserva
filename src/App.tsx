@@ -38,6 +38,7 @@ import { ToastProvider, useToast } from "./contexts/ToastContext";
 import { useReservasMVP } from "./hooks/useReservasMVP";
 import { useBarberos } from "./hooks/useBarberos";
 import { useServicios } from "./hooks/useServicios";
+import { useBookingsSimple } from "./hooks/useBookingsSimple";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
 function AppContent() {
@@ -431,7 +432,7 @@ function AppContent() {
                   selectedServices={selectedServices}
                   onBack={() => setBookingStep("service")}
                   onSubmit={handleBookingComplete}
-                  isSubmitting={createBooking.isLoading}
+                  isSubmitting={isLoadingBookings}
                 />
               )}
 
