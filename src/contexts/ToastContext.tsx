@@ -23,14 +23,14 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 
-  const addToast = useCallback((toast: Omit<ToastProps, "id" | "onClose">) => {
-    const id = Math.random().toString(36).substring(2, 11);
-    setToasts((prev) => [...prev, { ...toast, id, onClose: removeToast }]);
-  }, []);
-
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
+
+  const addToast = useCallback((toast: Omit<ToastProps, "id" | "onClose">) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    setToasts((prev) => [...prev, { ...toast, id, onClose: removeToast }]);
+  }, [removeToast]);
 
   const contextValue = useMemo(
     () => ({
@@ -47,7 +47,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {/* Toast Container */}
       <div className="fixed right-0 top-0 z-50 w-full max-w-sm space-y-4 p-6">
         {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} />
+          <Toast key={toast.id} {...toast} onClose={removeToast} />
         ))}
       </div>
     </ToastContext.Provider>

@@ -57,7 +57,7 @@ function AppContent() {
 
   // ✅ HOOKS MVP PARA SISTEMA COMPLETO
   const { createReserva, loading: isCreatingReserva } = useReservasMVP();
-  const { createUser } = useUsuarios();
+  const { crearUsuario } = useUsuarios();
 
   // 🛠️ DEBUG: Verificar datos de Supabase
   console.log("🔍 App.tsx - Sistema MVP:", {
@@ -82,7 +82,7 @@ function AppContent() {
         rol: "cliente" as const,
       };
 
-      const usuario = await createUser(usuarioData);
+      const usuario = await crearUsuario(usuarioData);
       if (!usuario) {
         addToast("Error al crear el usuario", "error");
         return;
@@ -90,7 +90,7 @@ function AppContent() {
 
       // 2. Crear reserva con servicios
       const reservaData = {
-        usuario_id: usuario.id,
+        usuario_id: usuario.id_usuario,
         barbero_id: selectedBarberId,
         fecha: booking.date,
         hora_inicio: booking.time,

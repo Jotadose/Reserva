@@ -71,6 +71,11 @@ export function useReservasMVP() {
       setLoading(true);
       setError(null);
 
+      // 🔧 TEMPORALMENTE DESHABILITADO - Foreign keys incorrectos
+      console.log("📋 fetchReservas temporalmente deshabilitado para evitar error 400");
+      setReservas([]);
+      return;
+
       let query = supabaseClient.from("reservas").select(`
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
