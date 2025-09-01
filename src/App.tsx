@@ -29,12 +29,11 @@ import {
 import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
 import ClientForm from "./components/ClientForm";
-import { AdminPanelEnhanced } from "./components/AdminPanelEnhanced";
+import { AdminPanelSimpleUpdated } from "./components/AdminPanelSimpleUpdated";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
-import { PWAInstallPrompt } from "./components/PWAInstallPrompt";
-import { useSupabaseNormalized } from "./hooks/useSupabaseNormalized";
+import { useBookingsSimple } from "./hooks/useBookingsSimple";
 import { Booking, Service, TimeSlot } from "./types/booking";
 
 function AppContent() {
@@ -51,111 +50,67 @@ function AppContent() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // ✅ HOOKS DE SUPABASE - Reemplaza las APIs Express
+  // ✅ HOOKS DE SUPABASE SIMPLIFICADOS
   const {
-    bookings_new: bookings,
+    bookings,
     createBooking,
-    cancelBooking: deleteBooking,
-    isLoading: isLoadingBookings,
-  } = useSupabaseNormalized();
+    deleteBooking,
+    loading: isLoadingBookings,
+    stats
+  } = useBookingsSimple();
 
   // 🛠️ DEBUG: Verificar datos de Supabase
   console.log("🔍 App.tsx - Datos de Supabase:", {
     bookingsCount: bookings?.length || 0,
     isLoading: isLoadingBookings,
-    rawBookings: bookings,
+    stats,
   });
 
-  // Transformar datos de Supabase al formato esperado por los componentes
-  const transformedBookings =
-    bookings?.map((booking) => ({
-      id: booking.id,
-      clientName: booking.client?.name || "Cliente",
-      service: booking.services[0]?.name || "Servicio",
-      date: booking.scheduled_date,
-      time: booking.scheduled_time,
-      status: booking.status,
-      total: booking.total || 0,
-      duration: booking.estimated_duration || 60,
-      // ✅ ARREGLAR: Agregar datos completos del cliente
-      client: {
-        name: booking.client?.name || "Cliente",
-        phone: booking.client?.phone || "No disponible",
-        email: booking.client?.email || "No disponible",
-        notes: booking.notes || "",
-      },
-      // ✅ COMPATIBILIDAD: Mantener servicios vacíos por simplicidad
-      services: [],
-      totalPrice: (booking.total || 0) / 100, // CORREGIDO: Convertir de centavos a pesos
-      createdAt: booking.created_at || new Date().toISOString(),
+  // Los datos ya vienen en el formato correcto del hook simplificado
+  const transformedBookings = bookings?.map((booking) => ({
+    id: booking.id,
+    clientName: booking.name,
+    service: booking.service,
+    date: booking.date,
+    time: booking.time,
+    status: booking.status,
+    total: 25000, // Precio fijo por ahora
+    duration: 45, // Duración fija por ahora
+    client: {
+      name: booking.name,
+      phone: booking.phone,
+      email: booking.email,
       notes: booking.notes || "",
-    })) || []; // ✅ NUEVA IMPLEMENTACIÓN - Crear reserva con Supabase
+    },
+    services: [],
+    totalPrice: 25000,
+    createdAt: booking.created_at,
+    notes: booking.notes || "",
+  })) || [];  // ✅ CREAR RESERVA SIMPLIFICADA
   const handleBookingComplete = async (booking: Booking) => {
     try {
-      console.log("💾 Creando reserva con Supabase:", booking);
+      console.log("💾 Creando reserva:", booking);
 
-      // Obtener servicios (usar datos por defecto si no están definidos)
-      const bookingServices = booking.services || [
-        {
-          id: "default-service",
-          name: "Servicio General",
-          price: booking.totalPrice || 50,
-          duration: booking.duration || 60,
-          category: "barberia" as const,
-        },
-      ];
-
-      // Calcular métricas de servicios
-      const totalDuration = bookingServices.reduce(
-        (total, service) => total + service.duration,
-        0
-      );
-      const totalPrice = bookingServices.reduce(
-        (total, service) => total + service.price,
-        0
-      );
-
-      // Usar hook de Supabase para crear reserva
-      const result = await createBooking.mutateAsync({
-        client_id: null, // Se creará el cliente automáticamente
-        scheduled_date: booking.date,
-        scheduled_time: booking.time,
-        estimated_duration: totalDuration,
-        status: "confirmed",
-        subtotal: totalPrice, // Directamente en pesos chilenos
-        taxes: 0,
-        discounts: 0,
-        total: totalPrice, // Directamente en pesos chilenos
-        notes: booking.client.notes,
-        services: bookingServices.map((service, index) => ({
-          service_id: service.id,
-          price: service.price, // Directamente en pesos chilenos
-          duration: service.duration,
-          execution_order: index + 1,
-        })),
-        // Datos del cliente
-        client_name: booking.client.name,
-        client_phone: booking.client.phone,
-        client_email: booking.client.email,
+      const success = await createBooking({
+        name: booking.client.name,
+        phone: booking.client.phone,
+        email: booking.client.email,
+        date: booking.date,
+        time: booking.time,
+        service: booking.service || "Corte de Cabello",
+        notes: booking.client.notes
       });
 
-      if (result) {
-        console.log("✅ Reserva creada en Supabase:", result);
-        setCurrentBooking({ ...booking, id: result.id });
+      if (success) {
+        setCurrentBooking(booking);
         setBookingStep("confirmation");
-        addToast({
-          type: "success",
-          title: "¡Reserva confirmada!",
-          message: "Tu cita ha sido agendada exitosamente",
-        });
+        addToast("¡Reserva creada exitosamente!", "success");
+      } else {
+        addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
       }
     } catch (error) {
-      console.error("❌ Error creando reserva:", error);
-      addToast({
-        type: "error",
-        title: "Error al guardar",
-        message: "No se pudo guardar la reserva. Intenta nuevamente.",
-      });
+      console.error("Error creando reserva:", error);
+      addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
     }
   };
 
@@ -167,23 +122,19 @@ function AppContent() {
     setCurrentBooking(null);
   };
 
-  // ✅ NUEVA IMPLEMENTACIÓN - Cancelar reserva con Supabase
+  // ✅ CANCELAR RESERVA SIMPLIFICADA
   const handleBookingCancel = async (bookingId: string) => {
     try {
       console.log("🗑️ Cancelando reserva:", bookingId);
-      await deleteBooking.mutateAsync(bookingId);
-      addToast({
-        type: "success",
-        title: "Reserva cancelada",
-        message: "La reserva ha sido cancelada exitosamente",
-      });
+      const success = await deleteBooking(bookingId);
+      if (success) {
+        addToast("Reserva cancelada exitosamente", "success");
+      } else {
+        addToast("Error al cancelar la reserva", "error");
+      }
     } catch (error) {
       console.error("❌ Error cancelando reserva:", error);
-      addToast({
-        type: "error",
-        title: "Error al cancelar",
-        message: "No se pudo cancelar la reserva.",
-      });
+      addToast("Error al cancelar la reserva", "error");
     }
   };
 
@@ -469,11 +420,9 @@ function AppContent() {
 
         {currentView === "admin" && (
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <AdminPanelEnhanced
+            <AdminPanelSimpleUpdated
               bookings={transformedBookings}
               onCancelBooking={handleBookingCancel}
-              onCreateBooking={handleBookingComplete}
-              isLoading={isLoadingBookings}
             />
           </div>
         )}

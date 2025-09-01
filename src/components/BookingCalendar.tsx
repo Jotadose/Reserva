@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { TimeSlot, Booking } from "../types/booking";
-import { useAvailability } from "../hooks/useSupabaseNormalized";
+import { useAvailabilitySimple } from "../hooks/useAvailabilitySimple";
 
 interface BookingCalendarProps {
   selectedDate: string;
@@ -23,22 +23,24 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   onNext,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
+  const { getAvailableSlots, loading: loadingAvailability } = useAvailabilitySimple();
 
-  // Usar hook de Supabase para obtener disponibilidad
-  const { data: availabilityData, isLoading: loadingBookings } =
-    useAvailability(
-      selectedDate,
-      undefined, // especialista opcional
-      selectedServices.reduce((total, service) => total + service.duration, 60) // duración total
-    );
+  // Función para cargar disponibilidad para una fecha específica
+  const loadAvailabilityForDate = useCallback(async (date: string) => {
+    if (!date) return [];
+    const slots = await getAvailableSlots(date);
+    return slots.filter(slot => slot.available).map(slot => slot.time);
+  }, [getAvailableSlots]);
 
-  // Convertir datos de Supabase al formato esperado
-  const availableSlots = useMemo(() => {
-    if (!availabilityData) return [];
-    return availabilityData
-      .filter((slot) => slot.is_available)
-      .map((slot) => slot.slot_time);
-  }, [availabilityData]);
+  // Obtener slots disponibles para la fecha seleccionada
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+
+  // Cargar disponibilidad cuando cambia la fecha
+  React.useEffect(() => {
+    if (selectedDate) {
+      loadAvailabilityForDate(selectedDate).then(setAvailableSlots);
+    }
+  }, [selectedDate, loadAvailabilityForDate]);
 
   /** ---------- Utilidades ---------- **/
   const isValidDate = (date: Date) =>
