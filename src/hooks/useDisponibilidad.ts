@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { supabaseClient } from '../lib/supabaseClient';
+import { useState } from "react";
+import { supabaseClient } from "../lib/supabaseClient";
 
 export interface SlotDisponible {
   hora_inicio: string;
@@ -12,7 +12,7 @@ export interface BloqueDisponibilidad {
   id_barbero: string;
   fecha_inicio: string;
   fecha_fin: string;
-  tipo: 'trabajo' | 'descanso' | 'vacaciones' | 'bloqueado';
+  tipo: "trabajo" | "descanso" | "vacaciones" | "bloqueado";
   descripcion?: string;
   created_at: string;
 }
@@ -23,8 +23,8 @@ export function useDisponibilidad() {
 
   // Obtener slots disponibles para un barbero en una fecha específica
   const getSlotsDisponibles = async (
-    idBarbero: string, 
-    fecha: string, 
+    idBarbero: string,
+    fecha: string,
     duracion: number = 60
   ): Promise<SlotDisponible[]> => {
     try {
@@ -32,12 +32,14 @@ export function useDisponibilidad() {
       setError(null);
 
       // Llamar a la función PostgreSQL que creamos
-      const { data, error: queryError } = await supabaseClient
-        .rpc('obtener_slots_disponibles', {
+      const { data, error: queryError } = await supabaseClient.rpc(
+        "obtener_slots_disponibles",
+        {
           p_id_barbero: idBarbero,
           p_fecha: fecha,
-          p_duracion: duracion
-        });
+          p_duracion: duracion,
+        }
+      );
 
       if (queryError) {
         throw queryError;
@@ -45,8 +47,8 @@ export function useDisponibilidad() {
 
       return data || [];
     } catch (err) {
-      console.error('Error fetching available slots:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching available slots:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
       return [];
     } finally {
       setLoading(false);
@@ -54,16 +56,18 @@ export function useDisponibilidad() {
   };
 
   // Obtener bloques de no disponibilidad de un barbero
-  const getBloquesDisponibilidad = async (idBarbero: string): Promise<BloqueDisponibilidad[]> => {
+  const getBloquesDisponibilidad = async (
+    idBarbero: string
+  ): Promise<BloqueDisponibilidad[]> => {
     try {
       setLoading(true);
       setError(null);
 
       const { data, error: queryError } = await supabaseClient
-        .from('disponibilidad')
-        .select('*')
-        .eq('id_barbero', idBarbero)
-        .order('fecha_inicio', { ascending: true });
+        .from("disponibilidad")
+        .select("*")
+        .eq("id_barbero", idBarbero)
+        .order("fecha_inicio", { ascending: true });
 
       if (queryError) {
         throw queryError;
@@ -71,8 +75,8 @@ export function useDisponibilidad() {
 
       return data || [];
     } catch (err) {
-      console.error('Error fetching availability blocks:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching availability blocks:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
       return [];
     } finally {
       setLoading(false);
@@ -80,13 +84,15 @@ export function useDisponibilidad() {
   };
 
   // Crear un bloque de no disponibilidad (descanso, vacaciones, etc.)
-  const crearBloqueDisponibilidad = async (bloque: Omit<BloqueDisponibilidad, 'id_disponibilidad' | 'created_at'>) => {
+  const crearBloqueDisponibilidad = async (
+    bloque: Omit<BloqueDisponibilidad, "id_disponibilidad" | "created_at">
+  ) => {
     try {
       setLoading(true);
       setError(null);
 
       const { data, error: queryError } = await supabaseClient
-        .from('disponibilidad')
+        .from("disponibilidad")
         .insert([bloque])
         .select()
         .single();
@@ -97,8 +103,8 @@ export function useDisponibilidad() {
 
       return data;
     } catch (err) {
-      console.error('Error creating availability block:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error creating availability block:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
       throw err;
     } finally {
       setLoading(false);
@@ -112,16 +118,16 @@ export function useDisponibilidad() {
       setError(null);
 
       const { error: queryError } = await supabaseClient
-        .from('disponibilidad')
+        .from("disponibilidad")
         .delete()
-        .eq('id_disponibilidad', id);
+        .eq("id_disponibilidad", id);
 
       if (queryError) {
         throw queryError;
       }
     } catch (err) {
-      console.error('Error deleting availability block:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error deleting availability block:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
       throw err;
     } finally {
       setLoading(false);
@@ -138,13 +144,13 @@ export function useDisponibilidad() {
     try {
       // Verificar que no hay reservas en ese horario
       const { data: reservas, error: reservasError } = await supabaseClient
-        .from('reservas')
-        .select('id_reserva')
-        .eq('id_barbero', idBarbero)
-        .eq('fecha_reserva', fecha)
-        .not('estado', 'in', '(cancelada,no_show)')
-        .gte('hora_fin', horaInicio)
-        .lte('hora_inicio', horaFin);
+        .from("reservas")
+        .select("id_reserva")
+        .eq("id_barbero", idBarbero)
+        .eq("fecha_reserva", fecha)
+        .not("estado", "in", "(cancelada,no_show)")
+        .gte("hora_fin", horaInicio)
+        .lte("hora_inicio", horaFin);
 
       if (reservasError) {
         throw reservasError;
@@ -159,12 +165,12 @@ export function useDisponibilidad() {
       const fechaHoraFin = `${fecha} ${horaFin}`;
 
       const { data: bloques, error: bloquesError } = await supabaseClient
-        .from('disponibilidad')
-        .select('id_disponibilidad')
-        .eq('id_barbero', idBarbero)
-        .in('tipo', ['descanso', 'vacaciones', 'bloqueado'])
-        .lte('fecha_inicio', fechaHoraFin)
-        .gte('fecha_fin', fechaHoraInicio);
+        .from("disponibilidad")
+        .select("id_disponibilidad")
+        .eq("id_barbero", idBarbero)
+        .in("tipo", ["descanso", "vacaciones", "bloqueado"])
+        .lte("fecha_inicio", fechaHoraFin)
+        .gte("fecha_fin", fechaHoraInicio);
 
       if (bloquesError) {
         throw bloquesError;
@@ -172,28 +178,28 @@ export function useDisponibilidad() {
 
       return !bloques || bloques.length === 0;
     } catch (err) {
-      console.error('Error verifying availability:', err);
+      console.error("Error verifying availability:", err);
       return false;
     }
   };
 
   // Generar slots de tiempo para mostrar en el calendario
   const generarSlots = (
-    horaInicio: string = '09:00',
-    horaFin: string = '18:00',
+    horaInicio: string = "09:00",
+    horaFin: string = "18:00",
     intervalo: number = 30
   ): string[] => {
     const slots: string[] = [];
     const inicio = new Date(`2000-01-01 ${horaInicio}`);
     const fin = new Date(`2000-01-01 ${horaFin}`);
-    
+
     let actual = new Date(inicio);
-    
+
     while (actual < fin) {
       slots.push(actual.toTimeString().slice(0, 5)); // HH:MM
       actual.setMinutes(actual.getMinutes() + intervalo);
     }
-    
+
     return slots;
   };
 
@@ -204,23 +210,23 @@ export function useDisponibilidad() {
     diasAdelante: number = 7
   ) => {
     const hoy = new Date();
-    
+
     for (let i = 0; i < diasAdelante; i++) {
       const fecha = new Date(hoy);
       fecha.setDate(fecha.getDate() + i);
-      const fechaStr = fecha.toISOString().split('T')[0];
-      
+      const fechaStr = fecha.toISOString().split("T")[0];
+
       const slots = await getSlotsDisponibles(idBarbero, fechaStr, duracion);
-      const disponibles = slots.filter(slot => slot.disponible);
-      
+      const disponibles = slots.filter((slot) => slot.disponible);
+
       if (disponibles.length > 0) {
         return {
           fecha: fechaStr,
-          hora: disponibles[0].hora_inicio
+          hora: disponibles[0].hora_inicio,
         };
       }
     }
-    
+
     return null; // No hay slots disponibles en los próximos días
   };
 
@@ -233,6 +239,6 @@ export function useDisponibilidad() {
     eliminarBloqueDisponibilidad,
     verificarDisponibilidad,
     generarSlots,
-    getProximoSlotDisponible
+    getProximoSlotDisponible,
   };
 }

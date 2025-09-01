@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export interface CreateBookingData {
   name: string;
@@ -19,7 +19,7 @@ export interface Booking {
   date: string;
   time: string;
   service: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: "confirmed" | "pending" | "cancelled";
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -45,10 +45,10 @@ export function useBookingsSimple() {
       setError(null);
 
       const { data, error: supabaseError } = await supabase
-        .from('bookings')
-        .select('*')
-        .order('date', { ascending: false })
-        .order('time', { ascending: false });
+        .from("bookings")
+        .select("*")
+        .order("date", { ascending: false })
+        .order("time", { ascending: false });
 
       if (supabaseError) {
         throw supabaseError;
@@ -56,30 +56,32 @@ export function useBookingsSimple() {
 
       setBookings(data || []);
     } catch (err) {
-      console.error('Error loading bookings:', err);
-      setError(err instanceof Error ? err.message : 'Error loading bookings');
+      console.error("Error loading bookings:", err);
+      setError(err instanceof Error ? err.message : "Error loading bookings");
     } finally {
       setLoading(false);
     }
   };
 
   // Función para crear una nueva reserva
-  const createBooking = async (bookingData: CreateBookingData): Promise<boolean> => {
+  const createBooking = async (
+    bookingData: CreateBookingData
+  ): Promise<boolean> => {
     try {
-      const { error: supabaseError } = await supabase
-        .from('bookings')
-        .insert([{
+      const { error: supabaseError } = await supabase.from("bookings").insert([
+        {
           name: bookingData.name,
           phone: bookingData.phone,
           email: bookingData.email,
           date: bookingData.date,
           time: bookingData.time,
           service: bookingData.service,
-          notes: bookingData.notes || '',
-          status: 'confirmed',
+          notes: bookingData.notes || "",
+          status: "confirmed",
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }]);
+          updated_at: new Date().toISOString(),
+        },
+      ]);
 
       if (supabaseError) {
         throw supabaseError;
@@ -89,8 +91,8 @@ export function useBookingsSimple() {
       await loadBookings();
       return true;
     } catch (err) {
-      console.error('Error creating booking:', err);
-      setError(err instanceof Error ? err.message : 'Error creating booking');
+      console.error("Error creating booking:", err);
+      setError(err instanceof Error ? err.message : "Error creating booking");
       return false;
     }
   };
@@ -99,9 +101,9 @@ export function useBookingsSimple() {
   const deleteBooking = async (id: string): Promise<boolean> => {
     try {
       const { error: supabaseError } = await supabase
-        .from('bookings')
+        .from("bookings")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (supabaseError) {
         throw supabaseError;
@@ -111,22 +113,25 @@ export function useBookingsSimple() {
       await loadBookings();
       return true;
     } catch (err) {
-      console.error('Error deleting booking:', err);
-      setError(err instanceof Error ? err.message : 'Error deleting booking');
+      console.error("Error deleting booking:", err);
+      setError(err instanceof Error ? err.message : "Error deleting booking");
       return false;
     }
   };
 
   // Función para actualizar una reserva
-  const updateBooking = async (id: string, updates: Partial<CreateBookingData>): Promise<boolean> => {
+  const updateBooking = async (
+    id: string,
+    updates: Partial<CreateBookingData>
+  ): Promise<boolean> => {
     try {
       const { error: supabaseError } = await supabase
-        .from('bookings')
+        .from("bookings")
         .update({
           ...updates,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', id);
+        .eq("id", id);
 
       if (supabaseError) {
         throw supabaseError;
@@ -136,8 +141,8 @@ export function useBookingsSimple() {
       await loadBookings();
       return true;
     } catch (err) {
-      console.error('Error updating booking:', err);
-      setError(err instanceof Error ? err.message : 'Error updating booking');
+      console.error("Error updating booking:", err);
+      setError(err instanceof Error ? err.message : "Error updating booking");
       return false;
     }
   };
@@ -145,23 +150,27 @@ export function useBookingsSimple() {
   // Calcular estadísticas
   const stats: BookingStats = {
     totalBookings: bookings.length,
-    todayBookings: bookings.filter(b => {
-      const today = new Date().toISOString().split('T')[0];
+    todayBookings: bookings.filter((b) => {
+      const today = new Date().toISOString().split("T")[0];
       return b.date === today;
     }).length,
-    weeklyBookings: bookings.filter(b => {
+    weeklyBookings: bookings.filter((b) => {
       const bookingDate = new Date(b.date);
       const today = new Date();
       const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
       return bookingDate >= oneWeekAgo && bookingDate <= today;
     }).length,
-    monthlyBookings: bookings.filter(b => {
+    monthlyBookings: bookings.filter((b) => {
       const bookingDate = new Date(b.date);
       const today = new Date();
-      const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      const oneMonthAgo = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate()
+      );
       return bookingDate >= oneMonthAgo && bookingDate <= today;
     }).length,
-    revenue: bookings.length * 25000 // Precio promedio por servicio
+    revenue: bookings.length * 25000, // Precio promedio por servicio
   };
 
   // Cargar reservas al montar el componente
@@ -177,6 +186,6 @@ export function useBookingsSimple() {
     createBooking,
     deleteBooking,
     updateBooking,
-    refreshBookings: loadBookings
+    refreshBookings: loadBookings,
   };
 }

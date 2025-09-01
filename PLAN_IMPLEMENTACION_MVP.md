@@ -3,6 +3,7 @@
 ## 🎯 OBJETIVO: MVP robusto para 4 barberos con gestión completa de disponibilidad
 
 ### 📊 ESTADO ACTUAL (Lo que funciona)
+
 - ✅ API Express: `/api/bookings`, `/api/availability`
 - ✅ Frontend básico: reservas simples funcionando
 - ✅ Base de datos: tabla `bookings` con constraintes
@@ -11,6 +12,7 @@
 ### 🔧 FASE 1: MIGRACIÓN DE BASE DE DATOS (30 min)
 
 #### 1.1 Aplicar Esquema Completo
+
 ```sql
 -- Ejecutar en orden:
 1. database/supabase-schema-normalized.sql (usuarios, servicios, barberos, disponibilidad)
@@ -19,6 +21,7 @@
 ```
 
 #### 1.2 Actualizar API para Nuevas Tablas
+
 ```typescript
 // Nuevos endpoints necesarios:
 GET  /api/barberos              // Listar barberos activos
@@ -30,6 +33,7 @@ POST /api/auth/login            // Autenticación básica
 ### 🔧 FASE 2: SISTEMA DE ROLES Y AUTENTICACIÓN (45 min)
 
 #### 2.1 Backend: Autenticación Simple
+
 ```typescript
 // api/auth.ts
 - JWT simple con roles (cliente, barbero, admin)
@@ -38,6 +42,7 @@ POST /api/auth/login            // Autenticación básica
 ```
 
 #### 2.2 Frontend: Sistema de Login
+
 ```typescript
 // src/hooks/useAuth.ts
 - Login/logout
@@ -48,6 +53,7 @@ POST /api/auth/login            // Autenticación básica
 ### 🔧 FASE 3: GESTIÓN DE BARBEROS Y DISPONIBILIDAD (60 min)
 
 #### 3.1 API de Disponibilidad Avanzada
+
 ```typescript
 // api/disponibilidad.ts
 - POST /api/disponibilidad (crear bloque: trabajo, descanso, vacaciones)
@@ -56,6 +62,7 @@ POST /api/auth/login            // Autenticación básica
 ```
 
 #### 3.2 Frontend: Panel de Barbero
+
 ```typescript
 // src/components/barbero/
 - BarberoDashboard.tsx
@@ -66,6 +73,7 @@ POST /api/auth/login            // Autenticación básica
 ### 🔧 FASE 4: RESERVAS AVANZADAS CON BARBEROS (45 min)
 
 #### 4.1 Actualizar Flujo de Reservas
+
 ```typescript
 // src/components/booking/
 - BarberoSelection.tsx (elegir barbero antes de fecha/hora)
@@ -74,6 +82,7 @@ POST /api/auth/login            // Autenticación básica
 ```
 
 #### 4.2 API de Reservas Mejorada
+
 ```typescript
 // Actualizar api/bookings
 - Validar que barbero esté disponible
@@ -84,6 +93,7 @@ POST /api/auth/login            // Autenticación básica
 ### 🔧 FASE 5: PANEL DE ADMINISTRACIÓN COMPLETO (30 min)
 
 #### 5.1 Dashboard Administrativo
+
 ```typescript
 // src/components/admin/
 - AdminDashboard.tsx (vista global de reservas)
@@ -95,6 +105,7 @@ POST /api/auth/login            // Autenticación básica
 ### 🔧 FASE 6: VALIDACIONES Y REGLAS DE NEGOCIO (30 min)
 
 #### 6.1 Validaciones Estrictas
+
 ```typescript
 // Backend: api/middleware/validation.ts
 - No reservas en bloques de descanso
@@ -104,6 +115,7 @@ POST /api/auth/login            // Autenticación básica
 ```
 
 #### 6.2 Frontend: UX Mejorada
+
 ```typescript
 // Mostrar solo barberos disponibles
 // Horarios filtrados por disponibilidad real
@@ -117,7 +129,7 @@ POST /api/auth/login            // Autenticación básica
 api/
 ├── auth.ts                 # Autenticación JWT
 ├── barberos.ts             # CRUD barberos
-├── servicios.ts            # CRUD servicios  
+├── servicios.ts            # CRUD servicios
 ├── disponibilidad.ts       # Gestión disponibilidad
 ├── bookings/ (existente)   # Reservas mejoradas
 └── middleware/
@@ -152,14 +164,17 @@ database/
 ## ⏱️ CRONOGRAMA DE IMPLEMENTACIÓN
 
 ### Día 1 (2-3 horas):
+
 - ✅ Fase 1: Migración BD + Seeders
 - ✅ Fase 2: Autenticación básica
 
-### Día 2 (2-3 horas):  
+### Día 2 (2-3 horas):
+
 - ✅ Fase 3: Gestión barberos y disponibilidad
 - ✅ Fase 4: Reservas con barberos
 
 ### Día 3 (1-2 horas):
+
 - ✅ Fase 5: Panel admin completo
 - ✅ Fase 6: Validaciones y UX
 - ✅ Testing y deploy
@@ -167,12 +182,14 @@ database/
 ## 🎯 CRITERIOS DE ÉXITO MVP
 
 ### Funcionales:
+
 - ✅ 4 barberos gestionan disponibilidad independientemente
-- ✅ Cliente ve solo horarios realmente disponibles  
+- ✅ Cliente ve solo horarios realmente disponibles
 - ✅ 0% reservas en descansos/vacaciones
 - ✅ Admin controla todo desde panel central
 
 ### Técnicos:
+
 - ✅ API valida roles y permisos
 - ✅ BD nunca expuesta al cliente
 - ✅ Constraintes previenen solapamientos

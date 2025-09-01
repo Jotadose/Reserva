@@ -26,28 +26,35 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   onNext,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
-  
+
   // 🔥 HOOKS MVP PARA DISPONIBILIDAD REAL
   const { barberos } = useBarberos();
   const { obtenerDisponibilidadPorFecha } = useDisponibilidad();
 
   // 🎯 USAR PRIMER BARBERO SI NO HAY UNO SELECCIONADO
-  const barberoId = selectedBarberId || (barberos.length > 0 ? barberos[0].id : null);
+  const barberoId =
+    selectedBarberId || (barberos.length > 0 ? barberos[0].id : null);
 
   // 🔥 FUNCIÓN MVP PARA CARGAR DISPONIBILIDAD
-  const loadAvailabilityForDate = useCallback(async (date: string) => {
-    if (!date || !barberoId) return [];
-    
-    try {
-      const disponibilidades = await obtenerDisponibilidadPorFecha(barberoId, date);
-      return disponibilidades
-        .filter(disp => disp.disponible)
-        .map(disp => disp.hora_inicio.slice(0, 5)); // Formato HH:MM
-    } catch (error) {
-      console.error('Error cargando disponibilidad MVP:', error);
-      return [];
-    }
-  }, [obtenerDisponibilidadPorFecha, barberoId]);
+  const loadAvailabilityForDate = useCallback(
+    async (date: string) => {
+      if (!date || !barberoId) return [];
+
+      try {
+        const disponibilidades = await obtenerDisponibilidadPorFecha(
+          barberoId,
+          date
+        );
+        return disponibilidades
+          .filter((disp) => disp.disponible)
+          .map((disp) => disp.hora_inicio.slice(0, 5)); // Formato HH:MM
+      } catch (error) {
+        console.error("Error cargando disponibilidad MVP:", error);
+        return [];
+      }
+    },
+    [obtenerDisponibilidadPorFecha, barberoId]
+  );
 
   // Obtener slots disponibles para la fecha seleccionada
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);

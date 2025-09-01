@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabaseClient } from '../lib/supabaseClient';
+import { useState, useEffect } from "react";
+import { supabaseClient } from "../lib/supabaseClient";
 
 export interface ReservaMVP {
   id_reserva: string;
@@ -11,7 +11,13 @@ export interface ReservaMVP {
   hora_fin: string;
   duracion_minutos: number;
   precio_total: number; // En centavos
-  estado: 'pendiente' | 'confirmada' | 'en_progreso' | 'completada' | 'cancelada' | 'no_show';
+  estado:
+    | "pendiente"
+    | "confirmada"
+    | "en_progreso"
+    | "completada"
+    | "cancelada"
+    | "no_show";
   notas_cliente?: string;
   notas_internas?: string;
   motivo_cancelacion?: string;
@@ -20,7 +26,7 @@ export interface ReservaMVP {
   confirmada_at?: string;
   completada_at?: string;
   cancelada_at?: string;
-  
+
   // Datos relacionados (joins)
   cliente?: {
     nombre: string;
@@ -65,9 +71,7 @@ export function useReservasMVP() {
       setLoading(true);
       setError(null);
 
-      let query = supabaseClient
-        .from('reservas')
-        .select(`
+      let query = supabaseClient.from("reservas").select(`
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
             nombre,
@@ -87,21 +91,22 @@ export function useReservasMVP() {
 
       // Aplicar filtros
       if (filtros?.barbero) {
-        query = query.eq('id_barbero', filtros.barbero);
+        query = query.eq("id_barbero", filtros.barbero);
       }
       if (filtros?.fecha) {
-        query = query.eq('fecha_reserva', filtros.fecha);
+        query = query.eq("fecha_reserva", filtros.fecha);
       }
       if (filtros?.estado) {
-        query = query.eq('estado', filtros.estado);
+        query = query.eq("estado", filtros.estado);
       }
       if (filtros?.cliente) {
-        query = query.eq('id_cliente', filtros.cliente);
+        query = query.eq("id_cliente", filtros.cliente);
       }
 
       // Ordenar por fecha y hora
-      query = query.order('fecha_reserva', { ascending: true })
-                   .order('hora_inicio', { ascending: true });
+      query = query
+        .order("fecha_reserva", { ascending: true })
+        .order("hora_inicio", { ascending: true });
 
       const { data, error: queryError } = await query;
 
@@ -111,8 +116,8 @@ export function useReservasMVP() {
 
       setReservas(data || []);
     } catch (err) {
-      console.error('Error fetching reservas:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching reservas:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -121,8 +126,9 @@ export function useReservasMVP() {
   const getReservaById = async (id: string): Promise<ReservaMVP | null> => {
     try {
       const { data, error: queryError } = await supabaseClient
-        .from('reservas')
-        .select(`
+        .from("reservas")
+        .select(
+          `
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
             nombre,
@@ -138,8 +144,9 @@ export function useReservasMVP() {
             categoria,
             color
           )
-        `)
-        .eq('id_reserva', id)
+        `
+        )
+        .eq("id_reserva", id)
         .single();
 
       if (queryError) {
@@ -148,23 +155,28 @@ export function useReservasMVP() {
 
       return data;
     } catch (err) {
-      console.error('Error fetching reserva by ID:', err);
+      console.error("Error fetching reserva by ID:", err);
       return null;
     }
   };
 
-  const crearReserva = async (reservaData: CrearReservaData): Promise<ReservaMVP> => {
+  const crearReserva = async (
+    reservaData: CrearReservaData
+  ): Promise<ReservaMVP> => {
     try {
       setLoading(true);
       setError(null);
 
       const { data, error: queryError } = await supabaseClient
-        .from('reservas')
-        .insert([{
-          ...reservaData,
-          estado: 'confirmada'
-        }])
-        .select(`
+        .from("reservas")
+        .insert([
+          {
+            ...reservaData,
+            estado: "confirmada",
+          },
+        ])
+        .select(
+          `
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
             nombre,
@@ -180,7 +192,8 @@ export function useReservasMVP() {
             categoria,
             color
           )
-        `)
+        `
+        )
         .single();
 
       if (queryError) {
@@ -189,40 +202,44 @@ export function useReservasMVP() {
 
       // Actualizar la lista local
       await fetchReservas();
-      
+
       return data;
     } catch (err) {
-      console.error('Error creating reserva:', err);
-      setError(err instanceof Error ? err.message : 'Error creando reserva');
+      console.error("Error creating reserva:", err);
+      setError(err instanceof Error ? err.message : "Error creando reserva");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const actualizarReserva = async (id: string, updates: Partial<ReservaMVP>): Promise<ReservaMVP> => {
+  const actualizarReserva = async (
+    id: string,
+    updates: Partial<ReservaMVP>
+  ): Promise<ReservaMVP> => {
     try {
       setLoading(true);
       setError(null);
 
       // Agregar timestamps según el estado
       const updatesWithTimestamps = { ...updates };
-      
-      if (updates.estado === 'confirmada' && !updates.confirmada_at) {
+
+      if (updates.estado === "confirmada" && !updates.confirmada_at) {
         updatesWithTimestamps.confirmada_at = new Date().toISOString();
       }
-      if (updates.estado === 'completada' && !updates.completada_at) {
+      if (updates.estado === "completada" && !updates.completada_at) {
         updatesWithTimestamps.completada_at = new Date().toISOString();
       }
-      if (updates.estado === 'cancelada' && !updates.cancelada_at) {
+      if (updates.estado === "cancelada" && !updates.cancelada_at) {
         updatesWithTimestamps.cancelada_at = new Date().toISOString();
       }
 
       const { data, error: queryError } = await supabaseClient
-        .from('reservas')
+        .from("reservas")
         .update(updatesWithTimestamps)
-        .eq('id_reserva', id)
-        .select(`
+        .eq("id_reserva", id)
+        .select(
+          `
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
             nombre,
@@ -238,7 +255,8 @@ export function useReservasMVP() {
             categoria,
             color
           )
-        `)
+        `
+        )
         .single();
 
       if (queryError) {
@@ -247,11 +265,13 @@ export function useReservasMVP() {
 
       // Actualizar la lista local
       await fetchReservas();
-      
+
       return data;
     } catch (err) {
-      console.error('Error updating reserva:', err);
-      setError(err instanceof Error ? err.message : 'Error actualizando reserva');
+      console.error("Error updating reserva:", err);
+      setError(
+        err instanceof Error ? err.message : "Error actualizando reserva"
+      );
       throw err;
     } finally {
       setLoading(false);
@@ -260,46 +280,51 @@ export function useReservasMVP() {
 
   const cancelarReserva = async (id: string, motivo?: string) => {
     return await actualizarReserva(id, {
-      estado: 'cancelada',
+      estado: "cancelada",
       motivo_cancelacion: motivo,
-      cancelada_at: new Date().toISOString()
+      cancelada_at: new Date().toISOString(),
     });
   };
 
   const completarReserva = async (id: string, notas_internas?: string) => {
     return await actualizarReserva(id, {
-      estado: 'completada',
+      estado: "completada",
       notas_internas,
-      completada_at: new Date().toISOString()
+      completada_at: new Date().toISOString(),
     });
   };
 
   const marcarEnProgreso = async (id: string) => {
     return await actualizarReserva(id, {
-      estado: 'en_progreso'
+      estado: "en_progreso",
     });
   };
 
   const marcarNoShow = async (id: string) => {
     return await actualizarReserva(id, {
-      estado: 'no_show'
+      estado: "no_show",
     });
   };
 
   // Obtener reservas de hoy para un barbero
   const getReservasHoy = async (idBarbero: string) => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date().toISOString().split("T")[0];
     await fetchReservas({ barbero: idBarbero, fecha: hoy });
   };
 
   // Obtener reservas por rango de fechas
-  const getReservasPorRango = async (fechaInicio: string, fechaFin: string, idBarbero?: string) => {
+  const getReservasPorRango = async (
+    fechaInicio: string,
+    fechaFin: string,
+    idBarbero?: string
+  ) => {
     try {
       setLoading(true);
-      
+
       let query = supabaseClient
-        .from('reservas')
-        .select(`
+        .from("reservas")
+        .select(
+          `
           *,
           cliente:usuarios!reservas_id_cliente_fkey (
             nombre,
@@ -315,17 +340,18 @@ export function useReservasMVP() {
             categoria,
             color
           )
-        `)
-        .gte('fecha_reserva', fechaInicio)
-        .lte('fecha_reserva', fechaFin);
+        `
+        )
+        .gte("fecha_reserva", fechaInicio)
+        .lte("fecha_reserva", fechaFin);
 
       if (idBarbero) {
-        query = query.eq('id_barbero', idBarbero);
+        query = query.eq("id_barbero", idBarbero);
       }
 
       const { data, error } = await query
-        .order('fecha_reserva', { ascending: true })
-        .order('hora_inicio', { ascending: true });
+        .order("fecha_reserva", { ascending: true })
+        .order("hora_inicio", { ascending: true });
 
       if (error) {
         throw error;
@@ -333,8 +359,8 @@ export function useReservasMVP() {
 
       setReservas(data || []);
     } catch (err) {
-      console.error('Error fetching reservas by range:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching reservas by range:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -342,9 +368,9 @@ export function useReservasMVP() {
 
   // Función para formatear precio
   const formatearPrecio = (precio: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
       minimumFractionDigits: 0,
     }).format(precio / 100);
   };
@@ -367,6 +393,6 @@ export function useReservasMVP() {
     marcarNoShow,
     getReservasHoy,
     getReservasPorRango,
-    formatearPrecio
+    formatearPrecio,
   };
 }

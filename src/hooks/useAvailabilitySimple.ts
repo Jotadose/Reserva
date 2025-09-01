@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export interface AvailabilitySlot {
   time: string;
@@ -10,7 +10,10 @@ export function useAvailabilitySimple() {
   const [error, setError] = useState<string | null>(null);
 
   // Función para verificar disponibilidad de un slot específico
-  const checkAvailability = async (date: string, time: string): Promise<boolean> => {
+  const checkAvailability = async (
+    date: string,
+    time: string
+  ): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
@@ -19,8 +22,10 @@ export function useAvailabilitySimple() {
       // En el futuro aquí se verificaría contra la base de datos
       return true;
     } catch (err) {
-      console.error('Error checking availability:', err);
-      setError(err instanceof Error ? err.message : 'Error checking availability');
+      console.error("Error checking availability:", err);
+      setError(
+        err instanceof Error ? err.message : "Error checking availability"
+      );
       return false;
     } finally {
       setLoading(false);
@@ -28,7 +33,9 @@ export function useAvailabilitySimple() {
   };
 
   // Función para obtener todos los slots disponibles para una fecha
-  const getAvailableSlots = async (date: string): Promise<AvailabilitySlot[]> => {
+  const getAvailableSlots = async (
+    date: string
+  ): Promise<AvailabilitySlot[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -44,19 +51,23 @@ export function useAvailabilitySimple() {
           // Saltar horario de almuerzo (12:00 - 13:00)
           if (hour === 12) continue;
 
-          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-          
+          const timeString = `${hour.toString().padStart(2, "0")}:${minute
+            .toString()
+            .padStart(2, "0")}`;
+
           slots.push({
             time: timeString,
-            available: true // Por ahora todos están disponibles
+            available: true, // Por ahora todos están disponibles
           });
         }
       }
 
       return slots;
     } catch (err) {
-      console.error('Error getting available slots:', err);
-      setError(err instanceof Error ? err.message : 'Error getting available slots');
+      console.error("Error getting available slots:", err);
+      setError(
+        err instanceof Error ? err.message : "Error getting available slots"
+      );
       return [];
     } finally {
       setLoading(false);
@@ -67,6 +78,6 @@ export function useAvailabilitySimple() {
     loading,
     error,
     checkAvailability,
-    getAvailableSlots
+    getAvailableSlots,
   };
 }

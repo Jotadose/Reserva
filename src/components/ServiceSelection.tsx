@@ -27,17 +27,17 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
   const { servicios, loading: loadingServicios } = useServicios();
 
   // 🔄 CONVERTIR SERVICIOS MVP AL FORMATO ESPERADO
-  const services: Service[] = servicios.map(servicio => ({
+  const services: Service[] = servicios.map((servicio) => ({
     id: servicio.id,
     name: servicio.nombre,
     price: servicio.precio,
     duration: servicio.duracion_estimada,
     category: servicio.categoria.toLowerCase(),
-    description: servicio.descripcion || `${servicio.nombre} profesional`
+    description: servicio.descripcion || `${servicio.nombre} profesional`,
   }));
 
   // 📊 OBTENER CATEGORÍAS DINÁMICAMENTE
-  const availableCategories = [...new Set(services.map(s => s.category))];
+  const availableCategories = [...new Set(services.map((s) => s.category))];
 
   // 🎯 MOSTRAR LOADING SI ESTÁ CARGANDO
   if (loadingServicios) {
@@ -117,7 +117,7 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
           {availableCategories.map((category) => {
             const categoryServices = getServicesByCategory(category);
             if (categoryServices.length === 0) return null;
-            
+
             return (
               <div key={category}>
                 <div className="mb-4 flex items-center space-x-3">
@@ -131,52 +131,52 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {categoryServices.map((service) => {
-                  const isSelected = selectedServices.some(
-                    (s) => s.id === service.id
-                  );
+                    const isSelected = selectedServices.some(
+                      (s) => s.id === service.id
+                    );
 
-                  return (
-                    <div
-                      key={service.id}
-                      onClick={() => toggleService(service)}
-                      className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-300 hover:scale-105 ${
-                        isSelected
-                          ? "border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20"
-                          : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500">
-                          <Check className="h-4 w-4 text-black" />
-                        </div>
-                      )}
+                    return (
+                      <div
+                        key={service.id}
+                        onClick={() => toggleService(service)}
+                        className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-300 hover:scale-105 ${
+                          isSelected
+                            ? "border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20"
+                            : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500">
+                            <Check className="h-4 w-4 text-black" />
+                          </div>
+                        )}
 
-                      <div className="mb-2 flex items-start justify-between">
-                        <h4 className="text-lg font-semibold text-white">
-                          {service.name}
-                        </h4>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-yellow-500">
-                            ${service.price.toLocaleString()}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            {service.duration} min
-                          </p>
+                        <div className="mb-2 flex items-start justify-between">
+                          <h4 className="text-lg font-semibold text-white">
+                            {service.name}
+                          </h4>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-yellow-500">
+                              ${service.price.toLocaleString()}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {service.duration} min
+                            </p>
+                          </div>
                         </div>
+
+                        {service.description && (
+                          <p className="text-sm text-gray-300">
+                            {service.description}
+                          </p>
+                        )}
                       </div>
-
-                      {service.description && (
-                        <p className="text-sm text-gray-300">
-                          {service.description}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
         </div>
       </div>
 

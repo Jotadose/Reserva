@@ -63,7 +63,7 @@ function AppContent() {
   console.log("🔍 App.tsx - Sistema MVP:", {
     isCreatingReserva,
     selectedBarberId,
-    selectedServices: selectedServices.length
+    selectedServices: selectedServices.length,
   });
 
   // Los datos ahora vienen de useReservasMVP (implementar cuando se necesite mostrar reservas)
@@ -79,7 +79,7 @@ function AppContent() {
         nombre: booking.client.name,
         telefono: booking.client.phone,
         email: booking.client.email,
-        rol: "cliente" as const
+        rol: "cliente" as const,
       };
 
       const usuario = await createUser(usuarioData);
@@ -96,10 +96,10 @@ function AppContent() {
         hora_inicio: booking.time,
         estado: "confirmada" as const,
         notas: booking.client.notes || "",
-        servicios: selectedServices.map(service => ({
+        servicios: selectedServices.map((service) => ({
           servicio_id: service.id,
-          precio_acordado: service.price
-        }))
+          precio_acordado: service.price,
+        })),
       };
 
       const success = await createReserva(reservaData);
@@ -290,7 +290,7 @@ function AppContent() {
       <main className="min-h-screen">
         {currentView === "test" && <TestMVPHooks />}
         {currentView === "mvp" && <BookingSystemMVP />}
-        
+
         {currentView === "landing" && (
           <LandingPage onStartBooking={startBookingProcess} />
         )}
@@ -305,9 +305,12 @@ function AppContent() {
                     className={`flex items-center space-x-3 ${
                       bookingStep === "barbero"
                         ? "text-yellow-500"
-                        : ["calendar", "service", "form", "confirmation"].includes(
-                            bookingStep
-                          )
+                        : [
+                            "calendar",
+                            "service",
+                            "form",
+                            "confirmation",
+                          ].includes(bookingStep)
                         ? "text-green-500"
                         : "text-gray-500"
                     }`}
@@ -316,9 +319,12 @@ function AppContent() {
                       className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
                         bookingStep === "barbero"
                           ? "border-yellow-500 bg-yellow-500/20"
-                          : ["calendar", "service", "form", "confirmation"].includes(
-                              bookingStep
-                            )
+                          : [
+                              "calendar",
+                              "service",
+                              "form",
+                              "confirmation",
+                            ].includes(bookingStep)
                           ? "border-green-500 bg-green-500/20"
                           : "border-gray-500"
                       }`}

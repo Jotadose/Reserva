@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabaseClient } from '../lib/supabaseClient';
+import { useState, useEffect } from "react";
+import { supabaseClient } from "../lib/supabaseClient";
 
 export interface Servicio {
   id_servicio: string;
@@ -25,11 +25,11 @@ export function useServicios() {
       setError(null);
 
       const { data, error: queryError } = await supabaseClient
-        .from('servicios')
-        .select('*')
-        .eq('activo', true)
-        .order('categoria', { ascending: true })
-        .order('precio', { ascending: true });
+        .from("servicios")
+        .select("*")
+        .eq("activo", true)
+        .order("categoria", { ascending: true })
+        .order("precio", { ascending: true });
 
       if (queryError) {
         throw queryError;
@@ -37,8 +37,8 @@ export function useServicios() {
 
       setServicios(data || []);
     } catch (err) {
-      console.error('Error fetching servicios:', err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error fetching servicios:", err);
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
@@ -47,9 +47,9 @@ export function useServicios() {
   const getServicioById = async (id: string) => {
     try {
       const { data, error: queryError } = await supabaseClient
-        .from('servicios')
-        .select('*')
-        .eq('id_servicio', id)
+        .from("servicios")
+        .select("*")
+        .eq("id_servicio", id)
         .single();
 
       if (queryError) {
@@ -58,26 +58,28 @@ export function useServicios() {
 
       return data as Servicio;
     } catch (err) {
-      console.error('Error fetching servicio by ID:', err);
+      console.error("Error fetching servicio by ID:", err);
       return null;
     }
   };
 
   const getServiciosPorCategoria = (categoria: string) => {
-    return servicios.filter(servicio => 
-      servicio.categoria === categoria && servicio.activo
+    return servicios.filter(
+      (servicio) => servicio.categoria === categoria && servicio.activo
     );
   };
 
   const getCategorias = () => {
-    const categorias = [...new Set(servicios.map(s => s.categoria).filter(Boolean))];
+    const categorias = [
+      ...new Set(servicios.map((s) => s.categoria).filter(Boolean)),
+    ];
     return categorias;
   };
 
   const formatearPrecio = (precio: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
       minimumFractionDigits: 0,
     }).format(precio); // Price is already in pesos, not centavos
   };
@@ -95,10 +97,12 @@ export function useServicios() {
   };
 
   // Crear un nuevo servicio (solo admin)
-  const crearServicio = async (servicio: Omit<Servicio, 'id_servicio' | 'created_at' | 'updated_at'>) => {
+  const crearServicio = async (
+    servicio: Omit<Servicio, "id_servicio" | "created_at" | "updated_at">
+  ) => {
     try {
       const { data, error: queryError } = await supabaseClient
-        .from('servicios')
+        .from("servicios")
         .insert([servicio])
         .select()
         .single();
@@ -111,7 +115,7 @@ export function useServicios() {
       await fetchServicios();
       return data;
     } catch (err) {
-      console.error('Error creating servicio:', err);
+      console.error("Error creating servicio:", err);
       throw err;
     }
   };
@@ -120,9 +124,9 @@ export function useServicios() {
   const actualizarServicio = async (id: string, updates: Partial<Servicio>) => {
     try {
       const { data, error: queryError } = await supabaseClient
-        .from('servicios')
+        .from("servicios")
         .update(updates)
-        .eq('id_servicio', id)
+        .eq("id_servicio", id)
         .select()
         .single();
 
@@ -134,7 +138,7 @@ export function useServicios() {
       await fetchServicios();
       return data;
     } catch (err) {
-      console.error('Error updating servicio:', err);
+      console.error("Error updating servicio:", err);
       throw err;
     }
   };
@@ -143,9 +147,9 @@ export function useServicios() {
   const desactivarServicio = async (id: string) => {
     try {
       const { error: queryError } = await supabaseClient
-        .from('servicios')
+        .from("servicios")
         .update({ activo: false })
-        .eq('id_servicio', id);
+        .eq("id_servicio", id);
 
       if (queryError) {
         throw queryError;
@@ -154,7 +158,7 @@ export function useServicios() {
       // Actualizar la lista local
       await fetchServicios();
     } catch (err) {
-      console.error('Error deactivating servicio:', err);
+      console.error("Error deactivating servicio:", err);
       throw err;
     }
   };
@@ -175,6 +179,6 @@ export function useServicios() {
     formatearDuracion,
     crearServicio,
     actualizarServicio,
-    desactivarServicio
+    desactivarServicio,
   };
 }
