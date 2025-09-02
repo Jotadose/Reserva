@@ -30,7 +30,7 @@ import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
 import BarberSelection from "./components/BarberSelection";
 import ClientForm from "./components/ClientForm";
-import AdminDashboardOptimizado from "./components/AdminDashboardOptimizado";
+import { AdminPanelAdvanced } from "./components/AdminPanelAdvanced";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
@@ -383,7 +383,7 @@ function AppContent() {
           </div>
         )}
 
-        {currentView === "admin" && <AdminDashboardOptimizado />}
+        {currentView === "admin" && <AdminPanelAdvanced />}
       </main>
 
       {/* Footer */}

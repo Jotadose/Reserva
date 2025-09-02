@@ -1,25 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "cd apps/web && pnpm run build",
+  "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
   "outputDirectory": "apps/web/dist",
-  "framework": "vite",
-  "functions": {
-    "apps/api/*.js": {
-      "runtime": "nodejs18.x"
-    },
-    "apps/api/*.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/apps/api/$1"
+      "destination": "/api/$1"
     },
     {
-      "source": "/((?!api).*)",
-      "destination": "/apps/web/$1"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -31,12 +22,16 @@
           "value": "public, max-age=0, must-revalidate"
         },
         {
-          "key": "Surrogate-Control",
-          "value": "public, max-age=3600"
-        },
-        {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     },
@@ -45,20 +40,24 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate, proxy-revalidate"
+          "value": "no-store, no-cache, must-revalidate"
         },
         {
-          "key": "Pragma",
-          "value": "no-cache"
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         },
         {
-          "key": "Expires",
-          "value": "0"
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     },
     {
-      "source": "/static/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
