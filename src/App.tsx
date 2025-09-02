@@ -88,42 +88,53 @@ function AppContent() {
       let usuario;
 
       try {
-        // Primero buscar si el usuario ya existe
+        // Primero buscar si el usuario ya existe con múltiples intentos
         usuario = await buscarPorEmail(booking.client.email);
 
         if (!usuario) {
-          // Si no existe, crear uno nuevo
-          const usuarioData = {
-            nombre: booking.client.name,
-            telefono: booking.client.phone,
-            email: booking.client.email,
-            rol: "cliente" as const, // 🔧 Campo obligatorio según schema
-            activo: true,
-          };
+          try {
+            // Si no existe, crear uno nuevo
+            const usuarioData = {
+              nombre: booking.client.name,
+              telefono: booking.client.phone,
+              email: booking.client.email,
+              rol: "cliente" as const, // 🔧 Campo obligatorio según schema
+              activo: true,
+            };
 
-          console.log("👤 Creando nuevo usuario:", usuarioData);
-          usuario = await crearUsuario(usuarioData);
-          console.log("✅ Usuario creado:", usuario);
+            console.log("👤 Creando nuevo usuario:", usuarioData);
+            usuario = await crearUsuario(usuarioData);
+            console.log("✅ Usuario creado:", usuario);
+          } catch (createError: any) {
+            // Si es error de clave duplicada, significa que el usuario se creó en otra sesión
+            // entre nuestra búsqueda inicial y el intento de creación
+            if (createError.code === "23505" && createError.message?.includes("usuarios_email_key")) {
+              console.log("⚠️ Usuario creado concurrentemente, buscando nuevamente...");
+              // Esperar un momento para asegurar que la base de datos se actualice
+              await new Promise(resolve => setTimeout(resolve, 500));
+              usuario = await buscarPorEmail(booking.client.email);
+              
+              if (usuario) {
+                console.log("👤 Usuario encontrado después de error de duplicado:", usuario);
+              } else {
+                console.error("❌ No se pudo encontrar el usuario después del error de duplicado");
+                addToast("Error: No se pudo procesar el usuario", "error");
+                return;
+              }
+            } else {
+              // Otro tipo de error
+              console.error("❌ Error inesperado creando usuario:", createError);
+              addToast("Error al procesar el usuario: " + createError.message, "error");
+              return;
+            }
+          }
         } else {
           console.log("👤 Usuario existente encontrado:", usuario);
         }
       } catch (error: any) {
-        // Si es error de clave duplicada, buscar el usuario nuevamente
-        if (
-          error.code === "23505" &&
-          error.message?.includes("usuarios_email_key")
-        ) {
-          console.log("⚠️ Usuario ya existe, buscando nuevamente...");
-          usuario = await buscarPorEmail(booking.client.email);
-          if (!usuario) {
-            addToast("Error: No se pudo procesar el usuario", "error");
-            return;
-          }
-        } else {
-          console.error("❌ Error inesperado creando usuario:", error);
-          addToast("Error al procesar el usuario: " + error.message, "error");
-          return;
-        }
+        console.error("❌ Error inesperado en el proceso de usuario:", error);
+        addToast("Error al procesar el usuario: " + error.message, "error");
+        return;
       }
 
       if (!usuario) {

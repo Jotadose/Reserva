@@ -1,15 +1,7 @@
 /**
  * APLICACIÓN PRINCIPAL - Sistema de Reservas para Barbería
  *
- * Este es e      if (!usuario) {
-        // Si no existe, crear uno nuevo
-        const usuarioData = {
-          nombre: booking.client.name,
-          telefono: booking.client.phone,
-          email: booking.client.email,
-          rol: "cliente" as const, // 🔧 Campo obligatorio según schema
-          activo: true
-        };ente raíz que maneja:
+ * Este es el componente raíz que maneja:
  * - Autenticación de administrador
  * - Estados principales de la aplicación (landing, reservas, admin)
  * - Integración con Supabase para datos
@@ -44,16 +36,19 @@ import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
 import { TestMVPHooks } from "./components/TestMVPHooks";
 import { BookingSystemMVP } from "./components/BookingSystemMVP";
+import { AdminTabsNavigation } from "./components/AdminTabsNavigation";
+import { AdminMasterComponent } from "./components/AdminMasterComponent";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
 import { NotificationProvider } from "./hooks/useNotifications";
 import { useReservasMVP } from "./hooks/useReservasMVP";
 import { useUsuarios } from "./hooks/useUsuarios";
 import { Booking, Service, TimeSlot } from "./types/booking";
+import { AuthProvider } from "./hooks/useAuth";
 
 function AppContent() {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<
-    "landing" | "booking" | "admin" | "admin-pro" | "test" | "mvp"
+    "landing" | "booking" | "admin" | "admin-pro" | "test" | "mvp" | "admin-tabs" | "admin-master"
   >("test");
   const [bookingStep, setBookingStep] = useState<
     "barbero" | "calendar" | "service" | "form" | "confirmation"
@@ -99,58 +94,46 @@ function AppContent() {
         console.log("👤 Usuario existente encontrado:", usuario);
       }
 
-      if (!usuario) {
-        addToast("Error al procesar el usuario", "error");
-        return;
-      }
-
-      // 2. Crear reserva con el primer servicio (MVP simplificado)
-      const firstService = selectedServices[0]; // Por ahora solo un servicio
-      const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-      const totalDuration = selectedServices.reduce(
-        (sum, s) => sum + s.duration,
-        0
-      );
-
-      // 🔧 CALCULAR TIEMPO DE FINALIZACIÓN
-      const [hours, minutes] = booking.time.split(":").map(Number);
-      const startMinutes = hours * 60 + minutes;
-      const endMinutes = startMinutes + totalDuration;
-      const endHours = Math.floor(endMinutes / 60);
-      const endMins = endMinutes % 60;
-      const horaFin = `${endHours.toString().padStart(2, "0")}:${endMins
-        .toString()
-        .padStart(2, "0")}`;
-
+      // 2. Crear la reserva con el ID del usuario
       const reservaData = {
-        id_cliente: usuario.id_usuario, // El schema usa id_cliente, no id_usuario
-        id_barbero: selectedBarberId,
-        id_servicio: firstService.id, // El id ya contiene id_servicio del mapeo en ServiceSelection
-        fecha_reserva: booking.date, // Campo separado para fecha
-        hora_inicio: booking.time, // Campo separado para hora de inicio
-        hora_fin: horaFin, // Campo separado para hora de fin
-        duracion_minutos: totalDuration,
-        precio_total: totalPrice * 100, // Convertir a centavos como está en el schema
-        notas_cliente: booking.client.notes || "",
+        clienteId: usuario?.id,
+        barberoId: booking.barberId,
+        servicioIds: booking.services.map((s) => s.id),
+        fecha: booking.date,
+        hora: booking.time,
+        duracionEstimada: booking.duration,
+        estado: "pendiente",
+        notas: booking.notes || "",
       };
 
-      console.log("📅 Creando reserva:", reservaData);
-      const reserva = await crearReserva(reservaData);
-      console.log("✅ Reserva creada exitosamente:", reserva);
+      console.log("📅 Creando reserva con datos:", reservaData);
+      const reservaCreada = await crearReserva(reservaData);
+      console.log("✅ Reserva creada:", reservaCreada);
 
+      // 3. Actualizar UI y mostrar confirmación
       setCurrentBooking(booking);
       setBookingStep("confirmation");
-      addToast("¡Reserva creada exitosamente!", "success");
+
+      // 4. Mostrar notificación de éxito
+      addToast({
+        title: "¡Reserva confirmada!",
+        message: `Tu cita ha sido agendada para el ${booking.date} a las ${booking.time}`,
+        type: "success",
+        duration: 5000,
+      });
     } catch (error) {
-      console.error("❌ Error creando reserva MVP:", error);
-      addToast(
-        "Error al crear la reserva: " + (error as Error).message,
-        "error"
-      );
+      console.error("❌ Error al crear reserva:", error);
+      addToast({
+        title: "Error al crear reserva",
+        message:
+          "Ocurrió un problema al procesar tu reserva. Por favor intenta nuevamente.",
+        type: "error",
+        duration: 5000,
+      });
     }
   };
 
-  const handleNewBooking = () => {
+  const resetBookingProcess = () => {
     setBookingStep("barbero");
     setSelectedDate("");
     setSelectedTime(null);
@@ -161,440 +144,375 @@ function AppContent() {
 
   const startBookingProcess = () => {
     setCurrentView("booking");
-    setBookingStep("barbero");
-    setSelectedDate("");
-    setSelectedTime(null);
-    setSelectedServices([]);
-    setSelectedBarberId("");
-    setCurrentBooking(null);
-  };
-
-  const goToLanding = () => {
-    setCurrentView("landing");
-    setMobileMenuOpen(false);
-  };
-
-  const goToBooking = () => {
-    setCurrentView("booking");
-    setMobileMenuOpen(false);
+    resetBookingProcess();
   };
 
   const goToAdmin = () => {
     setCurrentView("admin");
-    setMobileMenuOpen(false);
   };
 
   const goToAdminPro = () => {
     setCurrentView("admin-pro");
-    setMobileMenuOpen(false);
+  };
+
+  const goToTest = () => {
+    setCurrentView("test");
+  };
+
+  const goToMVP = () => {
+    setCurrentView("mvp");
+  };
+
+  const goToLanding = () => {
+    setCurrentView("landing");
+  };
+  
+  const goToAdminTabs = () => {
+    setCurrentView("admin-tabs");
+  };
+  
+  const goToAdminMaster = () => {
+    setCurrentView("admin-master");
+  };
+
+  const handleServiceSelect = (services: Service[]) => {
+    setSelectedServices(services);
+    setBookingStep("form");
+  };
+
+  const handleBarberSelect = (barberId: string) => {
+    setSelectedBarberId(barberId);
+    setBookingStep("calendar");
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setBookingStep("service");
+  };
+
+  const handleTimeSelect = (time: TimeSlot) => {
+    setSelectedTime(time);
+    setBookingStep("service");
+  };
+
+  const handleClientFormSubmit = (clientData: any) => {
+    // Crear objeto de reserva completo
+    const booking: Booking = {
+      id: `booking-${Date.now()}`,
+      barberId: selectedBarberId,
+      date: selectedDate,
+      time: selectedTime?.time || "",
+      duration: selectedServices.reduce((total, s) => total + s.duration, 0),
+      services: selectedServices,
+      status: "pending",
+      client: {
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+      },
+      notes: clientData.notes,
+      total: selectedServices.reduce((total, s) => total + s.price, 0),
+      createdAt: new Date().toISOString(),
+    };
+
+    handleBookingComplete(booking);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-sm">
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Navbar */}
+      <nav className="sticky top-0 z-10 bg-white shadow-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
-            <div
-              className="flex cursor-pointer items-center space-x-3"
-              onClick={goToLanding}
-            >
-              <div className="rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 p-3">
-                <Scissors className="h-8 w-8 text-black" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Michael The Barber
-                </h1>
-                <p className="text-sm text-gray-400">Studios</p>
+          <div className="flex h-16 justify-between">
+            <div className="flex">
+              <div className="flex flex-shrink-0 items-center">
+                <button
+                  onClick={goToLanding}
+                  className="flex items-center space-x-2 text-xl font-bold text-gray-900"
+                >
+                  <Scissors className="h-6 w-6 text-yellow-600" />
+                  <span>Michael The Barber</span>
+                </button>
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden space-x-1 md:flex">
+            <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
               <button
-                onClick={goToLanding}
-                className={`flex items-center space-x-2 rounded-lg px-6 py-3 font-semibold transition-all duration-300 ${
-                  currentView === "landing"
-                    ? "scale-105 transform bg-yellow-500 text-black shadow-lg"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
+                onClick={startBookingProcess}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
               >
-                <span>Inicio</span>
-              </button>
-              <button
-                onClick={goToBooking}
-                className={`flex items-center space-x-2 rounded-lg px-6 py-3 font-semibold transition-all duration-300 ${
-                  currentView === "booking"
-                    ? "scale-105 transform bg-yellow-500 text-black shadow-lg"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
-              >
-                <Calendar className="h-5 w-5" />
-                <span>Reservas</span>
+                Reservar
               </button>
               <button
                 onClick={goToAdmin}
-                className={`flex items-center space-x-2 rounded-lg px-6 py-3 font-semibold transition-all duration-300 ${
-                  currentView === "admin"
-                    ? "scale-105 transform bg-yellow-500 text-black shadow-lg"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
               >
-                <Settings className="h-5 w-5" />
-                <span>Admin</span>
+                Admin
               </button>
               <button
                 onClick={goToAdminPro}
-                className={`flex items-center space-x-2 rounded-lg px-6 py-3 font-semibold transition-all duration-300 ${
-                  currentView === "admin-pro"
-                    ? "scale-105 transform bg-blue-500 text-white shadow-lg"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
               >
-                <Users className="h-5 w-5" />
-                <span>Admin Pro</span>
+                Admin Pro
               </button>
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-white md:hidden"
-            >
-              {mobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="absolute left-0 right-0 top-full border-b border-gray-800 bg-black/95 backdrop-blur-sm md:hidden">
-              <div className="space-y-2 px-4 py-4">
-                <button
-                  onClick={goToLanding}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "landing"
-                      ? "bg-yellow-500 text-black"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Inicio
-                </button>
-                <button
-                  onClick={goToBooking}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "booking"
-                      ? "bg-yellow-500 text-black"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Reservas
-                </button>
-                <button
-                  onClick={() => setCurrentView("admin")}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "admin"
-                      ? "bg-yellow-500 text-black"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Admin
-                </button>
-                <button
-                  onClick={goToAdminPro}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "admin-pro"
-                      ? "bg-blue-500 text-white"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Admin Pro
-                </button>
-                <button
-                  onClick={() => setCurrentView("mvp")}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "mvp"
-                      ? "bg-yellow-500 text-black"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Sistema MVP
-                </button>
-                <button
-                  onClick={() => setCurrentView("test")}
-                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
-                    currentView === "test"
-                      ? "bg-yellow-500 text-black"
-                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                  }`}
-                >
-                  Test Hooks
-                </button>
-              </div>
+              <button
+                onClick={goToAdminTabs}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Admin Tabs
+              </button>
+              <button
+                onClick={goToAdminMaster}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 bg-yellow-100"
+              >
+                Admin Master
+              </button>
+              <button
+                onClick={goToTest}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Test MVP
+              </button>
+              <button
+                onClick={goToMVP}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                MVP
+              </button>
             </div>
-          )}
+
+            {/* Mobile menu button */}
+            <div className="-mr-2 flex items-center sm:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-yellow-500"
+              >
+                <span className="sr-only">
+                  {mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+                </span>
+                {mobileMenuOpen ? (
+                  <X className="block h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <Menu className="block h-6 w-6" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
-      </header>
 
-      <main className="min-h-screen">
-        {currentView === "test" && <TestMVPHooks />}
-        {currentView === "mvp" && <BookingSystemMVP />}
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden">
+            <div className="space-y-1 px-2 pb-3 pt-2">
+              <button
+                onClick={() => {
+                  startBookingProcess();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Reservar
+              </button>
+              <button
+                onClick={() => {
+                  goToAdmin();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Admin
+              </button>
+              <button
+                onClick={() => {
+                  goToAdminPro();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Admin Pro
+              </button>
+              <button
+                onClick={() => {
+                  goToAdminTabs();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Admin Tabs
+              </button>
+              <button
+                onClick={() => {
+                  goToAdminMaster();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100 bg-yellow-100"
+              >
+                Admin Master
+              </button>
+              <button
+                onClick={() => {
+                  goToTest();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Test MVP
+              </button>
+              <button
+                onClick={() => {
+                  goToMVP();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                MVP
+              </button>
+            </div>
+          </div>
+        )}
+      </nav>
 
+      {/* Main Content */}
+      <main className="flex-1">
         {currentView === "landing" && (
-          <LandingPage onStartBooking={startBookingProcess} />
+          <LandingPage onBookNow={startBookingProcess} />
         )}
 
         {currentView === "booking" && (
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="space-y-8">
-              {/* Progress Steps */}
-              <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`flex items-center space-x-3 ${
-                      bookingStep === "barbero"
-                        ? "text-yellow-500"
-                        : [
-                            "calendar",
-                            "service",
-                            "form",
-                            "confirmation",
-                          ].includes(bookingStep)
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                        bookingStep === "barbero"
-                          ? "border-yellow-500 bg-yellow-500/20"
-                          : [
-                              "calendar",
-                              "service",
-                              "form",
-                              "confirmation",
-                            ].includes(bookingStep)
-                          ? "border-green-500 bg-green-500/20"
-                          : "border-gray-500"
-                      }`}
-                    >
-                      {["calendar", "service", "form", "confirmation"].includes(
-                        bookingStep
-                      ) ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <Users className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="font-semibold">Barbero</span>
-                  </div>
-
-                  <div className="mx-4 h-px flex-1 bg-gray-600"></div>
-
-                  <div
-                    className={`flex items-center space-x-3 ${
-                      bookingStep === "calendar"
-                        ? "text-yellow-500"
-                        : ["service", "form", "confirmation"].includes(
-                            bookingStep
-                          )
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                        bookingStep === "calendar"
-                          ? "border-yellow-500 bg-yellow-500/20"
-                          : ["service", "form", "confirmation"].includes(
-                              bookingStep
-                            )
-                          ? "border-green-500 bg-green-500/20"
-                          : "border-gray-500"
-                      }`}
-                    >
-                      {["service", "form", "confirmation"].includes(
-                        bookingStep
-                      ) ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <Calendar className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="font-semibold">Fecha y Hora</span>
-                  </div>
-
-                  <div className="mx-4 h-px flex-1 bg-gray-600"></div>
-
-                  <div
-                    className={`flex items-center space-x-3 ${
-                      bookingStep === "service"
-                        ? "text-yellow-500"
-                        : ["form", "confirmation"].includes(bookingStep)
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                        bookingStep === "service"
-                          ? "border-yellow-500 bg-yellow-500/20"
-                          : ["form", "confirmation"].includes(bookingStep)
-                          ? "border-green-500 bg-green-500/20"
-                          : "border-gray-500"
-                      }`}
-                    >
-                      {["form", "confirmation"].includes(bookingStep) ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <Scissors className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="font-semibold">Servicios</span>
-                  </div>
-
-                  <div className="mx-4 h-px flex-1 bg-gray-600"></div>
-
-                  <div
-                    className={`flex items-center space-x-3 ${
-                      bookingStep === "form"
-                        ? "text-yellow-500"
-                        : bookingStep === "confirmation"
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                        bookingStep === "form"
-                          ? "border-yellow-500 bg-yellow-500/20"
-                          : bookingStep === "confirmation"
-                          ? "border-green-500 bg-green-500/20"
-                          : "border-gray-500"
-                      }`}
-                    >
-                      {bookingStep === "confirmation" ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <Users className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="font-semibold">Datos</span>
-                  </div>
+            <div className="mb-8 flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Reserva tu cita
+              </h1>
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    bookingStep === "barbero" || bookingStep === "calendar"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  1
+                </div>
+                <div
+                  className={`h-1 w-5 ${
+                    bookingStep === "service" || bookingStep === "form"
+                      ? "bg-yellow-500"
+                      : "bg-gray-200"
+                  }`}
+                />
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    bookingStep === "service" || bookingStep === "form"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  2
+                </div>
+                <div
+                  className={`h-1 w-5 ${
+                    bookingStep === "confirmation"
+                      ? "bg-yellow-500"
+                      : "bg-gray-200"
+                  }`}
+                />
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                    bookingStep === "confirmation"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  3
                 </div>
               </div>
-
-              {/* Content */}
-              {bookingStep === "barbero" && (
-                <BarberSelection
-                  selectedBarberId={selectedBarberId}
-                  onBarberSelect={setSelectedBarberId}
-                  onNext={() => setBookingStep("calendar")}
-                />
-              )}
-
-              {bookingStep === "calendar" && (
-                <BookingCalendar
-                  selectedDate={selectedDate}
-                  selectedTime={selectedTime}
-                  bookings={transformedBookings}
-                  selectedBarberId={selectedBarberId}
-                  onDateSelect={setSelectedDate}
-                  onTimeSelect={setSelectedTime}
-                  onNext={() => setBookingStep("service")}
-                />
-              )}
-
-              {bookingStep === "service" && (
-                <ServiceSelection
-                  selectedServices={selectedServices}
-                  onServicesChange={setSelectedServices}
-                  onBack={() => setBookingStep("calendar")}
-                  onNext={() => setBookingStep("form")}
-                />
-              )}
-
-              {bookingStep === "form" && (
-                <ClientForm
-                  selectedDate={selectedDate}
-                  selectedTime={selectedTime}
-                  selectedServices={selectedServices}
-                  onBack={() => setBookingStep("service")}
-                  onSubmit={handleBookingComplete}
-                  isSubmitting={isCreatingReserva}
-                />
-              )}
-
-              {bookingStep === "confirmation" && currentBooking && (
-                <BookingConfirmation
-                  booking={currentBooking}
-                  onNewBooking={handleNewBooking}
-                />
-              )}
             </div>
+
+            {bookingStep === "barbero" && (
+              <BarberSelection onSelect={handleBarberSelect} />
+            )}
+
+            {bookingStep === "calendar" && (
+              <BookingCalendar
+                barberId={selectedBarberId}
+                onDateSelect={handleDateSelect}
+                onTimeSelect={handleTimeSelect}
+              />
+            )}
+
+            {bookingStep === "service" && (
+              <ServiceSelection
+                onSelect={handleServiceSelect}
+                barberId={selectedBarberId}
+              />
+            )}
+
+            {bookingStep === "form" && (
+              <ClientForm
+                onSubmit={handleClientFormSubmit}
+                services={selectedServices}
+                date={selectedDate}
+                time={selectedTime?.time || ""}
+                isLoading={isCreatingReserva}
+              />
+            )}
+
+            {bookingStep === "confirmation" && currentBooking && (
+              <BookingConfirmation
+                booking={currentBooking}
+                onNewBooking={resetBookingProcess}
+              />
+            )}
           </div>
         )}
 
-        {currentView === "admin" && (
-          <div className="min-h-screen">
-            <AdminPanelModern />
-          </div>
-        )}
+        {currentView === "admin" && <AdminPanelModern />}
 
-        {currentView === "admin-pro" && (
-          <div className="min-h-screen">
-            <AdminPanelProfessional />
-          </div>
-        )}
+        {currentView === "admin-pro" && <AdminPanelProfessional />}
+        
+        {currentView === "admin-tabs" && <AdminTabsNavigation />}
+        
+        {currentView === "admin-master" && <AdminMasterComponent />}
+
+        {currentView === "test" && <TestMVPHooks />}
+
+        {currentView === "mvp" && <BookingSystemMVP />}
       </main>
 
-      {/* Footer - Only show on landing page */}
+      {/* Footer */}
       {currentView === "landing" && (
-        <footer className="border-t border-gray-800 bg-gray-900">
-          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-              {/* Logo and Description */}
-              <div className="md:col-span-2">
-                <div className="mb-4 flex items-center space-x-3">
-                  <div className="rounded-lg bg-gradient-to-r from-yellow-400 to-yellow-600 p-2">
-                    <Scissors className="h-6 w-6 text-black" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">
-                      Michael The Barber
-                    </h3>
-                    <p className="text-sm text-gray-400">Studios</p>
-                  </div>
-                </div>
-                <p className="mb-4 text-gray-400">
-                  Servicios de barbería y formación de alto estándar en
-                  Coquimbo. Donde tu estilo encuentra precisión.
+        <footer className="bg-gray-900 py-12 text-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              {/* About */}
+              <div>
+                <h4 className="mb-4 text-lg font-semibold text-white">
+                  Michael The Barber
+                </h4>
+                <p className="text-gray-400">
+                  Barbería de estilo clásico con un toque moderno. Ofrecemos
+                  cortes de cabello, arreglo de barba y más servicios para el
+                  caballero contemporáneo.
                 </p>
-                <div className="flex space-x-4">
+                <div className="mt-4 flex space-x-4">
                   <a
-                    href="https://www.instagram.com/michael.the.barber_studios/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
                     className="text-gray-400 transition-colors hover:text-yellow-500"
                   >
-                    <Instagram className="h-6 w-6" />
+                    <Instagram className="h-5 w-5" />
                   </a>
                   <a
-                    href="https://wa.me/56912345678"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
                     className="text-gray-400 transition-colors hover:text-yellow-500"
                   >
-                    <MessageCircle className="h-6 w-6" />
+                    <MessageCircle className="h-5 w-5" />
                   </a>
                 </div>
               </div>
 
-              {/* Contact Info */}
+              {/* Contact */}
               <div>
                 <h4 className="mb-4 text-lg font-semibold text-white">
                   Contacto
@@ -656,11 +574,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ToastProvider>
-      <NotificationProvider>
-        <AppContent />
-      </NotificationProvider>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 

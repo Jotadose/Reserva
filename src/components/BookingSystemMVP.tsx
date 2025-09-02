@@ -29,41 +29,52 @@ export function BookingSystemMVP() {
       let cliente;
 
       try {
-        // Primero buscar si el usuario ya existe
+        // Primero buscar si el usuario ya existe con múltiples intentos
         cliente = await buscarPorEmail(clientData.email);
 
         if (!cliente) {
-          // Si no existe, crear uno nuevo
-          const clienteData = {
-            nombre: clientData.nombre,
-            email: clientData.email,
-            telefono: clientData.telefono,
-            rol: "cliente" as const,
-          };
+          try {
+            // Si no existe, crear uno nuevo
+            const clienteData = {
+              nombre: clientData.nombre,
+              email: clientData.email,
+              telefono: clientData.telefono,
+              rol: "cliente" as const,
+            };
 
-          console.log("👤 Creando nuevo cliente:", clienteData);
-          cliente = await crearUsuario(clienteData);
-          console.log("✅ Cliente creado:", cliente);
+            console.log("👤 Creando nuevo cliente:", clienteData);
+            cliente = await crearUsuario(clienteData);
+            console.log("✅ Cliente creado:", cliente);
+          } catch (createError: any) {
+            // Si es error de clave duplicada, significa que el usuario se creó en otra sesión
+            // entre nuestra búsqueda inicial y el intento de creación
+            if (createError.code === "23505" && createError.message?.includes("usuarios_email_key")) {
+              console.log("⚠️ Cliente creado concurrentemente, buscando nuevamente...");
+              // Esperar un momento para asegurar que la base de datos se actualice
+              await new Promise(resolve => setTimeout(resolve, 500));
+              cliente = await buscarPorEmail(clientData.email);
+              
+              if (cliente) {
+                console.log("👤 Cliente encontrado después de error de duplicado:", cliente);
+              } else {
+                console.error("❌ No se pudo encontrar el cliente después del error de duplicado");
+                alert("Error: No se pudo procesar el cliente");
+                return;
+              }
+            } else {
+              // Otro tipo de error
+              console.error("❌ Error inesperado creando cliente:", createError);
+              alert("Error al procesar el cliente: " + createError.message);
+              return;
+            }
+          }
         } else {
           console.log("👤 Cliente existente encontrado:", cliente);
         }
       } catch (error: any) {
-        // Si es error de clave duplicada, buscar el usuario nuevamente
-        if (
-          error.code === "23505" &&
-          error.message?.includes("usuarios_email_key")
-        ) {
-          console.log("⚠️ Cliente ya existe, buscando nuevamente...");
-          cliente = await buscarPorEmail(clientData.email);
-          if (!cliente) {
-            alert("Error: No se pudo procesar el cliente");
-            return;
-          }
-        } else {
-          console.error("❌ Error inesperado creando cliente:", error);
-          alert("Error al procesar el cliente: " + error.message);
-          return;
-        }
+        console.error("❌ Error inesperado en el proceso de cliente:", error);
+        alert("Error al procesar el cliente: " + error.message);
+        return;
       }
 
       // 2. Calcular duración total y precio

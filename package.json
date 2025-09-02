@@ -17,13 +17,22 @@
     "clean": "pnpm --recursive run clean",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel",
+    "deploy:production": "node scripts/deploy-production.cjs",
+    "verify:cache": "node scripts/verify-production-cache.cjs",
+    "verify:deploy": "node scripts/verify-deploy.cjs",
+    "clear:cache": "node scripts/clear-vercel-cache.cjs",
     "test:booking": "node apps/api/test-reservation.js",
-    "test:duration": "node apps/api/test-duration-blocking.js"
+    "test:duration": "node apps/api/test-duration-blocking.js",
+    "test:production": "node test-production.js",
+    "test:production:complete": "node test-production-complete.js",
+    "test:cjs": "node scripts/test-cjs.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@supabase/supabase-js": "^2.56.0",
     "@tanstack/react-query": "^5.85.5",
+    "axios": "^1.11.0",
+    "chalk": "^5.6.0",
     "date-fns": "^4.1.0",
     "depcruise": "^1.0.0",
     "dotenv": "^17.2.1",
