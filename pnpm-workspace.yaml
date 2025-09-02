@@ -8,8 +8,7 @@
 packages:
   # Aplicaciones principales
   - "apps/api"
-  # Temporarily excluding apps/web due to build error
-  # - "apps/web"
+  - "apps/web"
 
   # Paquetes compartidos (tipos, utilidades, configuraciones)
   - "packages/*"

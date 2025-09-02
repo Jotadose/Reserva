@@ -30,14 +30,9 @@ import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
 import BarberSelection from "./components/BarberSelection";
 import ClientForm from "./components/ClientForm";
-import { AdminPanelModern } from "./components/AdminPanelModern";
-import AdminPanelProfessional from "./components/AdminPanelProfessional";
+import AdminDashboardOptimizado from "./components/AdminDashboardOptimizado";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
-import { TestMVPHooks } from "./components/TestMVPHooks";
-import { BookingSystemMVP } from "./components/BookingSystemMVP";
-import { AdminTabsNavigation } from "./components/AdminTabsNavigation";
-import { AdminMasterComponent } from "./components/AdminMasterComponent";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
 import { NotificationProvider } from "./hooks/useNotifications";
 import { useReservasMVP } from "./hooks/useReservasMVP";
@@ -48,8 +43,8 @@ import { AuthProvider } from "./hooks/useAuth";
 function AppContent() {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<
-    "landing" | "booking" | "admin" | "admin-pro" | "test" | "mvp" | "admin-tabs" | "admin-master"
-  >("test");
+    "landing" | "booking" | "admin"
+  >("landing");
   const [bookingStep, setBookingStep] = useState<
     "barbero" | "calendar" | "service" | "form" | "confirmation"
   >("barbero");
@@ -151,28 +146,8 @@ function AppContent() {
     setCurrentView("admin");
   };
 
-  const goToAdminPro = () => {
-    setCurrentView("admin-pro");
-  };
-
-  const goToTest = () => {
-    setCurrentView("test");
-  };
-
-  const goToMVP = () => {
-    setCurrentView("mvp");
-  };
-
   const goToLanding = () => {
     setCurrentView("landing");
-  };
-  
-  const goToAdminTabs = () => {
-    setCurrentView("admin-tabs");
-  };
-  
-  const goToAdminMaster = () => {
-    setCurrentView("admin-master");
   };
 
   const handleServiceSelect = (services: Service[]) => {
@@ -239,46 +214,22 @@ function AppContent() {
             {/* Desktop Navigation */}
             <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
               <button
+                onClick={goToLanding}
+                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Inicio
+              </button>
+              <button
                 onClick={startBookingProcess}
                 className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
               >
-                Reservar
+                Reserva
               </button>
               <button
                 onClick={goToAdmin}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
+                className="rounded-md px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 Admin
-              </button>
-              <button
-                onClick={goToAdminPro}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Admin Pro
-              </button>
-              <button
-                onClick={goToAdminTabs}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Admin Tabs
-              </button>
-              <button
-                onClick={goToAdminMaster}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 bg-yellow-100"
-              >
-                Admin Master
-              </button>
-              <button
-                onClick={goToTest}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Test MVP
-              </button>
-              <button
-                onClick={goToMVP}
-                className="rounded-md px-3 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100"
-              >
-                MVP
               </button>
             </div>
 
@@ -307,12 +258,21 @@ function AppContent() {
             <div className="space-y-1 px-2 pb-3 pt-2">
               <button
                 onClick={() => {
+                  goToLanding();
+                  setMobileMenuOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => {
                   startBookingProcess();
                   setMobileMenuOpen(false);
                 }}
                 className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
               >
-                Reservar
+                Reserva
               </button>
               <button
                 onClick={() => {
@@ -322,51 +282,6 @@ function AppContent() {
                 className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
               >
                 Admin
-              </button>
-              <button
-                onClick={() => {
-                  goToAdminPro();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Admin Pro
-              </button>
-              <button
-                onClick={() => {
-                  goToAdminTabs();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Admin Tabs
-              </button>
-              <button
-                onClick={() => {
-                  goToAdminMaster();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100 bg-yellow-100"
-              >
-                Admin Master
-              </button>
-              <button
-                onClick={() => {
-                  goToTest();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
-              >
-                Test MVP
-              </button>
-              <button
-                onClick={() => {
-                  goToMVP();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-100"
-              >
-                MVP
               </button>
             </div>
           </div>
@@ -468,17 +383,7 @@ function AppContent() {
           </div>
         )}
 
-        {currentView === "admin" && <AdminPanelModern />}
-
-        {currentView === "admin-pro" && <AdminPanelProfessional />}
-        
-        {currentView === "admin-tabs" && <AdminTabsNavigation />}
-        
-        {currentView === "admin-master" && <AdminMasterComponent />}
-
-        {currentView === "test" && <TestMVPHooks />}
-
-        {currentView === "mvp" && <BookingSystemMVP />}
+        {currentView === "admin" && <AdminDashboardOptimizado />}
       </main>
 
       {/* Footer */}

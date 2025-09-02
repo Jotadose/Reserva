@@ -1,8 +1,27 @@
 {
   "version": 2,
-  "buildCommand": "pnpm run build",
+  "buildCommand": "cd apps/web && pnpm run build",
   "installCommand": "pnpm install",
-  "outputDirectory": "dist",
+  "outputDirectory": "apps/web/dist",
+  "framework": "vite",
+  "functions": {
+    "apps/api/*.js": {
+      "runtime": "nodejs18.x"
+    },
+    "apps/api/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/apps/api/$1"
+    },
+    {
+      "source": "/((?!api).*)",
+      "destination": "/apps/web/$1"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
