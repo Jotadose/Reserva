@@ -1,7 +1,15 @@
 /**
  * APLICACIÓN PRINCIPAL - Sistema de Reservas para Barbería
  *
- * Este es el componente raíz que maneja:
+ * Este es e      if (!usuario) {
+        // Si no existe, crear uno nuevo
+        const usuarioData = {
+          nombre: booking.client.name,
+          telefono: booking.client.phone,
+          email: booking.client.email,
+          rol: "cliente" as const, // 🔧 Campo obligatorio según schema
+          activo: true
+        };ente raíz que maneja:
  * - Autenticación de administrador
  * - Estados principales de la aplicación (landing, reservas, admin)
  * - Integración con Supabase para datos
@@ -30,12 +38,14 @@ import BookingCalendar from "./components/BookingCalendar";
 import ServiceSelection from "./components/ServiceSelection";
 import BarberSelection from "./components/BarberSelection";
 import ClientForm from "./components/ClientForm";
-import { AdminPanelSimpleUpdated } from "./components/AdminPanelSimpleUpdated";
+import { AdminPanelModern } from "./components/AdminPanelModern";
+import AdminPanelProfessional from "./components/AdminPanelProfessional";
 import BookingConfirmation from "./components/BookingConfirmation";
 import LandingPage from "./components/LandingPage";
 import { TestMVPHooks } from "./components/TestMVPHooks";
 import { BookingSystemMVP } from "./components/BookingSystemMVP";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
+import { AuthProvider } from "./hooks/useAuth.tsx";
 import { useReservasMVP } from "./hooks/useReservasMVP";
 import { useUsuarios } from "./hooks/useUsuarios";
 import { Booking, Service, TimeSlot } from "./types/booking";
@@ -43,7 +53,7 @@ import { Booking, Service, TimeSlot } from "./types/booking";
 function AppContent() {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<
-    "landing" | "booking" | "admin" | "test" | "mvp"
+    "landing" | "booking" | "admin" | "admin-pro" | "test" | "mvp"
   >("test");
   const [bookingStep, setBookingStep] = useState<
     "barbero" | "calendar" | "service" | "form" | "confirmation"
@@ -56,8 +66,8 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ✅ HOOKS MVP PARA SISTEMA COMPLETO
-  const { createReserva, loading: isCreatingReserva } = useReservasMVP();
-  const { crearUsuario } = useUsuarios();
+  const { crearReserva, loading: isCreatingReserva } = useReservasMVP();
+  const { crearUsuario, buscarPorEmail } = useUsuarios();
 
   // 🛠️ DEBUG: Verificar datos de Supabase
   console.log("🔍 App.tsx - Sistema MVP:", {
@@ -74,46 +84,96 @@ function AppContent() {
     try {
       console.log("💾 Creando reserva MVP:", booking);
 
-      // 1. Crear/buscar usuario
-      const usuarioData = {
-        nombre: booking.client.name,
-        telefono: booking.client.phone,
-        email: booking.client.email,
-        rol: "cliente" as const,
-      };
+      // 1. Buscar/crear usuario usando los hooks del nivel superior
+      let usuario;
 
-      const usuario = await crearUsuario(usuarioData);
+      try {
+        // Primero buscar si el usuario ya existe
+        usuario = await buscarPorEmail(booking.client.email);
+
+        if (!usuario) {
+          // Si no existe, crear uno nuevo
+          const usuarioData = {
+            nombre: booking.client.name,
+            telefono: booking.client.phone,
+            email: booking.client.email,
+            rol: "cliente" as const, // 🔧 Campo obligatorio según schema
+            activo: true,
+          };
+
+          console.log("👤 Creando nuevo usuario:", usuarioData);
+          usuario = await crearUsuario(usuarioData);
+          console.log("✅ Usuario creado:", usuario);
+        } else {
+          console.log("👤 Usuario existente encontrado:", usuario);
+        }
+      } catch (error: any) {
+        // Si es error de clave duplicada, buscar el usuario nuevamente
+        if (
+          error.code === "23505" &&
+          error.message?.includes("usuarios_email_key")
+        ) {
+          console.log("⚠️ Usuario ya existe, buscando nuevamente...");
+          usuario = await buscarPorEmail(booking.client.email);
+          if (!usuario) {
+            addToast("Error: No se pudo procesar el usuario", "error");
+            return;
+          }
+        } else {
+          console.error("❌ Error inesperado creando usuario:", error);
+          addToast("Error al procesar el usuario: " + error.message, "error");
+          return;
+        }
+      }
+
       if (!usuario) {
-        addToast("Error al crear el usuario", "error");
+        addToast("Error al procesar el usuario", "error");
         return;
       }
 
-      // 2. Crear reserva con servicios
+      // 2. Crear reserva con el primer servicio (MVP simplificado)
+      const firstService = selectedServices[0]; // Por ahora solo un servicio
+      const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+      const totalDuration = selectedServices.reduce(
+        (sum, s) => sum + s.duration,
+        0
+      );
+
+      // 🔧 CALCULAR TIEMPO DE FINALIZACIÓN
+      const [hours, minutes] = booking.time.split(":").map(Number);
+      const startMinutes = hours * 60 + minutes;
+      const endMinutes = startMinutes + totalDuration;
+      const endHours = Math.floor(endMinutes / 60);
+      const endMins = endMinutes % 60;
+      const horaFin = `${endHours.toString().padStart(2, "0")}:${endMins
+        .toString()
+        .padStart(2, "0")}`;
+
       const reservaData = {
-        usuario_id: usuario.id_usuario,
-        barbero_id: selectedBarberId,
-        fecha: booking.date,
-        hora_inicio: booking.time,
-        estado: "confirmada" as const,
-        notas: booking.client.notes || "",
-        servicios: selectedServices.map((service) => ({
-          servicio_id: service.id,
-          precio_acordado: service.price,
-        })),
+        id_cliente: usuario.id_usuario, // El schema usa id_cliente, no id_usuario
+        id_barbero: selectedBarberId,
+        id_servicio: firstService.id, // El id ya contiene id_servicio del mapeo en ServiceSelection
+        fecha_reserva: booking.date, // Campo separado para fecha
+        hora_inicio: booking.time, // Campo separado para hora de inicio
+        hora_fin: horaFin, // Campo separado para hora de fin
+        duracion_minutos: totalDuration,
+        precio_total: totalPrice * 100, // Convertir a centavos como está en el schema
+        notas_cliente: booking.client.notes || "",
       };
 
-      const success = await createReserva(reservaData);
+      console.log("📅 Creando reserva:", reservaData);
+      const reserva = await crearReserva(reservaData);
+      console.log("✅ Reserva creada exitosamente:", reserva);
 
-      if (success) {
-        setCurrentBooking(booking);
-        setBookingStep("confirmation");
-        addToast("¡Reserva creada exitosamente en el sistema MVP!", "success");
-      } else {
-        addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
-      }
+      setCurrentBooking(booking);
+      setBookingStep("confirmation");
+      addToast("¡Reserva creada exitosamente!", "success");
     } catch (error) {
-      console.error("Error creando reserva MVP:", error);
-      addToast("Error al crear la reserva. Inténtalo de nuevo.", "error");
+      console.error("❌ Error creando reserva MVP:", error);
+      addToast(
+        "Error al crear la reserva: " + (error as Error).message,
+        "error"
+      );
     }
   };
 
@@ -124,12 +184,6 @@ function AppContent() {
     setSelectedServices([]);
     setSelectedBarberId("");
     setCurrentBooking(null);
-  };
-
-  // ✅ CANCELAR RESERVA MVP (TODO: Implementar cuando se migre el admin)
-  const handleBookingCancel = async (bookingId: string) => {
-    console.log("🗑️ Cancelar reserva MVP (pendiente):", bookingId);
-    addToast("Funcionalidad de cancelación pendiente de migración", "info");
   };
 
   const startBookingProcess = () => {
@@ -154,6 +208,11 @@ function AppContent() {
 
   const goToAdmin = () => {
     setCurrentView("admin");
+    setMobileMenuOpen(false);
+  };
+
+  const goToAdminPro = () => {
+    setCurrentView("admin-pro");
     setMobileMenuOpen(false);
   };
 
@@ -212,6 +271,17 @@ function AppContent() {
                 <Settings className="h-5 w-5" />
                 <span>Admin</span>
               </button>
+              <button
+                onClick={goToAdminPro}
+                className={`flex items-center space-x-2 rounded-lg px-6 py-3 font-semibold transition-all duration-300 ${
+                  currentView === "admin-pro"
+                    ? "scale-105 transform bg-blue-500 text-white shadow-lg"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`}
+              >
+                <Users className="h-5 w-5" />
+                <span>Admin Pro</span>
+              </button>
             </nav>
 
             {/* Mobile Menu Button */}
@@ -260,6 +330,16 @@ function AppContent() {
                   }`}
                 >
                   Admin
+                </button>
+                <button
+                  onClick={goToAdminPro}
+                  className={`w-full rounded-lg px-4 py-3 text-left font-semibold transition-all duration-300 ${
+                    currentView === "admin-pro"
+                      ? "bg-blue-500 text-white"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+                >
+                  Admin Pro
                 </button>
                 <button
                   onClick={() => setCurrentView("mvp")}
@@ -487,11 +567,14 @@ function AppContent() {
         )}
 
         {currentView === "admin" && (
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-            <AdminPanelSimpleUpdated
-              bookings={transformedBookings}
-              onCancelBooking={handleBookingCancel}
-            />
+          <div className="min-h-screen">
+            <AdminPanelModern />
+          </div>
+        )}
+
+        {currentView === "admin-pro" && (
+          <div className="min-h-screen">
+            <AdminPanelProfessional />
           </div>
         )}
       </main>
@@ -601,7 +684,9 @@ function AppContent() {
 function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ToastProvider>
   );
 }

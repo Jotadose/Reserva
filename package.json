@@ -1,15 +1,24 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "reserva-monorepo",
+  "version": "1.0.0",
+  "description": "Sistema profesional de reservas para barbería - Monorepo",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "test:booking": "node api/test-reservation.js",
-    "test:duration": "node api/test-duration-blocking.js",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "pnpm --parallel run dev",
+    "dev:web": "pnpm --filter web run dev",
+    "dev:api": "pnpm --filter api run dev",
+    "build": "pnpm --recursive run build",
+    "build:web": "pnpm --filter web run build",
+    "build:api": "pnpm --filter api run build",
+    "lint": "pnpm --recursive run lint",
+    "test": "pnpm --recursive run test",
+    "type-check": "pnpm --recursive run type-check",
+    "clean": "pnpm --recursive run clean",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "test:booking": "node apps/api/test-reservation.js",
+    "test:duration": "node apps/api/test-duration-blocking.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -26,11 +35,28 @@
     "yup": "^1.7.0",
     "zustand": "^5.0.8"
   },
+  "keywords": [
+    "barbershop",
+    "booking",
+    "reservations",
+    "monorepo",
+    "typescript",
+    "react",
+    "vercel"
+  ],
+  "author": "Juan Esteban",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.6",
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@types/node": "^24.3.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "@vercel/node": "^5.3.17",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "dependency-cruiser": "^17.0.1",

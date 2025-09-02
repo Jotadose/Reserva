@@ -1,47 +1,86 @@
-import React, { useState } from "react";
-import { BarChart3, Download, Users, TrendingUp } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  BarChart3,
+  Download,
+  Users,
+  TrendingUp,
+  Calendar,
+  Clock,
+  User,
+  MapPin,
+} from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
-import { Booking } from "../types/booking";
+import { useReservasMVP } from "../hooks/useReservasMVP";
+import { useUsuarios } from "../hooks/useUsuarios";
+import { useServicios } from "../hooks/useServicios";
 
 interface AdminPanelSimpleProps {
-  bookings: Booking[];
-  onCancelBooking: (bookingId: string) => Promise<void>;
+  // Props vacías por ahora, ya que obtenemos los datos de los hooks
 }
 
 type ViewMode = "overview" | "bookings";
 
-export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = ({
-  bookings = [],
-  onCancelBooking,
-}) => {
+export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<ViewMode>("overview");
 
-  // Calcular estadísticas básicas
+  // 🔧 HOOKS MVP PARA DATOS REALES
+  const {
+    reservas,
+    loading: loadingReservas,
+    refetch,
+    actualizarReserva,
+    formatearPrecio,
+  } = useReservasMVP();
+  const { usuarios, loading: loadingUsuarios } = useUsuarios();
+  const { servicios, loading: loadingServicios } = useServicios();
+
+  const loading = loadingReservas || loadingUsuarios || loadingServicios;
+
+  // 🔧 CALCULAR ESTADÍSTICAS CON DATOS REALES MVP
   const stats = {
-    totalBookings: bookings.length,
-    todayBookings: bookings.filter((b) => {
+    totalBookings: reservas.length,
+    todayBookings: reservas.filter((r) => {
       const today = new Date().toISOString().split("T")[0];
-      return b.date === today;
+      return r.fecha_reserva === today;
     }).length,
-    weeklyRevenue: bookings.length * 25000,
-    completedBookings: bookings.filter((b) => b.status === "confirmed").length,
+    weeklyRevenue: reservas.reduce((sum, r) => sum + (r.precio_total || 0), 0),
+    completedBookings: reservas.filter((r) => r.estado === "completada").length,
   };
 
-  const handleCancelBooking = async (bookingId: string) => {
+  const handleCancelBooking = async (reservaId: string) => {
     try {
-      await onCancelBooking(bookingId);
+      await actualizarReserva(reservaId, { estado: "cancelada" });
       addToast("Reserva cancelada exitosamente", "success");
+      await refetch();
     } catch (error) {
+      console.error("Error cancelando reserva:", error);
       addToast("Error al cancelar la reserva", "error");
     }
   };
 
+  const handleCompleteBooking = async (reservaId: string) => {
+    try {
+      await actualizarReserva(reservaId, { estado: "completada" });
+      addToast("Reserva marcada como completada", "success");
+      await refetch();
+    } catch (error) {
+      console.error("Error completando reserva:", error);
+      addToast("Error al completar la reserva", "error");
+    }
+  };
+
   const exportData = () => {
-    const csv = bookings
-      .map(
-        (b) => `${b.date},${b.time},${b.clientName},${b.service},${b.status}`
-      )
+    const csv = reservas
+      .map((r) => {
+        // Buscar cliente por ID
+        const cliente = usuarios.find((u) => u.id_usuario === r.id_cliente);
+        const servicio = servicios.find((s) => s.id_servicio === r.id_servicio);
+
+        return `${r.fecha_reserva},${r.hora_inicio},${
+          cliente?.nombre || "N/A"
+        },${servicio?.nombre || "N/A"},${r.estado}`;
+      })
       .join("\\n");
 
     const blob = new Blob([`Fecha,Hora,Cliente,Servicio,Estado\\n${csv}`], {
@@ -124,7 +163,11 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = ({
                   Ingresos Estimados
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${stats.weeklyRevenue.toLocaleString()}
+                  {new Intl.NumberFormat("es-CO", {
+                    style: "currency",
+                    currency: "COP",
+                    minimumFractionDigits: 0,
+                  }).format(stats.weeklyRevenue / 100)}
                 </p>
               </div>
             </div>
@@ -153,51 +196,77 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = ({
             </h2>
           </div>
           <div className="p-6">
-            {bookings.length === 0 ? (
+            {loading ? (
+              <p className="text-gray-500 text-center py-8">
+                Cargando reservas...
+              </p>
+            ) : reservas.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 No hay reservas registradas
               </p>
             ) : (
               <div className="space-y-4">
-                {bookings.slice(0, 5).map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {booking.clientName}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {booking.service}
-                          </p>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {booking.date} - {booking.time}
-                        </div>
-                        <div
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            booking.status === "confirmed"
-                              ? "bg-green-100 text-green-800"
-                              : booking.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {booking.status}
+                {reservas.slice(0, 5).map((reserva) => {
+                  const cliente = usuarios.find(
+                    (u) => u.id_usuario === reserva.id_cliente
+                  );
+                  const servicio = servicios.find(
+                    (s) => s.id_servicio === reserva.id_servicio
+                  );
+
+                  return (
+                    <div
+                      key={reserva.id_reserva}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {cliente?.nombre || "Cliente no encontrado"}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {servicio?.nombre || "Servicio no encontrado"}
+                            </p>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {reserva.fecha_reserva} - {reserva.hora_inicio}
+                          </div>
+                          <div
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              reserva.estado === "confirmada"
+                                ? "bg-green-100 text-green-800"
+                                : reserva.estado === "pendiente"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {reserva.estado}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {new Intl.NumberFormat("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                            minimumFractionDigits: 0,
+                          }).format((reserva.precio_total || 0) / 100)}
+                        </span>
+                        {reserva.estado === "confirmada" && (
+                          <button
+                            onClick={() =>
+                              handleCancelBooking(reserva.id_reserva)
+                            }
+                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleCancelBooking(booking.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

@@ -21,19 +21,50 @@ export function BookingSystemMVP() {
     formatearPrecio,
   } = useServicios();
   const { reservas, crearReserva, loading: reservasLoading } = useReservasMVP();
-  const { usuarios, crearUsuario } = useUsuarios();
+  const { usuarios, crearUsuario, buscarPorEmail } = useUsuarios();
 
   const handleCreateReservation = async () => {
     try {
-      // 1. Crear usuario cliente si no existe
-      const clienteData = {
-        nombre: clientData.nombre,
-        email: clientData.email,
-        telefono: clientData.telefono,
-        rol: "cliente" as const,
-      };
+      // 1. Buscar/crear usuario cliente
+      let cliente;
 
-      const nuevoCliente = await crearUsuario(clienteData);
+      try {
+        // Primero buscar si el usuario ya existe
+        cliente = await buscarPorEmail(clientData.email);
+
+        if (!cliente) {
+          // Si no existe, crear uno nuevo
+          const clienteData = {
+            nombre: clientData.nombre,
+            email: clientData.email,
+            telefono: clientData.telefono,
+            rol: "cliente" as const,
+          };
+
+          console.log("👤 Creando nuevo cliente:", clienteData);
+          cliente = await crearUsuario(clienteData);
+          console.log("✅ Cliente creado:", cliente);
+        } else {
+          console.log("👤 Cliente existente encontrado:", cliente);
+        }
+      } catch (error: any) {
+        // Si es error de clave duplicada, buscar el usuario nuevamente
+        if (
+          error.code === "23505" &&
+          error.message?.includes("usuarios_email_key")
+        ) {
+          console.log("⚠️ Cliente ya existe, buscando nuevamente...");
+          cliente = await buscarPorEmail(clientData.email);
+          if (!cliente) {
+            alert("Error: No se pudo procesar el cliente");
+            return;
+          }
+        } else {
+          console.error("❌ Error inesperado creando cliente:", error);
+          alert("Error al procesar el cliente: " + error.message);
+          return;
+        }
+      }
 
       // 2. Calcular duración total y precio
       const serviciosSeleccionados = servicios.filter((s) =>
@@ -50,7 +81,7 @@ export function BookingSystemMVP() {
 
       // 3. Crear reserva
       const reservaData = {
-        id_cliente: nuevoCliente.id_usuario,
+        id_cliente: cliente.id_usuario,
         id_barbero: selectedBarbero,
         id_servicio: selectedServicios[0], // Por ahora solo el primer servicio
         fecha_hora: new Date(`${selectedDate}T09:00:00`).toISOString(),
