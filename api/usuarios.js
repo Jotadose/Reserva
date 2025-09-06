@@ -64,8 +64,6 @@ async function getUsuarios(req, res) {
       rol,
       activo,
       fecha_registro,
-      ultima_visita,
-      notas_admin,
       created_at,
       updated_at
     `
@@ -119,7 +117,7 @@ async function getUsuarios(req, res) {
 }
 
 async function createUsuario(req, res) {
-  const { nombre, email, telefono, rol = "cliente", notas_admin } = req.body;
+  const { nombre, email, telefono, rol = "cliente" } = req.body;
 
   // Validación básica
   if (!nombre || !email || !telefono) {
@@ -161,7 +159,7 @@ async function createUsuario(req, res) {
       rol,
       activo: true,
       fecha_registro: new Date().toISOString(),
-      notas_admin,
+
     })
     .select()
     .single();
@@ -179,8 +177,7 @@ async function createUsuario(req, res) {
 
 async function updateUsuario(req, res) {
   const { id } = req.query;
-  const { nombre, email, telefono, rol, activo, notas_admin, ultima_visita } =
-    req.body;
+  const { nombre, email, telefono, rol, activo } = req.body;
 
   if (!id) {
     return res.status(400).json({ error: "ID de usuario requerido" });
@@ -220,8 +217,8 @@ async function updateUsuario(req, res) {
   if (telefono !== undefined) updates.telefono = telefono;
   if (rol !== undefined) updates.rol = rol;
   if (activo !== undefined) updates.activo = activo;
-  if (notas_admin !== undefined) updates.notas_admin = notas_admin;
-  if (ultima_visita !== undefined) updates.ultima_visita = ultima_visita;
+  // Campo notas_admin removido - no existe en la tabla
+  // Removed ultima_visita field as it doesn't exist in the database
 
   updates.updated_at = new Date().toISOString();
 
