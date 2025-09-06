@@ -10,9 +10,19 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
+
+async function logEvent(actor, entidad, accion, metadata = {}) {
+  try {
+    await supabase
+      .from("event_log")
+      .insert({ actor: actor || null, entidad, accion, metadata });
+  } catch (e) {
+    console.warn("No se pudo registrar evento barberos", e.message);
+  }
+}
 
 export default async function handler(req, res) {
   // Headers CORS
@@ -70,6 +80,7 @@ async function getBarberos(req, res) {
         horario_fin,
         dias_trabajo,
         tiempo_descanso,
+  comision_base,
         biografia,
         calificacion_promedio,
         total_cortes
@@ -102,6 +113,7 @@ async function createBarbero(req, res) {
     dias_trabajo,
     biografia,
     tiempo_descanso,
+    comision_base,
   } = req.body;
 
   // Validación básica
@@ -146,6 +158,7 @@ async function createBarbero(req, res) {
         "sabado",
       ],
       tiempo_descanso: tiempo_descanso || 10,
+      comision_base: comision_base ?? 0,
       biografia,
       activo: true,
     })
@@ -163,9 +176,13 @@ async function createBarbero(req, res) {
 
   res.status(201).json({
     success: true,
-    data: { usuario, barbero },
+    data: {
+      usuario,
+      barbero: { ...barbero, comision_base: barbero.comision_base ?? 0 },
+    },
     message: "Barbero creado exitosamente",
   });
+  logEvent(null, "barbero", "create", { id_barbero: usuario.id_usuario });
 }
 
 async function updateBarbero(req, res) {
@@ -181,6 +198,7 @@ async function updateBarbero(req, res) {
     biografia,
     tiempo_descanso,
     activo,
+    comision_base,
   } = req.body;
 
   if (!id) {
@@ -214,6 +232,7 @@ async function updateBarbero(req, res) {
       tiempo_descanso,
       biografia,
       activo,
+      comision_base,
       updated_at: new Date().toISOString(),
     })
     .eq("id_barbero", id)
@@ -226,9 +245,10 @@ async function updateBarbero(req, res) {
 
   res.status(200).json({
     success: true,
-    data,
+    data: { ...data, comision_base: data.comision_base ?? 0 },
     message: "Barbero actualizado exitosamente",
   });
+  logEvent(null, "barbero", "update", { id_barbero: id });
 }
 
 async function deleteBarbero(req, res) {
