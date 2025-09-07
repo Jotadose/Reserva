@@ -276,32 +276,20 @@ const BookingFlow: React.FC = () => {
         );
       case "date":
         return (
-          <>
-            <BookingCalendar
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              selectedService={selectedService}
-              selectedBarberId={selectedBarberId || undefined}
-              onDateSelect={(d) => {
-                setDate(d);
-                setTime(null); // Resetea la hora al cambiar de fecha
-              }}
-              onTimeSelect={(t) => {
-                setTime(t); // Solo actualiza la hora, no avanza
-              }}
-              onNext={goToNextStep}
-            />
-            {selectedTime && (
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={goToNextStep}
-                  className="rounded-lg bg-yellow-500 px-6 py-2 font-bold text-black transition-colors hover:bg-yellow-400"
-                >
-                  Continuar
-                </button>
-              </div>
-            )}
-          </>
+          <BookingCalendar
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            selectedService={selectedService}
+            selectedBarberId={selectedBarberId || undefined}
+            onDateSelect={(d) => {
+              setDate(d);
+              setTime(null); // Resetea la hora al cambiar de fecha
+            }}
+            onTimeSelect={(t) => {
+              setTime(t); // Solo actualiza la hora, no avanza
+            }}
+            onNext={goToNextStep}
+          />
         );
       case "form":
         return (
