@@ -32,21 +32,109 @@ export function useDisponibilidad() {
         setLoading(true);
         setError(null);
 
-        // Llamar a la función PostgreSQL que creamos
-        const { data, error: queryError } = await supabaseClient.rpc(
-          "obtener_slots_disponibles",
-          {
-            p_id_barbero: idBarbero,
-            p_fecha: fecha,
-            p_duracion: duracion,
-          }
-        );
+        // Primero obtener información del barbero y sus horarios
+        const { data: barberoData, error: barberoError } = await supabaseClient
+          .from("usuarios")
+          .select(`
+            id_usuario,
+            nombre,
+            barberos (
+              horario_inicio,
+              horario_fin,
+              dias_trabajo,
+              tiempo_descanso
+            )
+          `)
+          .eq("id_usuario", idBarbero)
+          .eq("rol", "barbero")
+          .eq("activo", true)
+          .single();
 
-        if (queryError) {
-          throw queryError;
+        if (barberoError || !barberoData || !(barberoData as any).barberos) {
+          throw new Error("Barbero no encontrado o inactivo");
         }
 
-        return data || [];
+        const horarios = (barberoData as any).barberos;
+        
+        // Verificar si el barbero trabaja en este día
+        const fechaObj = new Date(fecha);
+        const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        const diaActual = diasSemana[fechaObj.getDay()];
+        
+        if (!horarios.dias_trabajo.includes(diaActual)) {
+          console.log(`Barbero no trabaja los ${diaActual}s`);
+          return [];
+        }
+
+        // Generar slots basados en horarios del barbero
+        const slots: SlotDisponible[] = [];
+        const horaInicio = horarios.horario_inicio; // "08:00:00"
+        const horaFin = horarios.horario_fin; // "17:00:00"
+        
+        const [horaIni, minIni] = horaInicio.split(':').map(Number);
+        const [horaEnd, minEnd] = horaFin.split(':').map(Number);
+        
+        const tiempoDescanso = horarios.tiempo_descanso || 10; // minutos
+        
+        // Generar slots cada 30 minutos como opción base
+        let horaActual = horaIni * 60 + minIni; // convertir a minutos
+        const horaLimite = horaEnd * 60 + minEnd;
+        
+        while (horaActual + duracion <= horaLimite) {
+          const horas = Math.floor(horaActual / 60);
+          const minutos = horaActual % 60;
+          const horaSlot = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+          
+          const horasFin = Math.floor((horaActual + duracion) / 60);
+          const minutosFin = (horaActual + duracion) % 60;
+          const horaFinSlot = `${horasFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
+          
+          slots.push({
+            hora_inicio: horaSlot,
+            hora_fin: horaFinSlot,
+            disponible: true // Por defecto disponible, se verificará con reservas existentes
+          });
+          
+          // Siguiente slot cada 30 minutos
+          horaActual += 30;
+        }
+
+        // Obtener reservas existentes para filtrar slots ocupados
+        const { data: reservas, error: reservasError } = await supabaseClient
+          .from("reservas")
+          .select("hora_inicio, hora_fin")
+          .eq("id_barbero", idBarbero)
+          .eq("fecha_reserva", fecha)
+          .in("estado", ["pendiente", "confirmada", "en_progreso"]);
+
+        if (reservasError) {
+          console.warn("Error obteniendo reservas:", reservasError);
+        }
+
+        // Marcar slots como no disponibles si hay conflictos
+        const slotsDisponibles = slots.map(slot => {
+          const tieneConflicto = reservas?.some((reserva: any) => {
+            const slotStart = slot.hora_inicio;
+            const slotEnd = slot.hora_fin;
+            const reservaStart = reserva.hora_inicio;
+            const reservaEnd = reserva.hora_fin;
+            
+            // Verificar solapamiento
+            return (
+              (slotStart >= reservaStart && slotStart < reservaEnd) ||
+              (slotEnd > reservaStart && slotEnd <= reservaEnd) ||
+              (slotStart <= reservaStart && slotEnd >= reservaEnd)
+            );
+          });
+          
+          return {
+            ...slot,
+            disponible: !tieneConflicto
+          };
+        });
+
+        return slotsDisponibles.filter(slot => slot.disponible);
+        
       } catch (err) {
         console.error("Error fetching available slots:", err);
         setError(err instanceof Error ? err.message : "Error desconocido");
