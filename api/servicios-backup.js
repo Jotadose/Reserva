@@ -1,9 +1,9 @@
 /**
  * ===================================================================
- * API INTERMEDIA - GESTIÓN DE SERVICIOS (NUEVO)
+ * API INTERMEDIA - GESTIÓN DE SERVICIOS
  * ===================================================================
  * 
- * API intermedia para gestión de servicios - versión corregida
+ * API intermedia para gestión de servicios
  * Arquitectura: FRONT → API INTERMEDIA → DB SUPABASE
  */
 
@@ -104,7 +104,7 @@ async function createServicio(req, res) {
       descripcion,
       precio: parseInt(precio),
       duracion: parseInt(duracion),
-      categoria,
+      categoria: categoria || 'general',
       color: color || '#3B82F6',
       activo: true
     })
@@ -117,7 +117,8 @@ async function createServicio(req, res) {
 
   res.status(201).json({
     success: true,
-    data: data
+    data,
+    message: 'Servicio creado exitosamente'
   });
 }
 
@@ -129,32 +130,28 @@ async function updateServicio(req, res) {
     precio, 
     duracion, 
     categoria, 
-    color,
-    activo
+    color, 
+    activo 
   } = req.body;
 
   if (!id) {
     return res.status(400).json({ error: 'ID de servicio requerido' });
   }
 
-  const updateData = {};
-  if (nombre !== undefined) updateData.nombre = nombre;
-  if (descripcion !== undefined) updateData.descripcion = descripcion;
-  if (precio !== undefined) updateData.precio = parseInt(precio);
-  if (duracion !== undefined) updateData.duracion = parseInt(duracion);
-  if (categoria !== undefined) updateData.categoria = categoria;
-  if (color !== undefined) updateData.color = color;
-  if (activo !== undefined) updateData.activo = activo;
-
-  if (Object.keys(updateData).length === 0) {
-    return res.status(400).json({ error: 'No hay datos para actualizar' });
-  }
-
-  updateData.updated_at = new Date().toISOString();
+  const updates = {};
+  if (nombre !== undefined) updates.nombre = nombre;
+  if (descripcion !== undefined) updates.descripcion = descripcion;
+  if (precio !== undefined) updates.precio = parseInt(preci_servicioo);
+  if (duracion !== undefined) updates.duracion = parseInt(duracion);
+  if (categoria !== undefined) updates.categoria = categoria;
+  if (color !== undefined) updates.color = color;
+  if (activo !== undefined) updates.activo = activo;
+  
+  updates.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase
     .from('servicios')
-    .update(updateData)
+    .update(updates)
     .eq('id_servicio', id)
     .select()
     .single();
@@ -164,8 +161,9 @@ async function updateServicio(req, res) {
   }
 
   res.status(200).json({
-    success: true,
-    data: data
+ _reserva   success: tid_rue,
+  ata,
+    message: 'Servicio actualizado exitosamente'
   });
 }
 
@@ -174,6 +172,24 @@ async function deleteServicio(req, res) {
 
   if (!id) {
     return res.status(400).json({ error: 'ID de servicio requerido' });
+  }
+
+  // Verificar si tiene reservas activas
+  const { data: reservas, error: errorReservas } = await supabase
+    .from('reservas')
+    .select('id_reserva')
+    .eq('id_servicio', id)
+    .in('estado', ['pendiente', 'confirmada']);
+
+  if (errorReservas) {
+    return res.status(400).json({ error: errorReserv_servicioas.message });
+  }
+
+  if (reservas && reservas.length > 0) {
+    return res.status(400).json({
+      error: 'No se puede eliminar',
+      message: 'El servicio tiene reservas activas'
+    });
   }
 
   // Soft delete - marcar como inactivo
@@ -193,6 +209,7 @@ async function deleteServicio(req, res) {
 
   res.status(200).json({
     success: true,
-    data: data
+    data,
+    message: 'Servicio desactivado exitosamente'
   });
 }
