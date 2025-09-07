@@ -1,11 +1,12 @@
 import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
-import { TimeSlot, Booking } from "../types/booking";
+import { TimeSlot, Booking, Service } from "../types/booking";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
 import { useBloqueos } from "../hooks/useBloqueos";
 import { isDateAvailable as sharedIsDateAvailable } from "shared";
 import { useBarberos } from "../hooks/useBarberos";
 import { useAppStore } from "../store/appStore";
+import { DESIGN_TOKENS } from "../styles/designSystem";
 
 interface BookingCalendarProps {
   selectedDate: string;
@@ -309,30 +310,27 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             const dayBtnClass = (() => {
               if (isSelected) {
                 return (
-                  baseClass + "bg-yellow-500 text-black shadow-lg scale-105"
+                  baseClass + `${DESIGN_TOKENS.state.active} shadow-lg scale-105`
                 );
               }
               if (!isAvailable) {
-                let disabledClass =
-                  "bg-gray-900 text-gray-600 cursor-not-allowed";
+                let disabledClass = `${DESIGN_TOKENS.background.surface} ${DESIGN_TOKENS.text.muted} cursor-not-allowed`;
                 if (isPast) disabledClass += " opacity-50";
                 else if (isSunday)
-                  disabledClass =
-                    "bg-red-900/30 text-red-400 cursor-not-allowed";
+                  disabledClass = "bg-red-900/30 text-red-400 cursor-not-allowed";
                 else if (isTodayTooLate)
-                  disabledClass =
-                    "bg-orange-900/30 text-orange-400 cursor-not-allowed";
+                  disabledClass = "bg-orange-900/30 text-orange-400 cursor-not-allowed";
                 return baseClass + disabledClass;
               }
               if (isToday && !isTodayTooLate) {
                 return (
                   baseClass +
-                  "bg-blue-800 text-white hover:bg-blue-700 hover:scale-105 border border-blue-500"
+                  `${DESIGN_TOKENS.background.elevated} ${DESIGN_TOKENS.text.primary} hover:bg-gray-700 hover:scale-105 ${DESIGN_TOKENS.border.accent} border`
                 );
               }
               return (
                 baseClass +
-                "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105"
+                `${DESIGN_TOKENS.background.elevated} ${DESIGN_TOKENS.text.primary} hover:bg-gray-700 hover:scale-105`
               );
             })();
 
@@ -433,8 +431,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                     {timeSlots.map((slot) => {
                       const isSelectedSlot = selectedTime?.time === slot.time;
                       const slotClass = isSelectedSlot
-                        ? "p-3 rounded-lg font-semibold transition-all duration-200 bg-yellow-500 text-black shadow-lg scale-105"
-                        : "p-3 rounded-lg font-semibold transition-all duration-200 bg-gray-800 text-white hover:bg-gray-700 hover:scale-105";
+                        ? `p-3 rounded-lg font-semibold transition-all duration-200 ${DESIGN_TOKENS.state.active} shadow-lg scale-105`
+                        : `p-3 rounded-lg font-semibold transition-all duration-200 ${DESIGN_TOKENS.background.elevated} ${DESIGN_TOKENS.text.primary} hover:bg-gray-700 hover:scale-105`;
 
                       return (
                         <button

@@ -25,6 +25,9 @@ import { GestionBarberosAvanzada } from "./admin/GestionBarberosAvanzada";
 import { GestionServicios } from "./admin/GestionServicios";
 import { AdminBookingsView } from "./admin/AdminBookingsView";
 
+// Sistema de diseño unificado
+import { DESIGN_TOKENS, getButtonClass, getCardClass } from "../styles/designSystem";
+
 // Tipos
 interface Stats {
   reservasHoy: number;
@@ -129,93 +132,93 @@ export const AdminPanelModernized: React.FC = () => {
     <div className="space-y-6">
       {/* Estadísticas principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className={getCardClass()}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Reservas Hoy</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.reservasHoy}</p>
+              <p className={`text-sm font-medium ${DESIGN_TOKENS.text.secondary}`}>Reservas Hoy</p>
+              <p className={`text-2xl font-bold ${DESIGN_TOKENS.text.primary}`}>{stats.reservasHoy}</p>
             </div>
-            <Calendar className="h-8 w-8 text-blue-500" />
+            <Calendar className={`h-8 w-8 ${DESIGN_TOKENS.text.accent}`} />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className={getCardClass()}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Ingresos Hoy</p>
-              <p className="text-2xl font-bold text-gray-900">${stats.ingresosHoy.toLocaleString()}</p>
+              <p className={`text-sm font-medium ${DESIGN_TOKENS.text.secondary}`}>Ingresos Hoy</p>
+              <p className={`text-2xl font-bold ${DESIGN_TOKENS.text.primary}`}>${stats.ingresosHoy.toLocaleString()}</p>
             </div>
-            <DollarSign className="h-8 w-8 text-green-500" />
+            <DollarSign className="h-8 w-8 text-green-400" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className={getCardClass()}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalClientes}</p>
+              <p className={`text-sm font-medium ${DESIGN_TOKENS.text.secondary}`}>Total Clientes</p>
+              <p className={`text-2xl font-bold ${DESIGN_TOKENS.text.primary}`}>{stats.totalClientes}</p>
             </div>
-            <Users className="h-8 w-8 text-purple-500" />
+            <Users className="h-8 w-8 text-purple-400" />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className={getCardClass()}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Tasa Asistencia</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.tasaAsistencia}%</p>
+              <p className={`text-sm font-medium ${DESIGN_TOKENS.text.secondary}`}>Tasa Asistencia</p>
+              <p className={`text-2xl font-bold ${DESIGN_TOKENS.text.primary}`}>{stats.tasaAsistencia}%</p>
             </div>
-            <TrendingUp className="h-8 w-8 text-orange-500" />
+            <TrendingUp className={`h-8 w-8 ${DESIGN_TOKENS.text.accent}`} />
           </div>
         </div>
       </div>
 
       {/* Estadísticas semanales y mensuales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen Semanal</h3>
+        <div className={getCardClass()}>
+          <h3 className={`text-lg font-semibold ${DESIGN_TOKENS.text.primary} mb-4`}>Resumen Semanal</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Reservas:</span>
-              <span className="font-medium">{stats.reservasSemana}</span>
+              <span className={DESIGN_TOKENS.text.secondary}>Reservas:</span>
+              <span className={`font-medium ${DESIGN_TOKENS.text.primary}`}>{stats.reservasSemana}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Ingresos:</span>
-              <span className="font-medium">${stats.ingresosSemana.toLocaleString()}</span>
+              <span className={DESIGN_TOKENS.text.secondary}>Ingresos:</span>
+              <span className={`font-medium ${DESIGN_TOKENS.text.primary}`}>${stats.ingresosSemana.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen Mensual</h3>
+        <div className={getCardClass()}>
+          <h3 className={`text-lg font-semibold ${DESIGN_TOKENS.text.primary} mb-4`}>Resumen Mensual</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Reservas:</span>
-              <span className="font-medium">{stats.reservasMes}</span>
+              <span className={DESIGN_TOKENS.text.secondary}>Reservas:</span>
+              <span className={`font-medium ${DESIGN_TOKENS.text.primary}`}>{stats.reservasMes}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Ingresos:</span>
-              <span className="font-medium">${stats.ingresosMes.toLocaleString()}</span>
+              <span className={DESIGN_TOKENS.text.secondary}>Ingresos:</span>
+              <span className={`font-medium ${DESIGN_TOKENS.text.primary}`}>${stats.ingresosMes.toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Status del sistema */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Estado del Sistema</h3>
+      <div className={getCardClass()}>
+        <h3 className={`text-lg font-semibold ${DESIGN_TOKENS.text.primary} mb-4`}>Estado del Sistema</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-gray-600">Barberos activos: {barberos?.length || 0}</span>
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span className={`text-sm ${DESIGN_TOKENS.text.secondary}`}>Barberos activos: {barberos?.length || 0}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-gray-600">Servicios disponibles: {servicios?.length || 0}</span>
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span className={`text-sm ${DESIGN_TOKENS.text.secondary}`}>Servicios disponibles: {servicios?.length || 0}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="text-sm text-gray-600">Sistema operativo</span>
+            <CheckCircle className="h-5 w-5 text-green-400" />
+            <span className={`text-sm ${DESIGN_TOKENS.text.secondary}`}>Sistema operativo</span>
           </div>
         </div>
       </div>
@@ -224,36 +227,36 @@ export const AdminPanelModernized: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span className="ml-2 text-gray-600">Cargando panel de administración...</span>
+      <div className={`${DESIGN_TOKENS.background.admin} flex items-center justify-center h-64`}>
+        <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${DESIGN_TOKENS.border.accent}`}></div>
+        <span className={`ml-2 ${DESIGN_TOKENS.text.secondary}`}>Cargando panel de administración...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${DESIGN_TOKENS.background.admin}`}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className={`${DESIGN_TOKENS.background.elevated} shadow-sm ${DESIGN_TOKENS.border.default} border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className={`text-2xl font-bold ${DESIGN_TOKENS.text.primary}`}>
               Panel de Administración
             </h1>
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${DESIGN_TOKENS.text.muted} h-4 w-4`} />
                 <input
                   type="text"
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`pl-10 pr-4 py-2 bg-gray-800 ${DESIGN_TOKENS.border.default} border rounded-lg ${DESIGN_TOKENS.text.primary} placeholder-gray-400 ${DESIGN_TOKENS.state.focus}`}
                 />
               </div>
               <button
                 onClick={() => refetchReservas()}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className={getButtonClass('primary')}
               >
                 Actualizar
               </button>
@@ -263,7 +266,7 @@ export const AdminPanelModernized: React.FC = () => {
       </div>
 
       {/* Navegación de pestañas */}
-      <div className="bg-white border-b">
+      <div className={`${DESIGN_TOKENS.background.elevated} ${DESIGN_TOKENS.border.default} border-b`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
             {tabs.map((tab) => {
@@ -274,8 +277,8 @@ export const AdminPanelModernized: React.FC = () => {
                   onClick={() => setActiveTab(tab.id as TabType)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      ? `${DESIGN_TOKENS.border.accent} ${DESIGN_TOKENS.text.accent}`
+                      : `border-transparent ${DESIGN_TOKENS.text.secondary} ${DESIGN_TOKENS.state.hover}`
                   }`}
                 >
                   <Icon className="h-4 w-4" />
