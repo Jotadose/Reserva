@@ -34,9 +34,29 @@ export function useBarberos() {
         throw new Error(json.error || "Error obteniendo barberos");
       }
 
-      const list = json.data || [];
-      console.log("💈 Barberos cargados (API):", list.length);
-      setBarberos(list);
+      const rawData = json.data || [];
+      console.log("💈 Datos brutos de barberos (API):", rawData.length);
+      
+      // Transformar datos de la API a la estructura esperada por la app
+      const transformedBarberos: Barbero[] = rawData.map((item: any) => ({
+        id_barbero: item.id_usuario,
+        nombre: item.nombre,
+        email: item.email,
+        telefono: item.telefono,
+        especialidades: item.barberos?.especialidades || [],
+        horario_inicio: item.barberos?.horario_inicio || "09:00:00",
+        horario_fin: item.barberos?.horario_fin || "18:00:00",
+        dias_trabajo: item.barberos?.dias_trabajo || [],
+        tiempo_descanso: item.barberos?.tiempo_descanso || 10,
+        activo: item.activo,
+        biografia: item.barberos?.biografia || "",
+        calificacion_promedio: item.barberos?.calificacion_promedio || 0,
+        total_cortes: item.barberos?.total_cortes || 0,
+        avatar_url: item.avatar_url,
+      }));
+
+      console.log("💈 Barberos transformados:", transformedBarberos.length);
+      setBarberos(transformedBarberos);
     } catch (err) {
       console.error("Error fetching barberos:", err);
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -57,7 +77,28 @@ export function useBarberos() {
         throw new Error(json.error || "Error obteniendo barbero");
       }
 
-      return json.data as Barbero;
+      const item = json.data;
+      if (!item) return null;
+
+      // Transformar datos de la API a la estructura esperada
+      const transformedBarbero: Barbero = {
+        id_barbero: item.id_usuario,
+        nombre: item.nombre,
+        email: item.email,
+        telefono: item.telefono,
+        especialidades: item.barberos?.especialidades || [],
+        horario_inicio: item.barberos?.horario_inicio || "09:00:00",
+        horario_fin: item.barberos?.horario_fin || "18:00:00",
+        dias_trabajo: item.barberos?.dias_trabajo || [],
+        tiempo_descanso: item.barberos?.tiempo_descanso || 10,
+        activo: item.activo,
+        biografia: item.barberos?.biografia || "",
+        calificacion_promedio: item.barberos?.calificacion_promedio || 0,
+        total_cortes: item.barberos?.total_cortes || 0,
+        avatar_url: item.avatar_url,
+      };
+
+      return transformedBarbero;
     } catch (err) {
       console.error("Error fetching barbero by ID:", err);
       return null;
