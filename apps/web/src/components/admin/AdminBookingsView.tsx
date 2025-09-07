@@ -6,8 +6,6 @@ import { bookingStatuses } from "./config";
 export const AdminBookingsView: React.FC = () => {
   const {
     reservas,
-    usuarios,
-    servicios,
     handleCancelBooking,
     handleCompleteBooking,
     exportData,
@@ -26,10 +24,9 @@ export const AdminBookingsView: React.FC = () => {
 
     // Filtrar por término de búsqueda
     if (searchTerm) {
-      const cliente = usuarios.find((u) => u.id_usuario === reserva.id_cliente);
-      const servicio = servicios.find(
-        (s) => s.id_servicio === reserva.id_servicio
-      );
+      // Los datos del cliente y servicio ya vienen anidados en la reserva
+      const cliente = reserva.cliente;
+      const servicio = reserva.servicios;
       const searchLower = searchTerm.toLowerCase();
 
       const matchesCliente =
@@ -115,12 +112,9 @@ export const AdminBookingsView: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-700">
               {filteredReservas.map((reserva) => {
-                const cliente = usuarios.find(
-                  (u) => u.id_usuario === reserva.id_cliente
-                );
-                const servicio = servicios.find(
-                  (s) => s.id_servicio === reserva.id_servicio
-                );
+                // Los datos del cliente y servicio ya vienen anidados en la reserva
+                const cliente = reserva.cliente;
+                const servicio = reserva.servicios;
                 const statusColor = getStatusColor(reserva.estado);
 
                 return (
