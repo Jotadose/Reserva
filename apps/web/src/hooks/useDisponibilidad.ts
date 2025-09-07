@@ -76,11 +76,12 @@ export function useDisponibilidad() {
         
         const tiempoDescanso = horarios.tiempo_descanso || 10; // minutos
         
-        // Calcular intervalo entre slots: duración del servicio + tiempo de descanso
-        // Esto evita solapamientos entre citas consecutivas
-        const intervaloSlots = duracion + tiempoDescanso;
+        // En lugar de usar intervalos fijos basados en el servicio actual,
+        // generar slots cada 10-15 minutos para máxima flexibilidad
+        // y filtrar según reservas existentes y duración requerida
+        const intervaloBase = 15; // Generar slots cada 15 minutos
         
-        // Generar slots con el intervalo correcto para evitar solapamientos
+        // Generar slots con intervalo pequeño para máxima flexibilidad
         let horaActual = horaIni * 60 + minIni; // convertir a minutos
         const horaLimite = horaEnd * 60 + minEnd;
         
@@ -100,8 +101,8 @@ export function useDisponibilidad() {
             disponible: true // Por defecto disponible, se verificará con reservas existentes
           });
           
-          // Avanzar al siguiente slot usando el intervalo correcto (servicio + descanso)
-          horaActual += intervaloSlots;
+          // Avanzar con intervalo pequeño para máxima flexibilidad
+          horaActual += intervaloBase;
         }
 
         // Obtener reservas existentes para filtrar slots ocupados
@@ -116,7 +117,7 @@ export function useDisponibilidad() {
           console.warn("Error obteniendo reservas:", reservasError);
         }
 
-        // Marcar slots como no disponibles si hay conflictos
+        // Marcar slots como no disponibles si hay conflictos o no hay tiempo de descanso suficiente
         const slotsDisponibles = slots.map(slot => {
           const tieneConflicto = reservas?.some((reserva: any) => {
             const slotStart = slot.hora_inicio;
@@ -124,12 +125,29 @@ export function useDisponibilidad() {
             const reservaStart = reserva.hora_inicio;
             const reservaEnd = reserva.hora_fin;
             
-            // Verificar solapamiento
-            return (
-              (slotStart >= reservaStart && slotStart < reservaEnd) ||
-              (slotEnd > reservaStart && slotEnd <= reservaEnd) ||
-              (slotStart <= reservaStart && slotEnd >= reservaEnd)
+            // Convertir horas a minutos para cálculos más precisos
+            const slotStartMin = timeToMinutes(slotStart);
+            const slotEndMin = timeToMinutes(slotEnd);
+            const reservaStartMin = timeToMinutes(reservaStart);
+            const reservaEndMin = timeToMinutes(reservaEnd);
+            
+            // Verificar solapamiento directo
+            const solapamientoDirecto = (
+              (slotStartMin >= reservaStartMin && slotStartMin < reservaEndMin) ||
+              (slotEndMin > reservaStartMin && slotEndMin <= reservaEndMin) ||
+              (slotStartMin <= reservaStartMin && slotEndMin >= reservaEndMin)
             );
+            
+            // Verificar si hay tiempo suficiente de descanso entre citas
+            const tiempoDescanso = horarios.tiempo_descanso || 10;
+            const demasiadoCerca = (
+              // Slot muy cerca después de una reserva existente
+              (slotStartMin >= reservaEndMin && slotStartMin < reservaEndMin + tiempoDescanso) ||
+              // Slot muy cerca antes de una reserva existente  
+              (slotEndMin <= reservaStartMin && slotEndMin > reservaStartMin - tiempoDescanso)
+            );
+            
+            return solapamientoDirecto || demasiadoCerca;
           });
           
           return {
@@ -138,12 +156,18 @@ export function useDisponibilidad() {
           };
         });
 
+        // Función helper para convertir HH:MM a minutos
+        function timeToMinutes(timeStr: string): number {
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          return hours * 60 + minutes;
+        }
+
         const slotsFinalesDisponibles = slotsDisponibles.filter(slot => slot.disponible);
         
         console.log(`📅 Slots para ${(barberoData as any).nombre} (${fecha}):`, {
           horarioLaboral: `${horaInicio}-${horaFin}`,
           servicioMinutos: duracion,
-          intervaloSlots: intervaloSlots,
+          intervaloBase: intervaloBase,
           slotsGenerados: slots.length,
           slotsDisponibles: slotsFinalesDisponibles.length,
           reservasExistentes: reservas?.length || 0
