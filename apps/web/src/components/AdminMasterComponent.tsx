@@ -1,15 +1,9 @@
 import React from 'react';
-import { AdminPanelModern } from './AdminPanelModern';
-import AdminPanelProfessional from './AdminPanelProfessional';
-import { AdminPanelSimpleUpdated } from './AdminPanelSimpleUpdated';
-import { AdminPanelEnhanced } from './AdminPanelEnhanced';
-import { AdminPanelAdvanced } from './AdminPanelAdvanced';
-import { AdminTabsNavigation } from './AdminTabsNavigation';
+// DEPRECATED: AdminPanelModern moved to deprecated/
 import { Settings, BarChart3, Users, Calendar, Layout, Grid, Layers } from 'lucide-react';
 import { AdminProvider, useAdmin } from './admin/AdminContext';
 import { AdminViewMode } from './admin/config';
 import { formatCurrency } from './admin/utils';
-import { AdminBookingsView } from './admin/AdminBookingsView';
 
 // Componente interno que utiliza el contexto
 const AdminMasterContent: React.FC = () => {

@@ -21,7 +21,7 @@ import {
   Mail,
   MessageCircle,
 } from "lucide-react";
-import { AdminPanelAdvanced } from "./components/AdminPanelAdvanced";
+import { AdminMasterComponent } from "./components/AdminMasterComponentModernized";
 import LandingPage from "./components/LandingPage";
 import { ToastProvider } from "./contexts/ToastContext";
 import { NotificationProvider } from "./hooks/useNotifications";
@@ -38,9 +38,6 @@ function AppContent() {
 
   // ✅ HOOKS MVP PARA SISTEMA COMPLETO
   const { startBookingProcess: startFlowInStore } = useAppStore();
-
-  // Los datos ahora vienen de useReservasMVP (implementar cuando se necesite mostrar reservas)
-  const transformedBookings: any[] = []; // Por ahora vacío, se implementará cuando migremos el admin
 
   // ✅ CREAR RESERVA MVP COMPLETA
   const startBookingProcess = () => {
@@ -185,7 +182,7 @@ function AppContent() {
 
         {currentView === "booking" && <BookingFlow />}
 
-        {currentView === "admin" && <AdminPanelAdvanced />}
+        {currentView === "admin" && <AdminMasterComponent />}
       </main>
 
       {/* Footer */}
