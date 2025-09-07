@@ -76,10 +76,15 @@ export function useDisponibilidad() {
         
         const tiempoDescanso = horarios.tiempo_descanso || 10; // minutos
         
-        // Generar slots cada 30 minutos como opción base
+        // Calcular intervalo entre slots: duración del servicio + tiempo de descanso
+        // Esto evita solapamientos entre citas consecutivas
+        const intervaloSlots = duracion + tiempoDescanso;
+        
+        // Generar slots con el intervalo correcto para evitar solapamientos
         let horaActual = horaIni * 60 + minIni; // convertir a minutos
         const horaLimite = horaEnd * 60 + minEnd;
         
+        // Solo generar slots si el servicio completo cabe en el horario
         while (horaActual + duracion <= horaLimite) {
           const horas = Math.floor(horaActual / 60);
           const minutos = horaActual % 60;
@@ -95,8 +100,8 @@ export function useDisponibilidad() {
             disponible: true // Por defecto disponible, se verificará con reservas existentes
           });
           
-          // Siguiente slot cada 30 minutos
-          horaActual += 30;
+          // Avanzar al siguiente slot usando el intervalo correcto (servicio + descanso)
+          horaActual += intervaloSlots;
         }
 
         // Obtener reservas existentes para filtrar slots ocupados
@@ -133,7 +138,23 @@ export function useDisponibilidad() {
           };
         });
 
-        return slotsDisponibles.filter(slot => slot.disponible);
+        const slotsFinalesDisponibles = slotsDisponibles.filter(slot => slot.disponible);
+        
+        console.log(`📅 Slots para ${(barberoData as any).nombre} (${fecha}):`, {
+          horarioLaboral: `${horaInicio}-${horaFin}`,
+          servicioMinutos: duracion,
+          intervaloSlots: intervaloSlots,
+          slotsGenerados: slots.length,
+          slotsDisponibles: slotsFinalesDisponibles.length,
+          reservasExistentes: reservas?.length || 0
+        });
+
+        // Si no hay slots disponibles, retornar array vacío con mensaje en consola
+        if (slotsFinalesDisponibles.length === 0) {
+          console.log(`⚠️ No hay slots disponibles para ${(barberoData as any).nombre} el ${fecha} - servicio de ${duracion}min no cabe en horario o está ocupado`);
+        }
+
+        return slotsFinalesDisponibles;
         
       } catch (err) {
         console.error("Error fetching available slots:", err);

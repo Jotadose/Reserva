@@ -504,7 +504,13 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                   📅 No hay horarios disponibles para esta fecha
                 </p>
                 <p className="text-sm text-gray-500">
-                  Todos los slots están ocupados. Intenta con otra fecha.
+                  {selectedService 
+                    ? `El servicio "${selectedService.name}" (${selectedService.duration}min) no encaja en los horarios disponibles o están todos ocupados.`
+                    : 'Todos los slots están ocupados. Intenta con otra fecha.'
+                  }
+                </p>
+                <p className="mt-2 text-xs text-gray-600">
+                  Considera seleccionar otro barbero con horarios más flexibles.
                 </p>
               </div>
             );
