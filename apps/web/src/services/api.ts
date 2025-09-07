@@ -21,7 +21,7 @@ import type {
 // CONFIGURACIÓN DE LA API
 // ===================================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://reserva-imfi1r7az-jotadoses-projects.vercel.app/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://reserva-mauve.vercel.app/api";
 
 // ===================================================================
 // TIPOS BASE

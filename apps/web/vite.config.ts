@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://reserva-imfi1r7az-jotadoses-projects.vercel.app',
+        target: 'https://reserva-mauve.vercel.app',
         changeOrigin: true,
         secure: true,
       },
