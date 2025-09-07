@@ -21,7 +21,7 @@ import { useUsuarios } from "../hooks/useUsuarios";
 // Componentes avanzados ya desarrollados
 import { AgendaDisponibilidad } from "./admin/AgendaDisponibilidad";
 import { ConfiguracionHorariosTotal } from "./admin/ConfiguracionHorariosTotal";
-import { GestionBarberosAvanzada } from "./admin/GestionBarberosAvanzada";
+import { GestionBarberosSimple } from "./admin/GestionBarberosSimple";
 import { GestionServicios } from "./admin/GestionServicios";
 import { AdminBookingsView } from "./admin/AdminBookingsView";
 
@@ -294,7 +294,7 @@ export const AdminPanelModernized: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "dashboard" && <DashboardView />}
         {activeTab === "reservas" && <AdminBookingsView />}
-        {activeTab === "barberos" && <GestionBarberosAvanzada />}
+        {activeTab === "barberos" && <GestionBarberosSimple />}
         {activeTab === "servicios" && <GestionServicios />}
         {activeTab === "agenda" && <AgendaDisponibilidad />}
         {activeTab === "configuracion" && <ConfiguracionHorariosTotal />}

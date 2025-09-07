@@ -5,8 +5,10 @@
  *
  * Panel supremo para gestionar barberos con poder absoluto:
  * - Horarios personalizados por barbero
- * - Gestión de descansos y breaks
- * - Vacaciones y días libres
+ * - Gestión de descansos y breaks  const handleToggleActivo = (barberoId: string) => {
+    // TODO: Implementar llamada a API para actualizar estado del barbero
+    console.log("Toggling barbero activo:", barberoId);
+  };ciones y días libres
  * - Productividad y métricas individuales
  * - Comisiones y pagos
  */
@@ -41,6 +43,7 @@ import {
 } from "../ui";
 
 import { useToast } from "../../contexts/ToastContext";
+import { useBarberos } from "../../hooks/useBarberos";
 
 // ===================================================================
 // TIPOS E INTERFACES
@@ -249,7 +252,76 @@ const barberosMock: Barbero[] = [
 
 export const GestionBarberosAvanzada: React.FC = () => {
   const [vista, setVista] = useState<VistaGestion>("lista");
-  const [barberos, setBarberos] = useState<Barbero[]>(barberosMock);
+  
+  // Obtener datos reales de barberos desde la API
+  const { barberos: barberosAPI, loading: loadingBarberos, error: errorBarberos } = useBarberos();
+  
+  // Convertir datos de API a formato esperado por el componente
+  const barberos = useMemo(() => {
+    return barberosAPI.map(barbero => ({
+      id: barbero.id_barbero,
+      nombre: barbero.nombre,
+      email: barbero.email,
+      telefono: barbero.telefono || "",
+      activo: barbero.activo,
+      horarioPersonalizado: {
+        // Mapear días de trabajo a estructura esperada
+        lunes: {
+          activo: barbero.dias_trabajo.includes('lunes'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5),
+          descanso: { horaInicio: "13:00", horaFin: "14:00" }
+        },
+        martes: {
+          activo: barbero.dias_trabajo.includes('martes'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5),
+          descanso: { horaInicio: "13:00", horaFin: "14:00" }
+        },
+        miercoles: {
+          activo: barbero.dias_trabajo.includes('miercoles'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5),
+          descanso: { horaInicio: "13:00", horaFin: "14:00" }
+        },
+        jueves: {
+          activo: barbero.dias_trabajo.includes('jueves'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5),
+          descanso: { horaInicio: "13:00", horaFin: "14:00" }
+        },
+        viernes: {
+          activo: barbero.dias_trabajo.includes('viernes'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5),
+          descanso: { horaInicio: "13:00", horaFin: "14:00" }
+        },
+        sabado: {
+          activo: barbero.dias_trabajo.includes('sabado'),
+          horaInicio: barbero.horario_inicio.slice(0, 5),
+          horaFin: barbero.horario_fin.slice(0, 5)
+        },
+        domingo: { 
+          activo: barbero.dias_trabajo.includes('domingo'), 
+          horaInicio: "", 
+          horaFin: "" 
+        }
+      },
+      descansos: [],
+      vacaciones: [],
+      comisiones: {
+        porcentaje: 40,
+        serviciosEspeciales: {}
+      },
+      metricas: {
+        reservasCompletadas: barbero.total_cortes,
+        ingresosMes: 0,
+        satisfaccionCliente: barbero.calificacion_promedio,
+        puntualidad: 95
+      }
+    }));
+  }, [barberosAPI]);
+
   const [barberoSeleccionado, setBarberoSeleccionado] = useState<string | null>(
     null
   );
