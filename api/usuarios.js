@@ -7,12 +7,7 @@
  * Arquitectura: FRONT → API INTERMEDIA → DB SUPABASE
  */
 
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabase } from "../lib/database.js";
 
 export default async function handler(req, res) {
   // Headers CORS
@@ -159,7 +154,6 @@ async function createUsuario(req, res) {
       rol,
       activo: true,
       fecha_registro: new Date().toISOString(),
-
     })
     .select()
     .single();

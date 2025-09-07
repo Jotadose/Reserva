@@ -20,6 +20,7 @@ export interface Usuario {
   activo: boolean;
   created_at?: string;
   updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface Cliente extends Usuario {
@@ -56,7 +57,13 @@ export interface Reserva {
   servicio_id: number;
   fecha: string; // YYYY-MM-DD
   hora: string; // HH:MM
-  estado: "pendiente" | "confirmada" | "completada" | "cancelada";
+  estado:
+    | "pendiente"
+    | "confirmada"
+    | "en_progreso"
+    | "completada"
+    | "cancelada"
+    | "no_show";
   precio: number;
   notas?: string;
   created_at?: string;

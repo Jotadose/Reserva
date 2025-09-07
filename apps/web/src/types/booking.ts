@@ -16,15 +16,18 @@ export interface Booking {
   id: string;
   date: string;
   time: string;
-  services: Service[];
+  endTime?: string; // hora_fin calculada por backend
+  barberId?: string; // añadido para integración MVP Supabase (id_barbero)
+  service?: Service; // Un solo servicio por reserva
+  services?: Service[]; // Mantenido por retrocompatibilidad o para otros flujos
   client: {
     name: string;
     phone: string;
     email: string;
     notes?: string;
   };
-  totalPrice: number;
-  duration: number;
+  totalPrice: number; // precio_total (centavos o pesos según normalización UI)
+  duration: number; // duracion total en minutos (duracion_minutos backend)
   status:
     | "pending"
     | "confirmed"

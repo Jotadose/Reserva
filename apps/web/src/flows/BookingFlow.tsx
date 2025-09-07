@@ -1,58 +1,70 @@
-// src/flows/BookingFlow.tsx
-// QUÉ HACE: Orquesta todo el flujo de reserva desde el store
-// BENEFICIO: Componente inteligente que maneja la navegación entre pasos
-
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useAppStore } from "../store/appStore";
+import { useReservasMVP } from "../hooks/useReservasMVP";
+import { useUsuarios } from "../hooks/useUsuarios";
+import { useToast } from "../contexts/ToastContext";
+import { Booking } from "../types/booking";
 
 // Componentes del flujo de reserva
 import BookingCalendar from "../components/BookingCalendar";
+import BarberSelection from "../components/BarberSelection";
 import ServiceSelection from "../components/ServiceSelection";
 import ClientForm from "../components/ClientForm";
 import BookingConfirmation from "../components/BookingConfirmation";
 
 const BookingFlow: React.FC = () => {
-  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const { crearReserva, verificarDisponibilidad } = useReservasMVP();
+  const { crearUsuario, buscarPorEmail } = useUsuarios();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     bookingStep,
     setBookingStep,
     selectedDate,
     selectedTime,
-    selectedServices,
+    selectedService,
+    selectedBarberId,
+    currentBooking,
     setDate,
     setTime,
-    setServices,
+    setService,
+    setBarberId,
     resetBookingProcess,
+    addBooking,
   } = useAppStore();
 
   // Funciones de navegación entre pasos
   const goToNextStep = () => {
     switch (bookingStep) {
-      case "calendar":
-        if (selectedDate && selectedTime) {
-          setBookingStep("service");
-        }
+      case "barber":
+        if (selectedBarberId) setBookingStep("services");
         break;
-      case "service":
-        if (selectedServices.length > 0) {
-          setBookingStep("form");
-        }
+      case "services":
+        if (selectedService) setBookingStep("date");
+        break;
+      case "date":
+        if (selectedDate && selectedTime) setBookingStep("form");
         break;
       case "form":
-        // La transición a confirmation se maneja en el store cuando se crea la reserva
-        break;
+        break; // La creación pasa a confirmation externamente
     }
   };
 
   const goToPreviousStep = () => {
     switch (bookingStep) {
-      case "service":
-        setBookingStep("calendar");
+      case "barber":
+        handleBackToHome();
+        break;
+      case "services":
+        setBookingStep("barber");
+        break;
+      case "date":
+        setBookingStep("services");
         break;
       case "form":
-        setBookingStep("service");
+        setBookingStep("date");
         break;
       case "confirmation":
         setBookingStep("form");
@@ -61,21 +73,183 @@ const BookingFlow: React.FC = () => {
   };
 
   const handleBackToHome = () => {
+    // Sin react-router: simplemente resetear y quizá emitir evento futuro
     resetBookingProcess();
-    navigate("/");
+    // Nota: navegación a home simplificada al no usar react-router global
+  };
+
+  // Handle booking submission
+
+  const buildReservaPayload = (booking: Booking, usuarioId?: string) => {
+    // Backend ahora calcula hora_fin, duración y precio total usando el ID del servicio
+    if (!booking.service) {
+      throw new Error("Servicio no seleccionado para crear la reserva.");
+    }
+    return {
+      id_cliente: usuarioId,
+      id_barbero: booking.barberId,
+      fecha_reserva: booking.date,
+      hora_inicio: booking.time,
+      notas_cliente: booking.client.notes || "",
+      id_servicio: booking.service.id,
+    } as const;
+  };
+
+  const ensureUsuario = async (booking: Booking) => {
+    let usuario = await buscarPorEmail(booking.client.email);
+    if (usuario) {
+      console.log("👤 Usuario existente encontrado:", usuario);
+      return usuario.id_usuario;
+    }
+    const usuarioData = {
+      nombre: booking.client.name,
+      telefono: booking.client.phone,
+      email: booking.client.email,
+      rol: "cliente" as const,
+      activo: true,
+    };
+    console.log("👤 Creando nuevo usuario:", usuarioData);
+    usuario = await crearUsuario(usuarioData as any);
+    console.log("✅ Usuario creado:", usuario);
+    return usuario?.id_usuario;
+  };
+
+  const handleBookingSubmit = async (booking: Booking) => {
+    setIsSubmitting(true);
+    try {
+      console.log("💾 Iniciando proceso de reserva MVP:", booking);
+
+      // 1. Validaciones previas
+      if (!selectedBarberId || !booking.date || !booking.time) {
+        throw new Error("Faltan datos esenciales (barbero, fecha u hora).");
+      }
+
+      // 2. Verificación de disponibilidad en tiempo real
+      console.log("🔍 Verificando disponibilidad en tiempo real...");
+      if (!booking.service) {
+        throw new Error(
+          "No se ha seleccionado un servicio para la verificación."
+        );
+      }
+      const { esDisponible, mensaje } = await verificarDisponibilidad({
+        id_barbero: selectedBarberId,
+        fecha: booking.date,
+        hora: booking.time,
+        id_servicio: booking.service.id,
+      });
+
+      if (!esDisponible) {
+        console.warn("⏰ Horario no disponible:", mensaje);
+        addToast({
+          title: "Horario no disponible",
+          message:
+            mensaje ||
+            "El horario que seleccionaste fue ocupado. Por favor, elige otro.",
+          type: "warning",
+          duration: 8000,
+        });
+        // Retroceder al paso de selección de tiempo
+        setBookingStep("time");
+        return; // Detener el proceso
+      }
+      console.log("✅ Disponibilidad confirmada.");
+
+      // 3. Asegurar existencia del usuario
+      const usuarioId = await ensureUsuario(booking);
+      if (!usuarioId) {
+        throw new Error("No se pudo obtener o crear el usuario cliente.");
+      }
+
+      // 4. Construir y enviar la reserva
+      const reservaData = buildReservaPayload(booking, usuarioId);
+      console.log("📅 Creando reserva con datos:", reservaData);
+      const reservaCreada = await crearReserva(reservaData as any);
+      console.log("✅ Reserva creada (API):", reservaCreada);
+
+      // 5. Mapear respuesta de la API al formato del frontend
+      const bookingFromApi = mapApiToBooking(reservaCreada, booking);
+
+      // 6. Actualizar estado global y mostrar confirmación
+      addBooking(bookingFromApi);
+      setBookingStep("confirmation");
+      addToast({
+        title: "¡Reserva confirmada!",
+        message: `Tu cita ha sido agendada para el ${bookingFromApi.date} a las ${bookingFromApi.time}`,
+        type: "success",
+        duration: 5000,
+      });
+    } catch (error: any) {
+      console.error("❌ Error al crear reserva:", error);
+      // Loguear detalles del error
+      if (error?.message) console.error("Mensaje:", error.message);
+      if (error?.stack) console.error("Stack:", error.stack);
+      if (error?.response) console.error("Response:", error.response);
+
+      addToast({
+        title: "Error al crear reserva",
+        message: error?.message
+          ? `Error: ${error.message}`
+          : "Ocurrió un problema al procesar tu reserva. Por favor intenta nuevamente.",
+        type: "error",
+        duration: 7000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const mapApiToBooking = (
+    reservaCreada: any,
+    originalBooking: Booking
+  ): Booking => {
+    const mapEstado = (estado: string): Booking["status"] => {
+      switch (estado) {
+        case "pendiente":
+          return "pending";
+        case "confirmada":
+          return "confirmed";
+        case "en_progreso":
+          return "in-progress";
+        case "completada":
+          return "completed";
+        case "cancelada":
+          return "cancelled";
+        case "no_show":
+          return "no-show";
+        default:
+          return "pending";
+      }
+    };
+
+    return {
+      id: reservaCreada.id_reserva,
+      date: reservaCreada.fecha_reserva,
+      time: reservaCreada.hora_inicio,
+      endTime: reservaCreada.hora_fin,
+      barberId: reservaCreada.id_barbero,
+      service: originalBooking.service, // Mantener los detalles del servicio del frontend
+      client: originalBooking.client,
+      totalPrice: reservaCreada.precio_total,
+      duration: reservaCreada.duracion_minutos,
+      status: mapEstado(reservaCreada.estado),
+      createdAt: reservaCreada.created_at,
+      updatedAt: reservaCreada.updated_at,
+    };
   };
 
   // Progress indicator
   const getStepNumber = () => {
     switch (bookingStep) {
-      case "calendar":
+      case "barber":
         return 1;
-      case "service":
+      case "services":
         return 2;
-      case "form":
+      case "date":
         return 3;
-      case "confirmation":
+      case "form":
         return 4;
+      case "confirmation":
+        return 5;
       default:
         return 1;
     }
@@ -83,48 +257,101 @@ const BookingFlow: React.FC = () => {
 
   const renderStep = () => {
     switch (bookingStep) {
-      case "calendar":
+      case "barber":
         return (
-          <BookingCalendar
-            selectedDate={selectedDate}
-            selectedTime={selectedTime}
-            selectedServices={selectedServices}
-            onDateSelect={setDate}
-            onTimeSelect={setTime}
+          <BarberSelection
+            selectedBarberId={selectedBarberId || ""}
+            onBarberSelect={setBarberId}
             onNext={goToNextStep}
           />
         );
-
-      case "service":
+      case "services":
         return (
           <ServiceSelection
-            selectedServices={selectedServices}
-            onServicesChange={setServices}
+            selectedService={selectedService}
+            onServiceChange={setService}
             onNext={goToNextStep}
             onBack={goToPreviousStep}
           />
         );
-
-      case "form":
-        return <ClientForm onBack={goToPreviousStep} />;
-
-      case "confirmation":
+      case "date":
         return (
-          <BookingConfirmation
-            onStartNewBooking={() => {
-              resetBookingProcess();
-              setBookingStep("calendar");
-            }}
-            onBackToHome={handleBackToHome}
+          <>
+            <BookingCalendar
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              selectedService={selectedService}
+              selectedBarberId={selectedBarberId || undefined}
+              onDateSelect={(d) => {
+                setDate(d);
+                setTime(null); // Resetea la hora al cambiar de fecha
+              }}
+              onTimeSelect={(t) => {
+                setTime(t); // Solo actualiza la hora, no avanza
+              }}
+              onNext={goToNextStep}
+            />
+            {selectedTime && (
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={goToNextStep}
+                  className="rounded-lg bg-yellow-500 px-6 py-2 font-bold text-black transition-colors hover:bg-yellow-400"
+                >
+                  Continuar
+                </button>
+              </div>
+            )}
+          </>
+        );
+      case "form":
+        return (
+          <ClientForm
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            selectedService={selectedService}
+            selectedBarberId={selectedBarberId || undefined}
+            onBack={goToPreviousStep}
+            onSubmit={handleBookingSubmit}
+            isSubmitting={isSubmitting}
           />
         );
-
+      case "confirmation":
+        return currentBooking ? (
+          <BookingConfirmation
+            booking={currentBooking}
+            onNewBooking={() => {
+              resetBookingProcess();
+              setBookingStep("barber");
+            }}
+          />
+        ) : (
+          <div className="text-center text-white">
+            <p>Error: No se encontró la información de la reserva.</p>
+            <button
+              onClick={() => {
+                resetBookingProcess();
+                setBookingStep("barber");
+              }}
+              className="mt-4 rounded-lg bg-yellow-500 px-4 py-2 text-black"
+            >
+              Volver al inicio
+            </button>
+          </div>
+        );
       default:
         return null;
     }
   };
 
-  const stepNames = ["Fecha y Hora", "Servicios", "Datos", "Confirmación"];
+  // Ya no auto-avanzamos; se requiere pulsar botón Continuar
+
+  const stepNames = [
+    "Barbero",
+    "Servicios",
+    "Fecha y Hora",
+    "Datos",
+    "Confirmación",
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
@@ -143,14 +370,14 @@ const BookingFlow: React.FC = () => {
           <div className="mb-6">
             <div className="mb-2 flex items-center justify-between">
               <h1 className="text-3xl font-bold text-white">Nueva Reserva</h1>
-              <span className="text-gray-400">Paso {getStepNumber()} de 4</span>
+              <span className="text-gray-400">Paso {getStepNumber()} de 5</span>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-4 h-2 w-full rounded-full bg-gray-700">
               <div
                 className="h-2 rounded-full bg-yellow-500 transition-all duration-300"
-                style={{ width: `${(getStepNumber() / 4) * 100}%` }}
+                style={{ width: `${(getStepNumber() / 5) * 100}%` }}
               />
             </div>
 
@@ -183,7 +410,7 @@ const BookingFlow: React.FC = () => {
               <p>Step: {bookingStep}</p>
               <p>Date: {selectedDate || "No seleccionada"}</p>
               <p>Time: {selectedTime?.time || "No seleccionada"}</p>
-              <p>Services: {selectedServices.length} seleccionados</p>
+              <p>Service: {selectedService?.name || "No seleccionado"}</p>
             </div>
           </div>
         )}

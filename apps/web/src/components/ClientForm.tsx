@@ -6,7 +6,8 @@ import { formatDateString } from "../utils/dateUtils";
 interface ClientFormProps {
   selectedDate: string;
   selectedTime: TimeSlot | null;
-  selectedServices: Service[];
+  selectedService: Service | null;
+  selectedBarberId?: string;
   onBack: () => void;
   onSubmit: (booking: Booking) => void;
   isSubmitting?: boolean;
@@ -15,7 +16,8 @@ interface ClientFormProps {
 const ClientForm: React.FC<ClientFormProps> = ({
   selectedDate,
   selectedTime,
-  selectedServices,
+  selectedService,
+  selectedBarberId,
   onBack,
   onSubmit,
   isSubmitting = false,
@@ -42,7 +44,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
   };
 
   const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
+    const newErrors: Record<string, string> = {};
 
     // Validar nombre
     if (!formData.name.trim()) {
@@ -57,8 +59,8 @@ const ClientForm: React.FC<ClientFormProps> = ({
     if (!formData.phone.trim()) {
       newErrors.phone = "El teléfono es requerido";
     } else {
-      const phoneClean = formData.phone.replace(/[\s\-\(\)]/g, "");
-      if (!/^[\+]?[0-9]{8,15}$/.test(phoneClean)) {
+      const phoneClean = formData.phone.replace(/[\s\-()]/g, "");
+      if (!/^\+?\d{8,15}$/.test(phoneClean)) {
         newErrors.phone = "Formato de teléfono inválido (ej: +56912345678)";
       }
     }
@@ -111,45 +113,44 @@ const ClientForm: React.FC<ClientFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
-
-    const totalPrice = selectedServices.reduce(
-      (sum, service) => sum + service.price,
-      0
-    );
-    const totalDuration = selectedServices.reduce(
-      (sum, service) => sum + service.duration,
-      0
-    );
+    if (!validateForm() || !selectedService) return;
 
     const booking: Booking = {
       id: `booking-${Date.now()}`,
       date: selectedDate,
       time: selectedTime?.time || "",
-      services: selectedServices,
+      barberId: selectedBarberId,
+      service: selectedService,
       client: {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         email: formData.email.trim(),
         notes: formData.notes.trim() || undefined,
       },
-      totalPrice,
-      duration: totalDuration,
-      status: "confirmed",
+      totalPrice: selectedService.price,
+      duration: selectedService.duration,
+      status: "confirmed", // El backend puede cambiar esto a 'pendiente' si es necesario
       createdAt: new Date().toISOString(),
     };
 
     onSubmit(booking);
   };
 
-  const totalPrice = selectedServices.reduce(
-    (sum, service) => sum + service.price,
-    0
-  );
-  const totalDuration = selectedServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
+  if (!selectedService) {
+    return (
+      <div className="text-center text-white">
+        <p>Error: No se ha seleccionado ningún servicio.</p>
+        <button
+          onClick={onBack}
+          className="mt-4 rounded-lg bg-yellow-500 px-4 py-2 text-black"
+        >
+          Volver a seleccionar servicio
+        </button>
+      </div>
+    );
+  }
+
+  const { price: totalPrice, duration: totalDuration } = selectedService;
 
   return (
     <div className="space-y-6">
@@ -184,10 +185,8 @@ const ClientForm: React.FC<ClientFormProps> = ({
           <div className="mt-4 border-t border-gray-700 pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">Servicios seleccionados</p>
-                <p className="text-white">
-                  {selectedServices.map((s) => s.name).join(", ")}
-                </p>
+                <p className="text-sm text-gray-400">Servicio seleccionado</p>
+                <p className="text-white">{selectedService.name}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-400">Total</p>

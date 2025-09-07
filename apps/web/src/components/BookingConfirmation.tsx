@@ -60,7 +60,10 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
                   }
                 )}
               </p>
-              <p className="text-gray-400">{booking.time} hrs</p>
+              <p className="text-gray-400">
+                {booking.time}
+                {booking.endTime ? ` - ${booking.endTime}` : ""} hrs
+              </p>
             </div>
           </div>
 
@@ -98,48 +101,50 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
       </div>
 
       {/* Services */}
-      <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-        <h3 className="mb-4 text-xl font-bold text-white">
-          Servicios reservados
-        </h3>
+      {booking.service && (
+        <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
+          <h3 className="mb-4 text-xl font-bold text-white">
+            Servicio reservado
+          </h3>
 
-        <div className="mb-6 space-y-3">
-          {booking.services.map((service, index) => (
+          <div className="mb-6 space-y-3">
             <div
-              key={service.id}
+              key={booking.service.id}
               className="flex items-center justify-between rounded-lg bg-gray-800/50 p-3"
             >
               <div className="flex items-center space-x-3">
                 <div className="rounded-lg bg-yellow-500/20 p-2">
-                  {service.category === "barberia" ? (
+                  {booking.service.category === "barberia" ? (
                     <Scissors className="h-4 w-4 text-yellow-500" />
                   ) : (
                     <Plus className="h-4 w-4 text-yellow-500" />
                   )}
                 </div>
                 <div>
-                  <span className="font-medium text-white">{service.name}</span>
+                  <span className="font-medium text-white">
+                    {booking.service.name}
+                  </span>
                   <span className="block text-sm text-gray-400">
-                    {service.duration} min
+                    {booking.service.duration} min
                   </span>
                 </div>
               </div>
               <span className="font-semibold text-yellow-500">
-                ${service.price.toLocaleString()}
+                ${booking.service.price.toLocaleString()}
               </span>
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="border-t border-gray-600 pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-white">Total</span>
-            <span className="text-2xl font-bold text-yellow-500">
-              ${booking.totalPrice.toLocaleString()}
-            </span>
+          <div className="border-t border-gray-600 pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold text-white">Total</span>
+              <span className="text-2xl font-bold text-yellow-500">
+                ${booking.totalPrice.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Notes */}
       {booking.client.notes && (

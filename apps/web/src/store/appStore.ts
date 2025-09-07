@@ -8,7 +8,13 @@ import { Booking, Service, TimeSlot } from "../types/booking";
 
 // Definimos los tipos para las diferentes vistas y pasos del proceso
 type View = "landing" | "booking" | "admin";
-type BookingStep = "calendar" | "service" | "form" | "confirmation";
+type BookingStep =
+  | "barber"
+  | "services"
+  | "date"
+  | "time"
+  | "form"
+  | "confirmation";
 
 // Interface que define la estructura completa de nuestro estado
 interface AppState {
@@ -21,8 +27,9 @@ interface AppState {
   bookings: Booking[];
   selectedDate: string;
   selectedTime: TimeSlot | null;
-  selectedServices: Service[];
+  selectedService: Service | null; // Cambiado de selectedServices a uno solo
   currentBooking: Booking | null;
+  selectedBarberId: string | null;
 
   // Estado de autenticación simple para admin
   isAuthenticated: boolean;
@@ -42,7 +49,8 @@ interface AppState {
   // Acciones para la selección
   setDate: (date: string) => void;
   setTime: (time: TimeSlot | null) => void;
-  setServices: (services: Service[]) => void;
+  setService: (service: Service | null) => void; // Cambiado de setServices
+  setBarberId: (barberId: string) => void;
 
   // Acciones de autenticación
   login: (password: string) => boolean;
@@ -58,19 +66,21 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       // --- ESTADO INICIAL ---
       currentView: "landing",
-      bookingStep: "calendar",
+      bookingStep: "barber",
       mobileMenuOpen: false,
       bookings: [],
       selectedDate: "",
       selectedTime: null,
-      selectedServices: [],
+      selectedService: null,
       currentBooking: null,
+      selectedBarberId: null,
       isAuthenticated: false,
 
       // --- ACCIONES ---
       setView: (view) => set({ currentView: view, mobileMenuOpen: false }),
       setBookingStep: (step) => set({ bookingStep: step }),
-      toggleMobileMenu: () => set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
+      toggleMobileMenu: () =>
+        set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
 
       addBooking: (booking) => {
         set((state) => ({
@@ -83,7 +93,7 @@ export const useAppStore = create<AppState>()(
       updateBookingStatus: (bookingId, status) => {
         set((state) => ({
           bookings: state.bookings.map((booking) =>
-            booking.id === bookingId ? { ...booking, status } : booking,
+            booking.id === bookingId ? { ...booking, status } : booking
           ),
         }));
       },
@@ -97,27 +107,29 @@ export const useAppStore = create<AppState>()(
       startBookingProcess: () => {
         set({
           currentView: "booking",
-          bookingStep: "calendar",
+          bookingStep: "barber",
           selectedDate: "",
           selectedTime: null,
-          selectedServices: [],
+          selectedService: null,
           currentBooking: null,
         });
       },
 
       resetBookingProcess: () => {
         set({
-          bookingStep: "calendar",
+          bookingStep: "barber",
           selectedDate: "",
           selectedTime: null,
-          selectedServices: [],
+          selectedService: null,
           currentBooking: null,
+          selectedBarberId: null,
         });
       },
 
       setDate: (date) => set({ selectedDate: date }),
       setTime: (time) => set({ selectedTime: time }),
-      setServices: (services) => set({ selectedServices: services }),
+      setService: (service) => set({ selectedService: service }),
+      setBarberId: (barberId) => set({ selectedBarberId: barberId }),
 
       login: (password) => {
         const isValid = password === ADMIN_PASSWORD;
@@ -139,9 +151,9 @@ export const useAppStore = create<AppState>()(
         bookings: state.bookings,
         selectedDate: state.selectedDate,
         selectedTime: state.selectedTime,
-        selectedServices: state.selectedServices,
+        selectedService: state.selectedService,
         currentBooking: state.currentBooking,
       }),
-    },
-  ),
+    }
+  )
 );

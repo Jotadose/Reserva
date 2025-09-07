@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabaseClient } from "../lib/supabaseClient";
 
 export interface Servicio {
   id_servicio: string;
@@ -24,18 +23,16 @@ export function useServicios() {
       setLoading(true);
       setError(null);
 
-      const { data, error: queryError } = await supabaseClient
-        .from("servicios")
-        .select("*")
-        .eq("activo", true)
-        .order("categoria", { ascending: true })
-        .order("precio", { ascending: true });
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch("/api/servicios?activo=true");
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error obteniendo servicios");
       }
 
-      setServicios(data || []);
+      const list = json.data || [];
+      console.log("🛠️ Servicios cargados (API):", list.length);
+      setServicios(list);
     } catch (err) {
       console.error("Error fetching servicios:", err);
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -46,17 +43,14 @@ export function useServicios() {
 
   const getServicioById = async (id: string) => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("servicios")
-        .select("*")
-        .eq("id_servicio", id)
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/servicios/${id}`);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error obteniendo servicio");
       }
 
-      return data as Servicio;
+      return json.data as Servicio;
     } catch (err) {
       console.error("Error fetching servicio by ID:", err);
       return null;
@@ -101,19 +95,23 @@ export function useServicios() {
     servicio: Omit<Servicio, "id_servicio" | "created_at" | "updated_at">
   ) => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("servicios")
-        .insert([servicio])
-        .select()
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch("/api/servicios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(servicio),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error creando servicio");
       }
 
       // Actualizar la lista local
       await fetchServicios();
-      return data;
+      return json.data;
     } catch (err) {
       console.error("Error creating servicio:", err);
       throw err;
@@ -123,20 +121,23 @@ export function useServicios() {
   // Actualizar un servicio (solo admin)
   const actualizarServicio = async (id: string, updates: Partial<Servicio>) => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("servicios")
-        .update(updates)
-        .eq("id_servicio", id)
-        .select()
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/servicios/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error actualizando servicio");
       }
 
       // Actualizar la lista local
       await fetchServicios();
-      return data;
+      return json.data;
     } catch (err) {
       console.error("Error updating servicio:", err);
       throw err;
@@ -146,13 +147,14 @@ export function useServicios() {
   // Desactivar un servicio (solo admin)
   const desactivarServicio = async (id: string) => {
     try {
-      const { error: queryError } = await supabaseClient
-        .from("servicios")
-        .update({ activo: false })
-        .eq("id_servicio", id);
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/servicios/${id}`, {
+        method: "DELETE",
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error desactivando servicio");
       }
 
       // Actualizar la lista local

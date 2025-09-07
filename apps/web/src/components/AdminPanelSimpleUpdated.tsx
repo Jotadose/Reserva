@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, Download, Users, TrendingUp, Calendar, Clock, User, MapPin } from "lucide-react";
+import {
+  BarChart3,
+  Download,
+  Users,
+  TrendingUp,
+  Calendar,
+  Clock,
+  User,
+  MapPin,
+} from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
 import { useReservasMVP } from "../hooks/useReservasMVP";
 import { useUsuarios } from "../hooks/useUsuarios";
@@ -14,9 +23,15 @@ type ViewMode = "overview" | "bookings";
 export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
   const { addToast } = useToast();
   const [currentView, setCurrentView] = useState<ViewMode>("overview");
-  
+
   // 🔧 HOOKS MVP PARA DATOS REALES
-  const { reservas, loading: loadingReservas, refetch, actualizarReserva, formatearPrecio } = useReservasMVP();
+  const {
+    reservas,
+    loading: loadingReservas,
+    refetch,
+    actualizarReserva,
+    formatearPrecio,
+  } = useReservasMVP();
   const { usuarios, loading: loadingUsuarios } = useUsuarios();
   const { servicios, loading: loadingServicios } = useServicios();
 
@@ -59,10 +74,12 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
     const csv = reservas
       .map((r) => {
         // Buscar cliente por ID
-        const cliente = usuarios.find(u => u.id_usuario === r.id_cliente);
-        const servicio = servicios.find(s => s.id_servicio === r.id_servicio);
-        
-        return `${r.fecha_reserva},${r.hora_inicio},${cliente?.nombre || 'N/A'},${servicio?.nombre || 'N/A'},${r.estado}`;
+        const cliente = usuarios.find((u) => u.id_usuario === r.id_cliente);
+        const servicio = servicios.find((s) => s.id_servicio === r.id_servicio);
+
+        return `${r.fecha_reserva},${r.hora_inicio},${
+          cliente?.nombre || "N/A"
+        },${servicio?.nombre || "N/A"},${r.estado}`;
       })
       .join("\\n");
 
@@ -190,9 +207,13 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
             ) : (
               <div className="space-y-4">
                 {reservas.slice(0, 5).map((reserva) => {
-                  const cliente = usuarios.find(u => u.id_usuario === reserva.id_cliente);
-                  const servicio = servicios.find(s => s.id_servicio === reserva.id_servicio);
-                  
+                  const cliente = usuarios.find(
+                    (u) => u.id_usuario === reserva.id_cliente
+                  );
+                  const servicio = servicios.find(
+                    (s) => s.id_servicio === reserva.id_servicio
+                  );
+
                   return (
                     <div
                       key={reserva.id_reserva}
@@ -202,10 +223,10 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
                         <div className="flex items-center space-x-4">
                           <div>
                             <h3 className="font-medium text-gray-900">
-                              {cliente?.nombre || 'Cliente no encontrado'}
+                              {cliente?.nombre || "Cliente no encontrado"}
                             </h3>
                             <p className="text-sm text-gray-500">
-                              {servicio?.nombre || 'Servicio no encontrado'}
+                              {servicio?.nombre || "Servicio no encontrado"}
                             </p>
                           </div>
                           <div className="text-sm text-gray-600">
@@ -234,7 +255,9 @@ export const AdminPanelSimpleUpdated: React.FC<AdminPanelSimpleProps> = () => {
                         </span>
                         {reserva.estado === "confirmada" && (
                           <button
-                            onClick={() => handleCancelBooking(reserva.id_reserva)}
+                            onClick={() =>
+                              handleCancelBooking(reserva.id_reserva)
+                            }
                             className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
                           >
                             Cancelar

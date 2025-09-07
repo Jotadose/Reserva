@@ -11,15 +11,15 @@ import { Service } from "../types/booking";
 import { useServicios } from "../hooks/useServicios";
 
 interface ServiceSelectionProps {
-  selectedServices: Service[];
-  onServicesChange: (services: Service[]) => void;
+  selectedService: Service | null;
+  onServiceChange: (service: Service | null) => void;
   onBack: () => void;
   onNext: () => void;
 }
 
 const ServiceSelection: React.FC<ServiceSelectionProps> = ({
-  selectedServices,
-  onServicesChange,
+  selectedService,
+  onServiceChange,
   onBack,
   onNext,
 }) => {
@@ -55,17 +55,15 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
     );
   }
 
-  const toggleService = (service: Service) => {
-    const isSelected = selectedServices.some((s) => s.id === service.id);
+  const handleServiceClick = (service: Service) => {
+    const isSelected = selectedService?.id === service.id;
 
     if (isSelected) {
-      // Remover servicio
-      const newServices = selectedServices.filter((s) => s.id !== service.id);
-      onServicesChange(newServices);
+      // Deseleccionar si se hace clic en el mismo servicio
+      onServiceChange(null);
     } else {
-      // Agregar servicio
-      const newServices = [...selectedServices, service];
-      onServicesChange(newServices);
+      // Seleccionar el nuevo servicio
+      onServiceChange(service);
     }
   };
 
@@ -99,22 +97,13 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
     }
   };
 
-  const totalPrice = selectedServices.reduce(
-    (sum, service) => sum + service.price,
-    0
-  );
-  const totalDuration = selectedServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
-
-  const canProceed = selectedServices.length > 0;
+  const canProceed = selectedService !== null;
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
         <h2 className="mb-6 text-2xl font-bold text-white">
-          Selecciona tus servicios
+          Selecciona tu servicio
         </h2>
 
         <div className="space-y-8">
@@ -135,15 +124,13 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {categoryServices.map((service) => {
-                    const isSelected = selectedServices.some(
-                      (s) => s.id === service.id
-                    );
+                    const isSelected = selectedService?.id === service.id;
 
                     return (
-                      <div
+                      <button
                         key={service.id}
-                        onClick={() => toggleService(service)}
-                        className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-300 hover:scale-105 ${
+                        onClick={() => handleServiceClick(service)}
+                        className={`relative w-full cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-300 hover:scale-105 ${
                           isSelected
                             ? "border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20"
                             : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
@@ -178,7 +165,7 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
                             {service.description}
                           </p>
                         )}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -189,41 +176,17 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
       </div>
 
       {/* Summary */}
-      {selectedServices.length > 0 && (
+      {selectedService && (
         <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
           <h3 className="mb-4 text-xl font-semibold text-white">
-            Resumen de servicios
+            Servicio seleccionado
           </h3>
-
-          <div className="mb-6 space-y-3">
-            {selectedServices.map((service) => (
-              <div
-                key={service.id}
-                className="flex items-center justify-between border-b border-gray-700 py-2 last:border-b-0"
-              >
-                <div>
-                  <span className="font-medium text-white">{service.name}</span>
-                  <span className="ml-2 text-sm text-gray-400">
-                    ({service.duration} min)
-                  </span>
-                </div>
-                <span className="font-semibold text-yellow-500">
-                  {new Intl.NumberFormat("es-CL", {
-                    style: "currency",
-                    currency: "CLP",
-                    minimumFractionDigits: 0,
-                  }).format(service.price)}
-                </span>
-              </div>
-            ))}
-          </div>
-
           <div className="border-t border-gray-600 pt-4">
             <div className="flex items-center justify-between text-lg font-bold">
               <div className="text-white">
-                <span>Total: </span>
-                <span className="text-sm text-gray-400">
-                  ({totalDuration} min aprox.)
+                <span>{selectedService.name}</span>
+                <span className="ml-2 text-sm text-gray-400">
+                  ({selectedService.duration} min aprox.)
                 </span>
               </div>
               <span className="text-2xl text-yellow-500">
@@ -231,7 +194,7 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
                   style: "currency",
                   currency: "CLP",
                   minimumFractionDigits: 0,
-                }).format(totalPrice)}
+                }).format(selectedService.price)}
               </span>
             </div>
           </div>

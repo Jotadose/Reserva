@@ -140,8 +140,10 @@ export const getEstadoLabel = (estado: Reserva["estado"]): string => {
     confirmada: "Confirmada",
     completada: "Completada",
     cancelada: "Cancelada",
-  };
-  return labels[estado] || estado;
+    en_progreso: "En progreso",
+    no_show: "No se presentó",
+  } as Record<string, string>;
+  return labels[estado] ?? estado;
 };
 
 // ===================================================================
@@ -178,6 +180,18 @@ export const sortBy = <T>(
     return 0;
   });
 };
+
+// ===================================================================
+// SOFT DELETE HELPERS
+// ===================================================================
+
+export function filterSoftDeleted<T extends { deleted_at?: string | null }>(
+  items: T[],
+  includeDeleted = false
+): T[] {
+  if (includeDeleted) return items;
+  return items.filter((i) => !i.deleted_at);
+}
 
 // ===================================================================
 // UTILIDADES DE PAGINACIÓN

@@ -130,12 +130,41 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
             const availableToday = isAvailableToday(barbero);
 
             return (
-              <div
+              <button
+                type="button"
                 key={barbero.id_barbero}
-                onClick={() => onBarberSelect(barbero.id_barbero)}
-                className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all duration-300 hover:scale-105 ${
+                onClick={() => {
+                  if (typeof onBarberSelect === "function") {
+                    try {
+                      onBarberSelect(barbero.id_barbero);
+                    } catch (err) {
+                      console.error("Error ejecutando onBarberSelect", err);
+                    }
+                  } else {
+                    console.warn(
+                      "onBarberSelect no es una función:",
+                      onBarberSelect
+                    );
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (typeof onBarberSelect === "function") {
+                      try {
+                        onBarberSelect(barbero.id_barbero);
+                      } catch (err) {
+                        console.error(
+                          "Error ejecutando onBarberSelect (keyboard)",
+                          err
+                        );
+                      }
+                    }
+                  }
+                }}
+                className={`text-left relative rounded-xl border-2 p-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/60 hover:scale-105 ${
                   isSelected
-                    ? "border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20"
+                    ? "border-yellow-500 bg-yellow-500/10 shadow-lg shadow-yellow-500/20 animate-pulse"
                     : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
                 }`}
               >
@@ -244,7 +273,7 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
                     </p>
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -281,17 +310,31 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
       </div>
 
       {/* Next Button */}
-      {canProceed && (
-        <div className="flex justify-end">
-          <button
-            onClick={onNext}
-            className="flex transform items-center space-x-2 rounded-xl bg-yellow-500 px-8 py-4 text-lg font-bold text-black shadow-lg hover:scale-105 hover:bg-yellow-400 hover:shadow-xl"
-          >
-            <span>Continuar</span>
-            <ArrowRight className="h-5 w-5" />
-          </button>
-        </div>
-      )}
+      <div className="flex justify-end">
+        <button
+          disabled={!canProceed}
+          onClick={() => {
+            if (!canProceed) return;
+            if (typeof onNext === "function") {
+              try {
+                onNext();
+              } catch (err) {
+                console.error("Error ejecutando onNext", err);
+              }
+            } else {
+              console.warn("onNext no es una función:", onNext);
+            }
+          }}
+          className={`flex transform items-center space-x-2 rounded-xl px-8 py-4 text-lg font-bold shadow-lg transition-all duration-300 ${
+            canProceed
+              ? "bg-yellow-500 text-black hover:scale-105 hover:bg-yellow-400 hover:shadow-xl"
+              : "bg-gray-700 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          <span>{canProceed ? "Continuar" : "Selecciona un barbero"}</span>
+          {canProceed && <ArrowRight className="h-5 w-5" />}
+        </button>
+      </div>
     </div>
   );
 };

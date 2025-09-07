@@ -3,12 +3,6 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install --prod=false",
   "outputDirectory": "apps/web/dist",
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",

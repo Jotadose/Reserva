@@ -1,15 +1,18 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
 import { TimeSlot, Booking } from "../types/booking";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
+import { useBloqueos } from "../hooks/useBloqueos";
+import { isDateAvailable as sharedIsDateAvailable } from "shared";
 import { useBarberos } from "../hooks/useBarberos";
+import { useAppStore } from "../store/appStore";
 
 interface BookingCalendarProps {
   selectedDate: string;
   selectedTime: TimeSlot | null;
   bookings?: Booking[];
-  selectedServices?: Array<{ duration: number }>; // Para determinar duración del servicio
-  selectedBarberId?: string; // ID del barbero seleccionado
+  selectedService?: Service | null; // Para determinar duración del servicio
+  selectedBarberId?: string; // ID del barbero seleccionado (requerido)
   onDateSelect: (date: string) => void;
   onTimeSelect: (timeSlot: TimeSlot) => void;
   onNext: () => void;
@@ -19,7 +22,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   selectedDate,
   selectedTime,
   bookings = [],
-  selectedServices = [],
+  selectedService = null,
   selectedBarberId,
   onDateSelect,
   onTimeSelect,
@@ -27,28 +30,22 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 }) => {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
 
-  // 🔥 HOOKS MVP PARA DISPONIBILIDAD REAL
+  // 🔥 HOOKS DISPONIBILIDAD
   const { barberos } = useBarberos();
+  const { setBarberId } = useAppStore() as any;
   const { getSlotsDisponibles, loading } = useDisponibilidad();
+  const { bloqueos, fetchBloqueos } = useBloqueos();
 
-  // 🎯 USAR PRIMER BARBERO SI NO HAY UNO SELECCIONADO
-  const barberoId =
-    selectedBarberId || (barberos.length > 0 ? barberos[0].id : null);
+  // Requerir selección explícita del barbero
+  const barberoId = selectedBarberId || null;
 
   // 🔥 FUNCIÓN MVP PARA CARGAR DISPONIBILIDAD
   const loadAvailabilityForDate = useCallback(
     async (date: string) => {
-      if (!date || !barberoId) return [];
+      if (!date || !barberoId || !selectedService) return [];
 
       try {
-        // Duración promedio de servicios (puede ser dinámico basado en selectedServices)
-        const duracion =
-          selectedServices.length > 0
-            ? selectedServices.reduce(
-                (acc, service) => acc + service.duration,
-                0
-              )
-            : 60; // Default 60 minutos
+        const duracion = selectedService.duration;
 
         const slots = await getSlotsDisponibles(barberoId, date, duracion);
         return slots
@@ -59,7 +56,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
         return [];
       }
     },
-    [getSlotsDisponibles, barberoId, selectedServices]
+    [getSlotsDisponibles, barberoId, selectedService]
   );
 
   // Obtener slots disponibles para la fecha seleccionada
@@ -67,10 +64,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
   // Cargar disponibilidad cuando cambia la fecha
   React.useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && barberoId) {
       loadAvailabilityForDate(selectedDate).then(setAvailableSlots);
+    } else {
+      setAvailableSlots([]);
     }
-  }, [selectedDate, loadAvailabilityForDate]);
+  }, [selectedDate, barberoId, loadAvailabilityForDate]);
 
   /** ---------- Utilidades ---------- **/
   const isValidDate = (date: Date) =>
@@ -84,32 +83,26 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return localDate.toISOString().slice(0, 10);
   }, []);
 
-  const isDateAvailable = useCallback((date: string) => {
-    const parsed = new Date(date + "T12:00:00"); // Usar mediodía para evitar problemas de zona horaria
-    if (!isValidDate(parsed)) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const parsedDate = new Date(parsed);
-    parsedDate.setHours(0, 0, 0, 0);
-
-    // No permitir fechas pasadas
-    if (parsedDate < today) return false;
-
-    // No permitir domingos (día 0)
-    if (parsed.getDay() === 0) return false;
-
-    // No permitir reservas con menos de 2 horas de anticipación si es hoy
-    if (parsedDate.getTime() === today.getTime()) {
-      const now = new Date();
-      const currentHour = now.getHours();
-
-      // Si son después de las 17:00, no permitir reservas para hoy
-      if (currentHour >= 17) return false;
+  // Construir mapa de días bloqueados (vacaciones o bloqueo de día completo)
+  const blockedDatesMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const b of bloqueos) {
+      const fullDay =
+        (!b.hora_inicio && !b.hora_fin) ||
+        (b.hora_inicio === "00:00" && (!b.hora_fin || b.hora_fin === "23:59"));
+      if (fullDay || b.tipo === "vacaciones") map[b.fecha] = true;
     }
+    return map;
+  }, [bloqueos]);
 
-    return true;
-  }, []);
+  const isDateAvailable = useCallback(
+    (date: string) =>
+      sharedIsDateAvailable(date, {
+        blockedDates: blockedDatesMap,
+        workingDays: new Set([1, 2, 3, 4, 5, 6]), // Lunes-Sábado (0=Domingo excluido)
+      }),
+    [blockedDatesMap]
+  );
 
   const getBookingsForDate = useCallback(
     (date: string) =>
@@ -180,11 +173,21 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     () => getDaysInMonth(currentMonth),
     [currentMonth, getDaysInMonth]
   );
+
+  // Cargar bloqueos del mes visible
+  useEffect(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const from = new Date(year, month, 1).toISOString().slice(0, 10);
+    const to = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+    fetchBloqueos({ from, to, barbero: barberoId || undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMonth, barberoId]);
   const timeSlots = useMemo(
     () => (selectedDate ? generateTimeSlots(selectedDate) : []),
     [selectedDate, generateTimeSlots]
   );
-  const canProceed = Boolean(selectedDate && selectedTime?.time);
+  const canProceed = Boolean(selectedDate && selectedTime?.time && barberoId);
 
   /** ---------- Handlers ---------- **/
   const handleDateSelect = useCallback(
@@ -200,6 +203,25 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   /** ---------- Render ---------- **/
   return (
     <div className="space-y-6">
+      {/* Barber Selection Inline (fallback if user reached calendar without step) */}
+      {!barberoId && (
+        <div className="rounded-2xl border border-rose-700 bg-rose-900/40 p-4 mb-4">
+          <p className="text-sm text-rose-100 mb-2 font-semibold">
+            Debes seleccionar un barbero para ver el calendario.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {barberos.map((b) => (
+              <button
+                key={b.id_barbero}
+                onClick={() => setBarberId(b.id_barbero)}
+                className="p-2 rounded-lg bg-rose-800 hover:bg-rose-700 text-sm font-medium text-white"
+              >
+                {b.nombre}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Calendar */}
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
         <div className="mb-6 flex items-center justify-between">
@@ -244,9 +266,10 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
 
         {/* Days grid */}
         <div className="grid grid-cols-7 gap-2">
-          {daysInMonth.map((cell, idx) => {
+          {daysInMonth.map((cell) => {
             const { day } = cell as any;
             if (!day) return <div key={(cell as any).key} className="p-3" />;
+
             const dateString = formatDateString(
               currentMonth.getFullYear(),
               currentMonth.getMonth(),
@@ -257,75 +280,74 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 <div key={`invalid-${(cell as any).key}`} className="p-3" />
               );
 
-            const isAvailable = isDateAvailable(dateString);
-            const isSelected = selectedDate === dateString;
-            const bookingCount = getBookingsForDate(dateString);
-
-            // Determinar el tipo de restricción para mostrar diferentes estilos
+            // Helpers
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const cellDate = new Date(dateString + "T12:00:00"); // Usar mediodía para consistencia
+            const cellDate = new Date(dateString + "T12:00:00");
             const cellDateOnly = new Date(cellDate);
             cellDateOnly.setHours(0, 0, 0, 0);
-
             const isPast = cellDateOnly < today;
-            const isSunday = cellDate.getDay() === 0; // Ahora será consistente
+            const isSunday = cellDate.getDay() === 0;
             const isToday = cellDateOnly.getTime() === today.getTime();
             const isTodayTooLate = isToday && new Date().getHours() >= 17;
+            const isSelected = selectedDate === dateString;
+            const isAvailable = isDateAvailable(dateString);
+            const bookingCount = getBookingsForDate(dateString);
 
-            // compute className without nested ternary
-            let dayBtnClass =
+            const getButtonTitle = () => {
+              if (isPast) return "Esta fecha ya pasó";
+              if (isSunday) return "Cerrado los domingos";
+              if (isTodayTooLate)
+                return "Muy tarde para reservar hoy (mínimo 2 horas)";
+              if (isToday)
+                return "Hoy - Horarios limitados (mínimo 2 horas anticipación)";
+              return `Seleccionar ${dateString}`;
+            };
+
+            const baseClass =
               "p-3 rounded-lg font-semibold relative transition-all duration-200 ";
-
-            if (isSelected) {
-              dayBtnClass += "bg-yellow-500 text-black shadow-lg scale-105";
-            } else if (isAvailable) {
-              if (isToday && !isTodayTooLate) {
-                dayBtnClass +=
-                  "bg-blue-800 text-white hover:bg-blue-700 hover:scale-105 border border-blue-500";
-              } else {
-                dayBtnClass +=
-                  "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105";
+            const dayBtnClass = (() => {
+              if (isSelected) {
+                return (
+                  baseClass + "bg-yellow-500 text-black shadow-lg scale-105"
+                );
               }
-            } else if (isPast) {
-              dayBtnClass +=
-                "bg-gray-900 text-gray-600 cursor-not-allowed opacity-50";
-            } else if (isSunday) {
-              dayBtnClass += "bg-red-900/30 text-red-400 cursor-not-allowed";
-            } else if (isTodayTooLate) {
-              dayBtnClass +=
-                "bg-orange-900/30 text-orange-400 cursor-not-allowed";
-            } else {
-              dayBtnClass += "bg-gray-900 text-gray-600 cursor-not-allowed";
-            }
-
-            // Generar título/tooltip según el estado
-            let buttonTitle = `Seleccionar ${dateString}`;
-            if (isPast) {
-              buttonTitle = "Esta fecha ya pasó";
-            } else if (isSunday) {
-              buttonTitle = "Cerrado los domingos";
-            } else if (isTodayTooLate) {
-              buttonTitle =
-                "Muy tarde para reservar hoy (se necesitan 2 horas de anticipación)";
-            } else if (isToday) {
-              buttonTitle =
-                "Hoy - Horarios limitados (2 horas de anticipación mínima)";
-            }
+              if (!isAvailable) {
+                let disabledClass =
+                  "bg-gray-900 text-gray-600 cursor-not-allowed";
+                if (isPast) disabledClass += " opacity-50";
+                else if (isSunday)
+                  disabledClass =
+                    "bg-red-900/30 text-red-400 cursor-not-allowed";
+                else if (isTodayTooLate)
+                  disabledClass =
+                    "bg-orange-900/30 text-orange-400 cursor-not-allowed";
+                return baseClass + disabledClass;
+              }
+              if (isToday && !isTodayTooLate) {
+                return (
+                  baseClass +
+                  "bg-blue-800 text-white hover:bg-blue-700 hover:scale-105 border border-blue-500"
+                );
+              }
+              return (
+                baseClass +
+                "bg-gray-800 text-white hover:bg-gray-700 hover:scale-105"
+              );
+            })();
 
             return (
               <button
                 key={(cell as any).key}
                 onClick={() => handleDateSelect(dateString)}
-                disabled={!isAvailable}
-                aria-label={buttonTitle}
-                title={buttonTitle}
+                disabled={!isAvailable || !barberoId}
+                aria-label={getButtonTitle()}
+                title={getButtonTitle()}
                 className={dayBtnClass}
               >
                 {day}
-                {/* Indicadores especiales */}
                 {isToday && isAvailable && (
-                  <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-400"></div>
+                  <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-400" />
                 )}
                 {isSunday && (
                   <div className="absolute right-1 top-1 text-xs text-red-400">
@@ -375,7 +397,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       </div>
 
       {/* Time Slots */}
-      {selectedDate && (
+      {selectedDate && barberoId && (
         <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
           <div className="mb-6 flex items-center space-x-2">
             <Clock className="h-6 w-6 text-yellow-500" />

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabaseClient } from "../lib/supabaseClient";
 
 export interface Usuario {
   id_usuario: string;
@@ -33,21 +32,21 @@ export function useUsuarios() {
       setLoading(true);
       setError(null);
 
-      let query = supabaseClient.from("usuarios").select("*");
-
-      if (rol) {
-        query = query.eq("rol", rol);
+      const params = new URLSearchParams();
+      if (rol) params.set("rol", rol);
+      const qs = params.toString();
+      const url = qs ? `/api/usuarios?${qs}` : "/api/usuarios";
+      
+      const resp = await fetch(url);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error obteniendo usuarios");
       }
 
-      query = query.order("created_at", { ascending: false });
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      setUsuarios(data || []);
+      const list = json.data || [];
+      console.log("👥 Usuarios cargados (API):", list.length);
+      setUsuarios(list);
     } catch (err) {
       console.error("Error fetching usuarios:", err);
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -58,17 +57,14 @@ export function useUsuarios() {
 
   const getUsuarioById = async (id: string): Promise<Usuario | null> => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("usuarios")
-        .select("*")
-        .eq("id_usuario", id)
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/usuarios/${id}`);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error obteniendo usuario");
       }
 
-      return data;
+      return json.data;
     } catch (err) {
       console.error("Error fetching usuario by ID:", err);
       return null;
@@ -82,20 +78,24 @@ export function useUsuarios() {
       setLoading(true);
       setError(null);
 
-      const { data, error: queryError } = await supabaseClient
-        .from("usuarios")
-        .insert([usuarioData])
-        .select()
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuarioData),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error creando usuario");
       }
 
       // Actualizar la lista local
       await fetchUsuarios();
 
-      return data;
+      return json.data;
     } catch (err) {
       console.error("Error creating usuario:", err);
       setError(err instanceof Error ? err.message : "Error creando usuario");
@@ -113,21 +113,24 @@ export function useUsuarios() {
       setLoading(true);
       setError(null);
 
-      const { data, error: queryError } = await supabaseClient
-        .from("usuarios")
-        .update(updates)
-        .eq("id_usuario", id)
-        .select()
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/usuarios/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error actualizando usuario");
       }
 
       // Actualizar la lista local
       await fetchUsuarios();
 
-      return data;
+      return json.data;
     } catch (err) {
       console.error("Error updating usuario:", err);
       setError(
@@ -150,22 +153,19 @@ export function useUsuarios() {
   // Buscar usuario por email (para login)
   const buscarPorEmail = async (email: string): Promise<Usuario | null> => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("usuarios")
-        .select("*")
-        .eq("email", email)
-        .eq("activo", true)
-        .single();
-
-      if (queryError) {
-        if (queryError.code === "PGRST116") {
+      const resp = await fetch(`/api/usuarios?email=${encodeURIComponent(email)}&activo=true`);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        if (resp.status === 404) {
           // No se encontró el usuario
           return null;
         }
-        throw queryError;
+        throw new Error(json.error || "Error buscando usuario");
       }
 
-      return data;
+      const usuarios = json.data || [];
+      return usuarios.length > 0 ? usuarios[0] : null;
     } catch (err) {
       console.error("Error searching user by email:", err);
       return null;

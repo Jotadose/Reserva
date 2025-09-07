@@ -81,11 +81,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   children,
 }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
+  const [settings, setSettings] =
+    useState<NotificationSettings>(defaultSettings);
   const [isSupported, setIsSupported] = useState<boolean>(false);
-  const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const { user } = useAuth();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   // Calculate unread count
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -142,16 +144,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   }, []);
 
   // Mark notification as read
-  const markAsRead = useCallback(
-    (notificationId: string) => {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, isRead: true } : n
-        )
-      );
-    },
-    []
-  );
+  const markAsRead = useCallback((notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
+    );
+  }, []);
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(() => {
@@ -193,7 +190,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const sendNotification = useCallback(
     (notification: Omit<AppNotification, "id" | "createdAt" | "isRead">) => {
       const newNotification: AppNotification = {
-        id: `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `notification-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         isRead: false,
         priority: notification.priority || "medium",
@@ -203,7 +202,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       setNotifications((prev) => [newNotification, ...prev]);
 
       // Show toast for new notification
-      showToast({
+      addToast({
         title: notification.title,
         message: notification.message,
         type: notification.type === "error" ? "error" : "info",
@@ -228,7 +227,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         }
       }
     },
-    [isSupported, permission, settings.push, showToast]
+    [isSupported, permission, settings.push, addToast]
   );
 
   // Load notifications from API or local storage

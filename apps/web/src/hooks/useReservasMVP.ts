@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabaseClient } from "../lib/supabaseClient";
 
 export interface ReservaMVP {
   id_reserva: string;
   id_cliente: string;
   id_barbero: string;
-  id_servicio: string;
+  id_servicio: string; // servicio primario
   fecha_reserva: string;
   hora_inicio: string;
   hora_fin: string;
@@ -42,18 +41,27 @@ export interface ReservaMVP {
     categoria: string;
     color: string;
   };
+  servicios_json?: Array<{
+    id_servicio: string;
+    duracion: number;
+    precio: number;
+  }>;
 }
 
 export interface CrearReservaData {
-  id_cliente: string; // 🔧 Corregido: era id_cliente no id_usuario
+  id_cliente: string;
   id_barbero: string;
-  id_servicio: string;
   fecha_reserva: string;
   hora_inicio: string;
-  hora_fin: string;
-  duracion_minutos: number;
-  precio_total: number; // En centavos
   notas_cliente?: string;
+  id_servicio: string;
+}
+
+export interface VerificarDisponibilidadData {
+  id_barbero: string;
+  fecha: string;
+  hora: string;
+  id_servicio: string;
 }
 
 export function useReservasMVP() {
@@ -63,46 +71,30 @@ export function useReservasMVP() {
 
   const fetchReservas = async (filtros?: {
     barbero?: string;
-    fecha?: string;
+    fecha?: string; // mapped to ?fecha= en API
     estado?: string;
     cliente?: string;
+    incluir_eliminadas?: boolean;
   }) => {
     try {
       setLoading(true);
       setError(null);
-
-      // 🔧 FETCH SIMPLIFICADO SIN FOREIGN KEYS (por ahora)
-      let query = supabaseClient.from("reservas").select("*");
-
-      // Aplicar filtros
-      if (filtros?.barbero) {
-        query = query.eq("id_barbero", filtros.barbero);
-      }
-      if (filtros?.fecha) {
-        query = query.eq("fecha_reserva", filtros.fecha);
-      }
-      if (filtros?.estado) {
-        query = query.eq("estado", filtros.estado);
-      }
-      if (filtros?.cliente) {
-        query = query.eq("id_cliente", filtros.cliente);
-      }
-
-      // Ordenar por fecha y hora
-      query = query
-        .order("fecha_reserva", { ascending: false })
-        .order("hora_inicio", { ascending: false });
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      console.log("📋 Reservas cargadas:", data?.length || 0);
-      setReservas(data || []);
+      const params = new URLSearchParams();
+      if (filtros?.barbero) params.set("barbero", filtros.barbero);
+      if (filtros?.fecha) params.set("fecha", filtros.fecha);
+      if (filtros?.estado) params.set("estado", filtros.estado);
+      if (filtros?.cliente) params.set("cliente", filtros.cliente);
+      if (filtros?.incluir_eliminadas) params.set("incluir_eliminadas", "true");
+      const qs = params.toString();
+      const url = qs ? `/api/reservas?${qs}` : "/api/reservas";
+      const resp = await fetch(url);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error obteniendo reservas");
+      const list = json.data || [];
+      console.log("📋 Reservas cargadas (API):", list.length);
+      setReservas(list);
     } catch (err) {
-      console.error("Error fetching reservas:", err);
+      console.error("Error fetching reservas (API):", err);
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
@@ -111,38 +103,73 @@ export function useReservasMVP() {
 
   const getReservaById = async (id: string): Promise<ReservaMVP | null> => {
     try {
-      const { data, error: queryError } = await supabaseClient
-        .from("reservas")
-        .select(
-          `
-          *,
-          cliente:usuarios!reservas_id_cliente_fkey (
-            nombre,
-            email,
-            telefono
-          ),
-          barbero:usuarios!reservas_id_barbero_fkey (
-            nombre,
-            email
-          ),
-          servicio:servicios (
-            nombre,
-            categoria,
-            color
-          )
-        `
-        )
-        .eq("id_reserva", id)
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch(`/api/reservas/${id}`);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          return null;
+        }
+        throw new Error(json.error || "Error obteniendo reserva");
       }
 
-      return data;
+      return json.data as ReservaMVP;
     } catch (err) {
       console.error("Error fetching reserva by ID:", err);
       return null;
+    }
+  };
+
+  const verificarDisponibilidad = async (
+    params: VerificarDisponibilidadData
+  ): Promise<{ esDisponible: boolean; mensaje?: string }> => {
+    try {
+      const queryParams = new URLSearchParams({
+        barberId: params.id_barbero,
+        date: params.fecha,
+        startTime: params.hora,
+        serviceId: params.id_servicio,
+      });
+
+      const resp = await fetch(`/api/disponibilidad/check?${queryParams}`);
+      
+      // Check if response is HTML (authentication error)
+      const contentType = resp.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.error('🔒 API devolvió HTML en lugar de JSON - posible error de autenticación');
+        throw new Error('Error de autenticación en el servidor. Por favor, contacta al administrador.');
+      }
+      
+      let json;
+      try {
+        json = await resp.json();
+      } catch (parseError) {
+        console.error('❌ Error al parsear respuesta JSON:', parseError);
+        throw new Error('El servidor devolvió una respuesta inválida. Por favor, intenta nuevamente.');
+      }
+
+      if (!resp.ok) {
+        if (resp.status === 409) {
+          // 409 Conflict is a good status for "slot taken"
+          return {
+            esDisponible: false,
+            mensaje:
+              json.message ||
+              "El horario seleccionado ya no está disponible. Por favor, elige otro.",
+          };
+        }
+        throw new Error(
+          json.error ||
+            json.message ||
+            "Error al verificar disponibilidad del servidor."
+        );
+      }
+
+      return { esDisponible: true, ...json };
+    } catch (err) {
+      console.error("Error al verificar disponibilidad (API):", err);
+      // Re-throw so the UI can display a generic error toast
+      throw err;
     }
   };
 
@@ -152,28 +179,37 @@ export function useReservasMVP() {
     try {
       setLoading(true);
       setError(null);
-
-      const { data, error: queryError } = await supabaseClient
-        .from("reservas")
-        .insert([
-          {
-            ...reservaData,
-            estado: "confirmada",
-          },
-        ])
-        .select("*") // 🔧 Solo datos básicos, sin foreign keys
-        .single();
-
-      if (queryError) {
-        throw queryError;
+      const resp = await fetch("/api/reservas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reservaData),
+      });
+      
+      // Check if response is HTML (authentication error)
+      const contentType = resp.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.error('🔒 API devolvió HTML en lugar de JSON - posible error de autenticación');
+        throw new Error('Error de autenticación en el servidor. Por favor, contacta al administrador.');
       }
-
-      // Actualizar la lista local
-      await fetchReservas();
-
-      return data;
+      
+      let json;
+      try {
+        json = await resp.json();
+      } catch (parseError) {
+        console.error('❌ Error al parsear respuesta JSON:', parseError);
+        throw new Error('El servidor devolvió una respuesta inválida. Por favor, intenta nuevamente.');
+      }
+      
+      if (!resp.ok)
+        throw new Error(json.error || json.message || "Error creando reserva");
+      const created: ReservaMVP = json.data;
+      // Optimistic append then refresh (ensures ordering logic from API if changed later)
+      setReservas((prev) => [created, ...prev]);
+      // Refresh in background (no await to keep UX snappy)
+      fetchReservas();
+      return created;
     } catch (err) {
-      console.error("Error creating reserva:", err);
+      console.error("Error creating reserva (API):", err);
       setError(err instanceof Error ? err.message : "Error creando reserva");
       throw err;
     } finally {
@@ -188,55 +224,23 @@ export function useReservasMVP() {
     try {
       setLoading(true);
       setError(null);
-
-      // Agregar timestamps según el estado
-      const updatesWithTimestamps = { ...updates };
-
-      if (updates.estado === "confirmada" && !updates.confirmada_at) {
-        updatesWithTimestamps.confirmada_at = new Date().toISOString();
-      }
-      if (updates.estado === "completada" && !updates.completada_at) {
-        updatesWithTimestamps.completada_at = new Date().toISOString();
-      }
-      if (updates.estado === "cancelada" && !updates.cancelada_at) {
-        updatesWithTimestamps.cancelada_at = new Date().toISOString();
-      }
-
-      const { data, error: queryError } = await supabaseClient
-        .from("reservas")
-        .update(updatesWithTimestamps)
-        .eq("id_reserva", id)
-        .select(
-          `
-          *,
-          cliente:usuarios!reservas_id_cliente_fkey (
-            nombre,
-            email,
-            telefono
-          ),
-          barbero:usuarios!reservas_id_barbero_fkey (
-            nombre,
-            email
-          ),
-          servicio:servicios (
-            nombre,
-            categoria,
-            color
-          )
-        `
-        )
-        .single();
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      // Actualizar la lista local
-      await fetchReservas();
-
-      return data;
+      const resp = await fetch(`/api/reservas?id=${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      const json = await resp.json();
+      if (!resp.ok)
+        throw new Error(
+          json.error || json.message || "Error actualizando reserva"
+        );
+      const updated: ReservaMVP = json.data;
+      setReservas((prev) =>
+        prev.map((r) => (r.id_reserva === id ? updated : r))
+      );
+      return updated;
     } catch (err) {
-      console.error("Error updating reserva:", err);
+      console.error("Error updating reserva (API):", err);
       setError(
         err instanceof Error ? err.message : "Error actualizando reserva"
       );
@@ -246,33 +250,25 @@ export function useReservasMVP() {
     }
   };
 
-  const cancelarReserva = async (id: string, motivo?: string) => {
-    return await actualizarReserva(id, {
+  const cancelarReserva = async (id: string, motivo?: string) =>
+    actualizarReserva(id, {
       estado: "cancelada",
       motivo_cancelacion: motivo,
       cancelada_at: new Date().toISOString(),
     });
-  };
 
-  const completarReserva = async (id: string, notas_internas?: string) => {
-    return await actualizarReserva(id, {
+  const completarReserva = async (id: string, notas_internas?: string) =>
+    actualizarReserva(id, {
       estado: "completada",
       notas_internas,
       completada_at: new Date().toISOString(),
     });
-  };
 
-  const marcarEnProgreso = async (id: string) => {
-    return await actualizarReserva(id, {
-      estado: "en_progreso",
-    });
-  };
+  const marcarEnProgreso = async (id: string) =>
+    actualizarReserva(id, { estado: "en_progreso" });
 
-  const marcarNoShow = async (id: string) => {
-    return await actualizarReserva(id, {
-      estado: "no_show",
-    });
-  };
+  const marcarNoShow = async (id: string) =>
+    actualizarReserva(id, { estado: "no_show" });
 
   // Obtener reservas de hoy para un barbero
   const getReservasHoy = async (idBarbero: string) => {
@@ -288,44 +284,25 @@ export function useReservasMVP() {
   ) => {
     try {
       setLoading(true);
+      setError(null);
 
-      let query = supabaseClient
-        .from("reservas")
-        .select(
-          `
-          *,
-          cliente:usuarios!reservas_id_cliente_fkey (
-            nombre,
-            email,
-            telefono
-          ),
-          barbero:usuarios!reservas_id_barbero_fkey (
-            nombre,
-            email
-          ),
-          servicio:servicios (
-            nombre,
-            categoria,
-            color
-          )
-        `
-        )
-        .gte("fecha_reserva", fechaInicio)
-        .lte("fecha_reserva", fechaFin);
-
+      const params = new URLSearchParams();
+      params.set("fecha_inicio", fechaInicio);
+      params.set("fecha_fin", fechaFin);
       if (idBarbero) {
-        query = query.eq("id_barbero", idBarbero);
+        params.set("barbero", idBarbero);
       }
 
-      const { data, error } = await query
-        .order("fecha_reserva", { ascending: true })
-        .order("hora_inicio", { ascending: true });
-
-      if (error) {
-        throw error;
+      const resp = await fetch(`/api/reservas?${params.toString()}`);
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error obteniendo reservas por rango");
       }
 
-      setReservas(data || []);
+      const list = json.data || [];
+      console.log("📅 Reservas por rango cargadas (API):", list.length);
+      setReservas(list);
     } catch (err) {
       console.error("Error fetching reservas by range:", err);
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -336,11 +313,13 @@ export function useReservasMVP() {
 
   // Función para formatear precio
   const formatearPrecio = (precio: number) => {
-    return new Intl.NumberFormat("es-CO", {
+    // Los precios en la BD están en centavos (ej: 10000 para $10.000 CLP)
+    // Intl.NumberFormat para CLP no maneja centavos.
+    return new Intl.NumberFormat("es-CL", {
       style: "currency",
-      currency: "COP",
+      currency: "CLP",
       minimumFractionDigits: 0,
-    }).format(precio / 100);
+    }).format(precio);
   };
 
   useEffect(() => {
@@ -353,6 +332,7 @@ export function useReservasMVP() {
     error,
     refetch: fetchReservas,
     getReservaById,
+    verificarDisponibilidad,
     crearReserva,
     actualizarReserva,
     cancelarReserva,
