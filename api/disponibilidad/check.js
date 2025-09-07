@@ -101,25 +101,68 @@ export default async function handler(req, res) {
       });
     }
 
-    // Verificar horarios de trabajo del barbero (opcional - implementar si existe tabla de horarios)
-    // Por ahora asumimos horario estándar: 9:00 - 18:00, Lunes a Sábado
-    const dayOfWeek = new Date(date).getDay(); // 0 = Domingo, 6 = Sábado
-    if (dayOfWeek === 0) { // Domingo cerrado
-      return res.status(409).json({
-        esDisponible: false,
-        message: "Los domingos estamos cerrados."
+    // Obtener horarios de trabajo del barbero desde la base de datos
+    const { data: barbero, error: barberoError } = await supabase
+      .from("usuarios")
+      .select(`
+        id_usuario,
+        nombre,
+        barberos (
+          horario_inicio,
+          horario_fin,
+          dias_trabajo
+        )
+      `)
+      .eq("id_usuario", barberId)
+      .eq("rol", "barbero")
+      .eq("activo", true)
+      .single();
+
+    if (barberoError || !barbero || !barbero.barberos) {
+      return res.status(400).json({
+        error: "Barbero no encontrado o inactivo",
+        barberId,
+        barberoError: barberoError?.message
       });
     }
 
+    const horarios = barbero.barberos;
+    
+    // Verificar día de trabajo
+    const fechaObj = new Date(date);
+    const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    const diaActual = diasSemana[fechaObj.getDay()];
+    
+    if (!horarios.dias_trabajo.includes(diaActual)) {
+      return res.status(409).json({
+        esDisponible: false,
+        message: `${barbero.nombre} no trabaja los ${diaActual}s.`
+      });
+    }
+
+    // Verificar horario de trabajo del barbero específico
     const startHour = parseInt(startTime.split(':')[0]);
+    const startMinute = parseInt(startTime.split(':')[1]);
     const endHour = parseInt(endTime.split(':')[0]);
     const endMinute = parseInt(endTime.split(':')[1]);
     
-    // Verificar horario de trabajo (9:00 - 18:00)
-    if (startHour < 9 || endHour > 18 || (endHour === 18 && endMinute > 0)) {
+    const inicioLaboral = horarios.horario_inicio.split(':');
+    const finLaboral = horarios.horario_fin.split(':');
+    const horaInicioLaboral = parseInt(inicioLaboral[0]);
+    const minutoInicioLaboral = parseInt(inicioLaboral[1]);
+    const horaFinLaboral = parseInt(finLaboral[0]);
+    const minutoFinLaboral = parseInt(finLaboral[1]);
+    
+    // Convertir a minutos para comparación más fácil
+    const startTimeMinutes = startHour * 60 + startMinute;
+    const endTimeMinutes = endHour * 60 + endMinute;
+    const laboralStartMinutes = horaInicioLaboral * 60 + minutoInicioLaboral;
+    const laboralEndMinutes = horaFinLaboral * 60 + minutoFinLaboral;
+    
+    if (startTimeMinutes < laboralStartMinutes || endTimeMinutes > laboralEndMinutes) {
       return res.status(409).json({
         esDisponible: false,
-        message: "El horario debe estar entre las 9:00 y 18:00 horas."
+        message: `${barbero.nombre} trabaja de ${horarios.horario_inicio} a ${horarios.horario_fin}.`
       });
     }
 
@@ -129,10 +172,16 @@ export default async function handler(req, res) {
       message: "Horario disponible",
       detalles: {
         barberId,
+        barberoNombre: barbero.nombre,
         fecha: date,
         hora_inicio: startTime,
         hora_fin: endTime,
-        duracion_minutos: servicio.duracion_minutos
+        duracion_minutos: servicio.duracion,
+        horario_laboral: {
+          inicio: horarios.horario_inicio,
+          fin: horarios.horario_fin,
+          dias: horarios.dias_trabajo
+        }
       }
     });
 
