@@ -347,11 +347,11 @@ async function handleDisponibilidadMonth(req, res, params) {
     // STEP 4: Obtener reservas del mes
     const { data: reservas, error: reservasError } = await supabase
       .from('reservas')
-      .select('fecha, hora_inicio, hora_fin, estado')
+      .select('fecha_reserva, hora_inicio, hora_fin, estado')
       .eq('id_barbero', barberoId)
-      .gte('fecha', startDate)
-      .lte('fecha', endDate)
-      .in('estado', ['confirmed', 'pending']);
+      .gte('fecha_reserva', startDate)
+      .lte('fecha_reserva', endDate)
+      .in('estado', ['confirmada', 'pendiente']);
 
     if (reservasError) {
       console.error('Error reservas:', reservasError);
@@ -360,7 +360,7 @@ async function handleDisponibilidadMonth(req, res, params) {
 
     // STEP 5: Obtener bloqueos del mes
     const { data: bloqueos, error: bloqueosError } = await supabase
-      .from('bloqueos')
+      .from('bloqueos_horarios')
       .select('fecha_inicio, fecha_fin, hora_inicio, hora_fin')
       .eq('id_barbero', barberoId)
       .gte('fecha_inicio', startDate)
@@ -386,10 +386,10 @@ async function handleDisponibilidadMonth(req, res, params) {
     const bloqueosByDate = new Map();
 
     (reservas || []).forEach(reserva => {
-      if (!reservasByDate.has(reserva.fecha)) {
-        reservasByDate.set(reserva.fecha, []);
+      if (!reservasByDate.has(reserva.fecha_reserva)) {
+        reservasByDate.set(reserva.fecha_reserva, []);
       }
-      reservasByDate.get(reserva.fecha).push({
+      reservasByDate.get(reserva.fecha_reserva).push({
         inicio: reserva.hora_inicio,
         fin: reserva.hora_fin
       });
@@ -634,8 +634,8 @@ async function handleReservas(req, res, params) {
         .from('reservas')
         .select(`
           *,
-          clientes(id_cliente, nombre, telefono, email),
-          servicios(id_servicio, nombre, precio, duracion_minutos)
+          cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
+          servicio:servicios(id_servicio, nombre, precio, duracion_minutos)
         `)
         .eq('id_reserva', id)
         .single();
@@ -648,16 +648,16 @@ async function handleReservas(req, res, params) {
         .from('reservas')
         .select(`
           *,
-          clientes(id_cliente, nombre, telefono, email),
-          servicios(id_servicio, nombre, precio, duracion_minutos)
+          cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
+          servicio:servicios(id_servicio, nombre, precio, duracion_minutos)
         `);
       
       if (barbero) query = query.eq('id_barbero', barbero);
-      if (fecha) query = query.eq('fecha', fecha);
+      if (fecha) query = query.eq('fecha_reserva', fecha);
       if (estado) query = query.eq('estado', estado);
       if (cliente) query = query.eq('id_cliente', cliente);
       
-      query = query.order('fecha', { ascending: false })
+      query = query.order('fecha_reserva', { ascending: false })
                    .order('hora_inicio', { ascending: false });
       
       const { data, error } = await query;
@@ -696,7 +696,7 @@ async function handleReservas(req, res, params) {
 async function handleBloqueos(req, res, params) {
   if (req.method === 'GET') {
     const { data, error } = await supabase
-      .from('bloqueos')
+      .from('bloqueos_horarios')
       .select('*')
       .order('fecha_inicio');
       
