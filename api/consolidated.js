@@ -604,14 +604,34 @@ async function handleUsuarios(req, res, params) {
   }
   
   if (req.method === 'POST') {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .insert(req.body)
-      .select()
-      .single();
+    console.log('👤 Crear usuario:', req.body);
+    
+    try {
+      const userData = {
+        nombre: req.body.nombre,
+        email: req.body.email,
+        telefono: req.body.telefono || null,
+        rol: req.body.rol || 'cliente',
+        activo: req.body.activo !== false
+      };
       
-    if (error) return res.status(400).json({ error: error.message });
-    return res.status(201).json({ data });
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert(userData)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('❌ Error creando usuario:', error);
+        return res.status(400).json({ error: error.message });
+      }
+      
+      console.log('✅ Usuario creado exitosamente:', data.id_usuario);
+      return res.status(201).json({ data });
+    } catch (err) {
+      console.error('❌ Error en POST usuarios:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
   }
   
   if (req.method === 'PUT') {
@@ -673,14 +693,56 @@ async function handleReservas(req, res, params) {
   }
   
   if (req.method === 'POST') {
-    const { data, error } = await supabase
-      .from('reservas')
-      .insert(req.body)
-      .select()
-      .single();
+    console.log('📝 Crear reserva:', req.body);
+    
+    // Validar datos requeridos
+    const { id_cliente, id_barbero, id_servicio, fecha_reserva, hora_inicio, hora_fin, duracion_minutos, precio_total } = req.body;
+    
+    if (!id_cliente || !id_barbero || !id_servicio || !fecha_reserva || !hora_inicio || !hora_fin) {
+      return res.status(400).json({ 
+        error: 'Faltan campos requeridos',
+        required: ['id_cliente', 'id_barbero', 'id_servicio', 'fecha_reserva', 'hora_inicio', 'hora_fin']
+      });
+    }
+    
+    try {
+      const reservaData = {
+        id_cliente,
+        id_barbero,
+        id_servicio,
+        fecha_reserva,
+        hora_inicio,
+        hora_fin,
+        duracion_minutos: duracion_minutos || 30,
+        precio_total: precio_total || 0,
+        estado: 'confirmada',
+        notas_cliente: req.body.notas_cliente || null,
+        notas_internas: req.body.notas_internas || null
+      };
       
-    if (error) return res.status(400).json({ error: error.message });
-    return res.status(201).json({ data });
+      console.log('📝 Datos de reserva procesados:', reservaData);
+      
+      const { data, error } = await supabase
+        .from('reservas')
+        .insert(reservaData)
+        .select(`
+          *,
+          cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
+          servicio:servicios(id_servicio, nombre, precio, duracion)
+        `)
+        .single();
+        
+      if (error) {
+        console.error('❌ Error creando reserva:', error);
+        return res.status(400).json({ error: error.message });
+      }
+      
+      console.log('✅ Reserva creada exitosamente:', data.id_reserva);
+      return res.status(201).json({ data });
+    } catch (err) {
+      console.error('❌ Error en POST reservas:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
   }
   
   if (req.method === 'PUT') {
