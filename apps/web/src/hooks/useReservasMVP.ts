@@ -293,7 +293,7 @@ export function useReservasMVP() {
         params.set("barbero", idBarbero);
       }
 
-      const resp = await fetch(`/api/reservas?${params.toString()}`);
+      const resp = await fetch(`/api/consolidated?type=reservas&${params.toString()}`);
       const json = await resp.json();
       
       if (!resp.ok) {

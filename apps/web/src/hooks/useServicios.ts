@@ -23,7 +23,7 @@ export function useServicios() {
       setLoading(true);
       setError(null);
 
-      const resp = await fetch("/api/servicios?activo=true");
+      const resp = await fetch("/api/consolidated?type=servicios");
       const json = await resp.json();
       
       if (!resp.ok) {

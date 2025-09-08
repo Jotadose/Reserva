@@ -71,7 +71,7 @@ export const useCalendarAvailability = () => {
       const startTime = Date.now();
 
       const response = await fetch(
-        `/api/disponibilidad/month?barberoId=${barberoId}&serviceId=${serviceId}&year=${year}&month=${month}`,
+        `/api/consolidated?type=disponibilidad&action=month&barberoId=${barberoId}&serviceId=${serviceId}&year=${year}&month=${month}`,
         { signal: abortControllerRef.current.signal }
       );
 
