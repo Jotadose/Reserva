@@ -40,6 +40,7 @@ export default async function handler(req, res) {
   try {
     const { type, action, ...params } = req.query;
     console.log('📋 Request params:', { type, action, params });
+    console.log('📋 Full query object:', req.query);
 
     if (!type) {
       console.log('❌ Missing type parameter');
