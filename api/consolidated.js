@@ -453,46 +453,200 @@ async function handleDisponibilidadMonth(req, res, params) {
 // =====================================================
 async function handleServicios(req, res, params) {
   if (req.method === 'GET') {
+    const { id } = params;
+    
+    if (id) {
+      // Obtener servicio específico
+      const { data, error } = await supabase
+        .from('servicios')
+        .select('*')
+        .eq('id_servicio', id)
+        .single();
+        
+      if (error) return res.status(404).json({ error: 'Servicio no encontrado' });
+      return res.status(200).json({ data });
+    } else {
+      // Obtener todos los servicios
+      const { data, error } = await supabase
+        .from('servicios')
+        .select('*')
+        .eq('activo', true)
+        .order('nombre');
+        
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ data: data || [] });
+    }
+  }
+  
+  if (req.method === 'POST') {
     const { data, error } = await supabase
       .from('servicios')
-      .select('*')
-      .eq('activo', true)
-      .order('nombre');
+      .insert(req.body)
+      .select()
+      .single();
       
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ data: data || [] });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(201).json({ data });
   }
+  
+  if (req.method === 'PUT') {
+    const { id } = params;
+    const { data, error } = await supabase
+      .from('servicios')
+      .update(req.body)
+      .eq('id_servicio', id)
+      .select()
+      .single();
+      
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ data });
+  }
+  
+  if (req.method === 'DELETE') {
+    const { id } = params;
+    const { data, error } = await supabase
+      .from('servicios')
+      .update({ activo: false })
+      .eq('id_servicio', id)
+      .select()
+      .single();
+      
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ data });
+  }
+  
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
 async function handleUsuarios(req, res, params) {
   if (req.method === 'GET') {
+    const { id, email } = params;
+    
+    if (id) {
+      // Obtener usuario específico
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id_usuario', id)
+        .single();
+        
+      if (error) return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(200).json({ data });
+    } else if (email) {
+      // Buscar por email
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('email', email)
+        .eq('activo', true);
+        
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ data: data || [] });
+    } else {
+      // Obtener todos los usuarios
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('nombre');
+        
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ data: data || [] });
+    }
+  }
+  
+  if (req.method === 'POST') {
     const { data, error } = await supabase
       .from('usuarios')
-      .select('*')
-      .order('nombre');
+      .insert(req.body)
+      .select()
+      .single();
       
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ data: data || [] });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(201).json({ data });
   }
+  
+  if (req.method === 'PUT') {
+    const { id } = params;
+    const { data, error } = await supabase
+      .from('usuarios')
+      .update(req.body)
+      .eq('id_usuario', id)
+      .select()
+      .single();
+      
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ data });
+  }
+  
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
 async function handleReservas(req, res, params) {
   if (req.method === 'GET') {
+    const { id, barbero, fecha, estado, cliente } = params;
+    
+    if (id) {
+      // Obtener reserva específica
+      const { data, error } = await supabase
+        .from('reservas_mvp')
+        .select(`
+          *,
+          cliente:clientes(id_cliente, nombre, telefono, email),
+          servicios(id_servicio, nombre, precio, duracion_minutos)
+        `)
+        .eq('id_reserva', id)
+        .single();
+        
+      if (error) return res.status(404).json({ error: 'Reserva no encontrada' });
+      return res.status(200).json({ data });
+    } else {
+      // Obtener reservas con filtros
+      let query = supabase
+        .from('reservas_mvp')
+        .select(`
+          *,
+          cliente:clientes(id_cliente, nombre, telefono, email),
+          servicios(id_servicio, nombre, precio, duracion_minutos)
+        `);
+      
+      if (barbero) query = query.eq('id_barbero', barbero);
+      if (fecha) query = query.eq('fecha', fecha);
+      if (estado) query = query.eq('estado', estado);
+      if (cliente) query = query.eq('id_cliente', cliente);
+      
+      query = query.order('fecha', { ascending: false })
+                   .order('hora_inicio', { ascending: false });
+      
+      const { data, error } = await query;
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(200).json({ data: data || [] });
+    }
+  }
+  
+  if (req.method === 'POST') {
     const { data, error } = await supabase
       .from('reservas_mvp')
-      .select(`
-        *,
-        cliente:clientes(id_cliente, nombre, telefono, email),
-        servicios(id_servicio, nombre, precio, duracion_minutos)
-      `)
-      .order('fecha', { ascending: false })
-      .order('hora_inicio', { ascending: false });
+      .insert(req.body)
+      .select()
+      .single();
       
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ data: data || [] });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(201).json({ data });
   }
+  
+  if (req.method === 'PUT') {
+    const { id } = params;
+    const { data, error } = await supabase
+      .from('reservas_mvp')
+      .update(req.body)
+      .eq('id_reserva', id)
+      .select()
+      .single();
+      
+    if (error) return res.status(400).json({ error: error.message });
+    return res.status(200).json({ data });
+  }
+  
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
