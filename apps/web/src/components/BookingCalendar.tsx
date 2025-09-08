@@ -96,13 +96,48 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return map;
   }, [bloqueos]);
 
+  // 🔥 FUNCIÓN PARA OBTENER DÍAS DE TRABAJO DEL BARBERO SELECCIONADO
+  const getWorkingDaysForSelectedBarbero = useCallback(() => {
+    if (!barberoId) {
+      // Si no hay barbero seleccionado, usar días por defecto (sin domingo)
+      return new Set([1, 2, 3, 4, 5, 6]);
+    }
+
+    const barbero = barberos.find(b => b.id_barbero === barberoId);
+    if (!barbero || !barbero.dias_trabajo) {
+      // Si no se encuentra el barbero, usar días por defecto
+      return new Set([1, 2, 3, 4, 5, 6]);
+    }
+
+    // Mapear días de texto a números (0=Domingo, 1=Lunes, etc.)
+    const diasMap: { [key: string]: number } = {
+      'domingo': 0,
+      'lunes': 1,
+      'martes': 2,
+      'miercoles': 3,
+      'jueves': 4,
+      'viernes': 5,
+      'sabado': 6
+    };
+
+    const workingDaysSet = new Set<number>();
+    barbero.dias_trabajo.forEach(dia => {
+      const dayNumber = diasMap[dia.toLowerCase()];
+      if (dayNumber !== undefined) {
+        workingDaysSet.add(dayNumber);
+      }
+    });
+
+    return workingDaysSet;
+  }, [barberoId, barberos]);
+
   const isDateAvailable = useCallback(
     (date: string) =>
       sharedIsDateAvailable(date, {
         blockedDates: blockedDatesMap,
-        workingDays: new Set([1, 2, 3, 4, 5, 6]), // Lunes-Sábado (0=Domingo excluido)
+        workingDays: getWorkingDaysForSelectedBarbero(), // Usar días reales del barbero
       }),
-    [blockedDatesMap]
+    [blockedDatesMap, getWorkingDaysForSelectedBarbero]
   );
 
   const getBookingsForDate = useCallback(
@@ -288,16 +323,22 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
             const cellDateOnly = new Date(cellDate);
             cellDateOnly.setHours(0, 0, 0, 0);
             const isPast = cellDateOnly < today;
-            const isSunday = cellDate.getDay() === 0;
+            const dayOfWeek = cellDate.getDay();
+            const workingDays = getWorkingDaysForSelectedBarbero();
+            const isWorkingDay = workingDays.has(dayOfWeek);
             const isToday = cellDateOnly.getTime() === today.getTime();
             const isTodayTooLate = isToday && new Date().getHours() >= 17;
             const isSelected = selectedDate === dateString;
             const isAvailable = isDateAvailable(dateString);
             const bookingCount = getBookingsForDate(dateString);
 
+            // Mapear números de día a nombres
+            const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            const dayName = dayNames[dayOfWeek];
+
             const getButtonTitle = () => {
               if (isPast) return "Esta fecha ya pasó";
-              if (isSunday) return "Cerrado los domingos";
+              if (!isWorkingDay) return `Barbero no trabaja los ${dayName}s`;
               if (isTodayTooLate)
                 return "Muy tarde para reservar hoy (mínimo 2 horas)";
               if (isToday)
@@ -316,7 +357,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               if (!isAvailable) {
                 let disabledClass = `${DESIGN_TOKENS.background.surface} ${DESIGN_TOKENS.text.muted} cursor-not-allowed`;
                 if (isPast) disabledClass += " opacity-50";
-                else if (isSunday)
+                else if (!isWorkingDay)
                   disabledClass = "bg-red-900/30 text-red-400 cursor-not-allowed";
                 else if (isTodayTooLate)
                   disabledClass = "bg-orange-900/30 text-orange-400 cursor-not-allowed";
@@ -347,7 +388,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 {isToday && isAvailable && (
                   <div className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-400" />
                 )}
-                {isSunday && (
+                {!isWorkingDay && (
                   <div className="absolute right-1 top-1 text-xs text-red-400">
                     ✕
                   </div>
@@ -376,7 +417,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               <div className="flex h-3 w-3 items-center justify-center rounded bg-red-900/30">
                 <span className="text-[8px] text-red-400">✕</span>
               </div>
-              <span>Cerrado (domingos)</span>
+              <span>Días no laborables</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="h-3 w-3 rounded bg-gray-900 opacity-50"></div>
