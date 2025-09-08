@@ -39,7 +39,7 @@ export function useBarberos() {
       
       // Transformar datos de la API a la estructura esperada por la app
       const transformedBarberos: Barbero[] = rawData.map((item: any) => ({
-        id_barbero: item.id_usuario,
+        id_barbero: item.barberos?.id_barbero || item.id_usuario, // Usar el verdadero id_barbero si existe
         nombre: item.nombre,
         email: item.email,
         telefono: item.telefono,

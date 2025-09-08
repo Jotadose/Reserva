@@ -145,6 +145,7 @@ async function handleBarberos(req, res, params) {
           configuracion,
           created_at,
           barberos (
+            id_barbero,
             especialidades,
             horario_inicio,
             horario_fin,
@@ -177,6 +178,7 @@ async function handleBarberos(req, res, params) {
           configuracion,
           created_at,
           barberos (
+            id_barbero,
             especialidades,
             horario_inicio,
             horario_fin,
