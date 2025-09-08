@@ -1,5 +1,10 @@
 import { supabase } from '../lib/database.js';
 
+console.log('🔍 CONSOLIDATED API LOADING:', {
+  supabaseExists: !!supabase,
+  timestamp: new Date().toISOString()
+});
+
 /**
  * 🚀 ULTRA-CONSOLIDATED API - Solución al límite de 12 funciones Vercel Hobby
  * 
@@ -15,7 +20,12 @@ import { supabase } from '../lib/database.js';
  * - POST /api/consolidated?type=reservas (CRUD)
  */
 export default async function handler(req, res) {
-  const { type, action, ...params } = req.query;
+  console.log('🚀 CONSOLIDATED API START:', {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    timestamp: new Date().toISOString()
+  });
 
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,11 +33,31 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight handled');
     return res.status(200).end();
   }
 
   try {
+    const { type, action, ...params } = req.query;
+    console.log('📋 Request params:', { type, action, params });
+
+    if (!type) {
+      console.log('❌ Missing type parameter');
+      return res.status(400).json({ 
+        error: 'Missing required parameter: type',
+        available: ['barberos', 'servicios', 'usuarios', 'reservas', 'bloqueos', 'disponibilidad', 'health']
+      });
+    }
     console.log(`🚀 CONSOLIDATED API: ${req.method} ${type}/${action || 'default'}`);
+
+    // Verificar que supabase esté disponible
+    if (!supabase) {
+      console.error('❌ Supabase client not available');
+      return res.status(500).json({ 
+        error: 'Database connection not available',
+        timestamp: new Date().toISOString()
+      });
+    }
 
     switch (type) {
       case 'barberos':
@@ -68,10 +98,20 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('❌ Consolidated API Error:', error);
+    console.error('❌ CONSOLIDATED API ERROR:', {
+      error: error.message,
+      stack: error.stack,
+      query: req.query,
+      method: req.method,
+      url: req.url,
+      timestamp: new Date().toISOString()
+    });
+    
     return res.status(500).json({ 
       error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     });
   }
 }
