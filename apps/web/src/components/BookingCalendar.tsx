@@ -162,7 +162,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     const month = currentMonth.getMonth() + 1;
 
     console.log(`🚀 ULTRA-FAST Calendar Loading: ${barberoId}-${selectedService.id}-${year}-${month}`);
-    fetchMonthAvailability(parseInt(barberoId), parseInt(selectedService.id), year, month);
+    fetchMonthAvailability(barberoId, selectedService.id, year, month);
   }, [currentMonth, barberoId, selectedService, fetchMonthAvailability]);
 
   // Limpiar cache cuando cambie barbero o servicio

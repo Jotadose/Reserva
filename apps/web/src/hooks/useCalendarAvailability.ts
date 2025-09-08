@@ -16,8 +16,8 @@ interface UnavailableDay {
 }
 
 interface CalendarAvailability {
-  barberoId: number;
-  serviceId: number;
+  barberoId: string;
+  serviceId: string;
   month: number;
   year: number;
   availableDays: AvailableDay[];
@@ -42,7 +42,7 @@ export const useCalendarAvailability = () => {
   const cache = useRef(new Map<string, CalendarAvailability>());
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchMonthAvailability = useCallback(async (barberoId: number, serviceId: number, year: number, month: number) => {
+  const fetchMonthAvailability = useCallback(async (barberoId: string, serviceId: string, year: number, month: number) => {
     if (!barberoId || !serviceId || !year || !month) {
       setAvailability(null);
       return;
