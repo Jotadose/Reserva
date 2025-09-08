@@ -76,13 +76,16 @@ export default async function handler(req, res) {
         return await handleBloqueos(req, res, params);
         
       case 'disponibilidad':
+        console.log('🗓️ DISPONIBILIDAD REQUEST:', { action, params });
         if (action === 'month') {
           return await handleDisponibilidadMonth(req, res, params);
         } else if (action === 'check') {
           return await handleDisponibilidadCheck(req, res, params);
         }
+        console.log('❌ Invalid disponibilidad action:', action);
         return res.status(400).json({ 
           error: 'Invalid disponibilidad action',
+          received: action,
           available: ['month', 'check']
         });
         
@@ -293,9 +296,11 @@ async function handleBarberos(req, res, params) {
 // 🔥 DISPONIBILIDAD MONTH HANDLER (SIMPLIFICADO)
 // =====================================================
 async function handleDisponibilidadMonth(req, res, params) {
+  console.log('📅 handleDisponibilidadMonth called with:', params);
   const { barberoId, serviceId, year, month } = params;
 
   if (!barberoId || !serviceId || !year || !month) {
+    console.log('❌ Missing parameters:', { barberoId, serviceId, year, month });
     return res.status(400).json({ 
       error: 'Faltan parámetros: barberoId, serviceId, year, month' 
     });
@@ -330,7 +335,7 @@ async function handleDisponibilidadMonth(req, res, params) {
     // STEP 2: Obtener información del servicio
     const { data: servicio, error: servicioError } = await supabase
       .from('servicios')
-      .select('id_servicio, duracion_minutos, nombre')
+      .select('id_servicio, duracion, nombre')
       .eq('id_servicio', serviceId)
       .eq('activo', true)
       .single();
@@ -372,7 +377,7 @@ async function handleDisponibilidadMonth(req, res, params) {
     }
 
     // STEP 6: Procesar datos
-    const serviceDuration = servicio.duracion_minutos || 30;
+    const serviceDuration = servicio.duracion || 30;
     const barberoConfig = barbero.barberos || {};
     const workingDays = Array.isArray(barberoConfig.dias_trabajo) 
       ? barberoConfig.dias_trabajo 
@@ -635,7 +640,7 @@ async function handleReservas(req, res, params) {
         .select(`
           *,
           cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
-          servicio:servicios(id_servicio, nombre, precio, duracion_minutos)
+          servicio:servicios(id_servicio, nombre, precio, duracion)
         `)
         .eq('id_reserva', id)
         .single();
@@ -649,7 +654,7 @@ async function handleReservas(req, res, params) {
         .select(`
           *,
           cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
-          servicio:servicios(id_servicio, nombre, precio, duracion_minutos)
+          servicio:servicios(id_servicio, nombre, precio, duracion)
         `);
       
       if (barbero) query = query.eq('id_barbero', barbero);
