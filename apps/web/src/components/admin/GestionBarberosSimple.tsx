@@ -47,7 +47,7 @@ export const GestionBarberosSimple: React.FC = () => {
   // Función para actualizar barbero
   const handleActualizarBarbero = async (barberoId: string) => {
     try {
-      const response = await fetch(`/api/barberos?id=${barberoId}`, {
+      const response = await fetch(`/api/consolidated?type=barberos&id=${barberoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosEditados)
@@ -69,7 +69,7 @@ export const GestionBarberosSimple: React.FC = () => {
   // Función para agregar barbero
   const handleAgregarBarbero = async () => {
     try {
-      const response = await fetch('/api/barberos', {
+      const response = await fetch('/api/consolidated?type=barberos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosEditados)
@@ -101,7 +101,7 @@ export const GestionBarberosSimple: React.FC = () => {
   // Función para cambiar estado activo/inactivo
   const handleToggleActivo = async (barberoId: string, nuevoEstado: boolean) => {
     try {
-      const response = await fetch(`/api/barberos?id=${barberoId}`, {
+      const response = await fetch(`/api/consolidated?type=barberos&id=${barberoId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ activo: nuevoEstado })
@@ -123,7 +123,7 @@ export const GestionBarberosSimple: React.FC = () => {
   const handleEliminarBarbero = async (barberoId: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este barbero?')) {
       try {
-        const response = await fetch(`/api/barberos?id=${barberoId}`, {
+        const response = await fetch(`/api/consolidated?type=barberos&id=${barberoId}`, {
           method: 'DELETE'
         });
 

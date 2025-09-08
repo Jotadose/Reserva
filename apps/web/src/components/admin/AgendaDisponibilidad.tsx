@@ -932,7 +932,7 @@ export const AgendaDisponibilidad: React.FC = () => {
                   try {
                     setSavingDisponibilidad(true);
                     const resp = await fetch(
-                      `/api/barberos?id=${barberoActivo.id_barbero}`,
+                      `/api/consolidated?type=barberos&id=${barberoActivo.id_barbero}`,
                       {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
