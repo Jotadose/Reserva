@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback, useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Clock, ArrowRight, Scissors, Zap } from "lucide-react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Clock, ArrowRight, Zap, TrendingUp } from "lucide-react";
 import { TimeSlot, Booking, Service } from "../types/booking";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
 import { useBloqueos } from "../hooks/useBloqueos";
@@ -7,6 +7,7 @@ import { isDateAvailable as sharedIsDateAvailable } from "shared";
 import { useBarberos } from "../hooks/useBarberos";
 import { useAppStore } from "../store/appStore";
 import { DESIGN_TOKENS } from "../styles/designSystem";
+import { useCalendarAvailability } from "../hooks/useCalendarAvailability";
 
 interface BookingCalendarProps {
   selectedDate: string;
@@ -131,129 +132,65 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return workingDaysSet;
   }, [barberoId, barberos]);
 
-  // 🔥 FUNCIÓN MEJORADA PARA VERIFICAR DISPONIBILIDAD COMPLETA (día + horarios)
-  const isDateFullyAvailable = useCallback(async (date: string) => {
-    // Primero verificar disponibilidad básica (día de trabajo, no bloqueado)
-    const basicAvailable = sharedIsDateAvailable(date, {
-      blockedDates: blockedDatesMap,
-      workingDays: getWorkingDaysForSelectedBarbero(),
-    });
-    
-    if (!basicAvailable) return false;
-    
-    // Luego verificar si hay horarios disponibles
-    const slots = await loadAvailabilityForDate(date);
-    return slots.length > 0;
-  }, [blockedDatesMap, getWorkingDaysForSelectedBarbero, loadAvailabilityForDate]);
+  // =====================================================
+  // 🚀 ULTRA-OPTIMIZED CALENDAR - Single API Call
+  // =====================================================
+  const {
+    availability,
+    isLoading: isCalculatingAvailability,
+    error: availabilityError,
+    fetchMonthAvailability,
+    isDateAvailable: isDateAvailableFromAPI,
+    getAvailableDaysSet,
+    getStats,
+    clearCache
+  } = useCalendarAvailability();
 
-  // Estados para la carga optimizada
-  const [daysWithSlots, setDaysWithSlots] = useState<Set<string>>(new Set());
-  const [isCalculatingAvailability, setIsCalculatingAvailability] = useState(false);
-  const [calculationProgress, setCalculationProgress] = useState({ current: 0, total: 0 });
+  // Estados locales simplificados - eliminamos duplicados
+  // const [currentMonth, setCurrentMonth] ya existe arriba
+  // const [selectedDate, setSelectedDate] ya existe arriba
 
-  // Cache para evitar recálculos innecesarios
-  const availabilityCache = useRef<Map<string, string[]>>(new Map());
-
-  // Efecto para precalcular disponibilidad de días del mes actual - OPTIMIZADO
+  // =====================================================
+  // EFECTO PRINCIPAL - Una sola llamada por mes
+  // =====================================================
   useEffect(() => {
-    const calculateAvailabilityForMonth = async () => {
-      if (!barberoId || !selectedService) {
-        setDaysWithSlots(new Set());
-        return;
-      }
+    if (!barberoId || !selectedService) {
+      return;
+    }
 
-      setIsCalculatingAvailability(true);
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
-      setCalculationProgress({ current: 0, total: daysInMonth });
-      
-      // Crear clave única para este cálculo
-      const cacheKey = `${barberoId}-${selectedService.id}-${year}-${month}`;
-      
-      // Verificar si ya tenemos este cálculo en cache
-      if (availabilityCache.current.has(cacheKey)) {
-        const cachedDays = availabilityCache.current.get(cacheKey) || [];
-        setDaysWithSlots(new Set(cachedDays));
-        setIsCalculatingAvailability(false);
-        return;
-      }
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth() + 1;
 
-      const availableDays = new Set<string>();
-      
-      // OPTIMIZACIÓN 1: Procesar en lotes de 7 días (semana)
-      const BATCH_SIZE = 7;
-      const batches = [];
-      
-      for (let i = 1; i <= daysInMonth; i += BATCH_SIZE) {
-        const batch = [];
-        for (let j = i; j < Math.min(i + BATCH_SIZE, daysInMonth + 1); j++) {
-          batch.push(j);
-        }
-        batches.push(batch);
-      }
+    console.log(`🚀 ULTRA-FAST Calendar Loading: ${barberoId}-${selectedService.id}-${year}-${month}`);
+    fetchMonthAvailability(parseInt(barberoId), parseInt(selectedService.id), year, month);
+  }, [currentMonth, barberoId, selectedService, fetchMonthAvailability]);
 
-      // OPTIMIZACIÓN 2: Procesar lotes en paralelo con delay para UX
-      for (const batch of batches) {
-        const batchPromises = batch.map(async (day) => {
-          const dateString = formatDateString(year, month, day);
-          const isAvailable = await isDateFullyAvailable(dateString);
-          
-          if (isAvailable) {
-            availableDays.add(dateString);
-          }
-          
-          return { day, dateString, isAvailable };
-        });
-
-        // Esperar que termine el lote actual
-        await Promise.all(batchPromises);
-        
-        // Actualizar progreso y UI progresivamente
-        setCalculationProgress(prev => ({ 
-          ...prev, 
-          current: Math.min(batch[batch.length - 1], daysInMonth) 
-        }));
-        
-        // Update UI progressively para mejor UX
-        setDaysWithSlots(new Set(availableDays));
-        
-        // Pequeño delay para permitir que la UI se actualice
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-      
-      // Guardar en cache
-      availabilityCache.current.set(cacheKey, [...availableDays]);
-      
-      setDaysWithSlots(availableDays);
-      setIsCalculatingAvailability(false);
-      setCalculationProgress({ current: daysInMonth, total: daysInMonth });
-    };
-
-    calculateAvailabilityForMonth();
-  }, [currentMonth, barberoId, selectedService, isDateFullyAvailable, formatDateString]);
-
-  // Limpiar cache cuando cambien parámetros críticos
+  // Limpiar cache cuando cambie barbero o servicio
   useEffect(() => {
-    availabilityCache.current.clear();
-  }, [barberoId, selectedService]);
+    clearCache();
+  }, [barberoId, selectedService, clearCache]);
+
+  // =====================================================
+  // HELPERS ULTRA-RÁPIDOS
+  // =====================================================
+  const daysWithSlots = useMemo(() => getAvailableDaysSet(), [getAvailableDaysSet]);
+  
+  const calendarStats = useMemo(() => getStats(), [getStats]);
 
   const isDateAvailable = useCallback(
     (date: string) => {
-      // Verificación básica (día de trabajo, no bloqueado)
-      const basicAvailable = sharedIsDateAvailable(date, {
+      // Si tenemos datos de la API ultra-optimizada, usar esos
+      if (availability) {
+        return isDateAvailableFromAPI(date);
+      }
+      
+      // Fallback a verificación básica mientras carga
+      return sharedIsDateAvailable(date, {
         blockedDates: blockedDatesMap,
         workingDays: getWorkingDaysForSelectedBarbero(),
-      });
-      
-      // Si no es un día básicamente disponible, retornar false
-      if (!basicAvailable) return false;
-      
-      // Verificar si tiene horarios disponibles (precalculado)
-      return daysWithSlots.has(date);
+      }) && daysWithSlots.has(date);
     },
-    [blockedDatesMap, getWorkingDaysForSelectedBarbero, daysWithSlots]
+    [availability, isDateAvailableFromAPI, blockedDatesMap, getWorkingDaysForSelectedBarbero, daysWithSlots]
   );
 
   const getBookingsForDate = useCallback(
@@ -376,37 +313,52 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       )}
       {/* Calendar */}
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
-        {/* Loading Animation Temática de Barbería */}
+        {/* ULTRA-FAST Loading Animation */}
         {isCalculatingAvailability && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl border border-amber-700/50">
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl border border-blue-700/50">
             <div className="flex items-center space-x-3 mb-3">
               <div className="flex space-x-1">
-                <Scissors className="w-5 h-5 text-amber-400 animate-pulse" />
-                <Zap className="w-4 h-4 text-orange-400 animate-bounce" style={{ animationDelay: '0.1s' }} />
-                <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                <Zap className="w-5 h-5 text-blue-400 animate-pulse" />
+                <TrendingUp className="w-4 h-4 text-indigo-400 animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
               </div>
-              <span className="text-amber-100 text-sm font-medium">
-                Calculando disponibilidad...
+              <span className="text-blue-100 text-sm font-medium">
+                🚀 Carga ultra-rápida del mes completo...
               </span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-300 ease-out"
-                style={{ 
-                  width: calculationProgress.total > 0 
-                    ? `${(calculationProgress.current / calculationProgress.total) * 100}%` 
-                    : '0%' 
-                }}
-              />
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full animate-pulse w-full" />
             </div>
-            <p className="text-xs text-amber-200 mt-2 text-center">
-              {calculationProgress.current} de {calculationProgress.total} días revisados
+            <p className="text-xs text-blue-200 mt-2 text-center">
+              Procesando disponibilidad completa en una sola consulta
               <span className="inline-flex ml-2 space-x-1">
-                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
               </span>
             </p>
+          </div>
+        )}
+
+        {/* Stats de rendimiento */}
+        {calendarStats && !isCalculatingAvailability && (
+          <div className="mb-4 p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
+            <div className="flex items-center justify-between text-xs text-green-200">
+              <span>✅ {calendarStats.availableDays} días disponibles de {calendarStats.totalDays}</span>
+              <span>⚡ {calendarStats.processingTime}ms</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-1 mt-1">
+              <div 
+                className="bg-green-500 h-1 rounded-full" 
+                style={{ width: `${calendarStats.availabilityRate}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {availabilityError && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <p className="text-red-200 text-sm">❌ Error: {availabilityError}</p>
           </div>
         )}
         
