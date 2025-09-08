@@ -131,13 +131,63 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return workingDaysSet;
   }, [barberoId, barberos]);
 
+  // 🔥 FUNCIÓN MEJORADA PARA VERIFICAR DISPONIBILIDAD COMPLETA (día + horarios)
+  const isDateFullyAvailable = useCallback(async (date: string) => {
+    // Primero verificar disponibilidad básica (día de trabajo, no bloqueado)
+    const basicAvailable = sharedIsDateAvailable(date, {
+      blockedDates: blockedDatesMap,
+      workingDays: getWorkingDaysForSelectedBarbero(),
+    });
+    
+    if (!basicAvailable) return false;
+    
+    // Luego verificar si hay horarios disponibles
+    const slots = await loadAvailabilityForDate(date);
+    return slots.length > 0;
+  }, [blockedDatesMap, getWorkingDaysForSelectedBarbero, loadAvailabilityForDate]);
+
+  // Estado para almacenar qué días tienen horarios disponibles
+  const [daysWithSlots, setDaysWithSlots] = useState<Set<string>>(new Set());
+
+  // Efecto para precalcular disponibilidad de días del mes actual
+  useEffect(() => {
+    const calculateAvailabilityForMonth = async () => {
+      if (!barberoId || !selectedService) return;
+
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      const availableDays = new Set<string>();
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateString = formatDateString(year, month, day);
+        if (await isDateFullyAvailable(dateString)) {
+          availableDays.add(dateString);
+        }
+      }
+      
+      setDaysWithSlots(availableDays);
+    };
+
+    calculateAvailabilityForMonth();
+  }, [currentMonth, barberoId, selectedService, isDateFullyAvailable, formatDateString]);
+
   const isDateAvailable = useCallback(
-    (date: string) =>
-      sharedIsDateAvailable(date, {
+    (date: string) => {
+      // Verificación básica (día de trabajo, no bloqueado)
+      const basicAvailable = sharedIsDateAvailable(date, {
         blockedDates: blockedDatesMap,
-        workingDays: getWorkingDaysForSelectedBarbero(), // Usar días reales del barbero
-      }),
-    [blockedDatesMap, getWorkingDaysForSelectedBarbero]
+        workingDays: getWorkingDaysForSelectedBarbero(),
+      });
+      
+      // Si no es un día básicamente disponible, retornar false
+      if (!basicAvailable) return false;
+      
+      // Verificar si tiene horarios disponibles (precalculado)
+      return daysWithSlots.has(date);
+    },
+    [blockedDatesMap, getWorkingDaysForSelectedBarbero, daysWithSlots]
   );
 
   const getBookingsForDate = useCallback(
@@ -341,6 +391,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
               if (!isWorkingDay) return `Barbero no trabaja los ${dayName}s`;
               if (isTodayTooLate)
                 return "Muy tarde para reservar hoy (mínimo 2 horas)";
+              if (isWorkingDay && !daysWithSlots.has(dateString))
+                return `Sin horarios disponibles - Todos ocupados`;
               if (isToday)
                 return "Hoy - Horarios limitados (mínimo 2 horas anticipación)";
               return `Seleccionar ${dateString}`;
@@ -361,6 +413,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                   disabledClass = "bg-red-900/30 text-red-400 cursor-not-allowed";
                 else if (isTodayTooLate)
                   disabledClass = "bg-orange-900/30 text-orange-400 cursor-not-allowed";
+                else if (isWorkingDay && !daysWithSlots.has(dateString))
+                  disabledClass = "bg-gray-900/50 text-gray-500 cursor-not-allowed"; // Sin horarios disponibles
                 return baseClass + disabledClass;
               }
               if (isToday && !isTodayTooLate) {
@@ -393,6 +447,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                     ✕
                   </div>
                 )}
+                {isWorkingDay && !daysWithSlots.has(dateString) && isAvailable !== true && (
+                  <div className="absolute right-1 top-1 text-xs text-gray-500">
+                    🚫
+                  </div>
+                )}
                 {bookingCount > 0 && isAvailable && (
                   <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-xs font-bold text-black">
                     {bookingCount > 9 ? "9+" : bookingCount}
@@ -418,6 +477,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
                 <span className="text-[8px] text-red-400">✕</span>
               </div>
               <span>Días no laborables</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="flex h-3 w-3 items-center justify-center rounded bg-gray-900/50">
+                <span className="text-[8px] text-gray-500">🚫</span>
+              </div>
+              <span>Sin horarios disponibles</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="h-3 w-3 rounded bg-gray-900 opacity-50"></div>
