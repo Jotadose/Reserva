@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Clock, ArrowRight } from "lucide-react";
+import React, { useMemo, useCallback, useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, Clock, ArrowRight, Scissors, Zap } from "lucide-react";
 import { TimeSlot, Booking, Service } from "../types/booking";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
 import { useBloqueos } from "../hooks/useBloqueos";
@@ -146,32 +146,98 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
     return slots.length > 0;
   }, [blockedDatesMap, getWorkingDaysForSelectedBarbero, loadAvailabilityForDate]);
 
-  // Estado para almacenar qué días tienen horarios disponibles
+  // Estados para la carga optimizada
   const [daysWithSlots, setDaysWithSlots] = useState<Set<string>>(new Set());
+  const [isCalculatingAvailability, setIsCalculatingAvailability] = useState(false);
+  const [calculationProgress, setCalculationProgress] = useState({ current: 0, total: 0 });
 
-  // Efecto para precalcular disponibilidad de días del mes actual
+  // Cache para evitar recálculos innecesarios
+  const availabilityCache = useRef<Map<string, string[]>>(new Map());
+
+  // Efecto para precalcular disponibilidad de días del mes actual - OPTIMIZADO
   useEffect(() => {
     const calculateAvailabilityForMonth = async () => {
-      if (!barberoId || !selectedService) return;
+      if (!barberoId || !selectedService) {
+        setDaysWithSlots(new Set());
+        return;
+      }
 
+      setIsCalculatingAvailability(true);
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       
+      setCalculationProgress({ current: 0, total: daysInMonth });
+      
+      // Crear clave única para este cálculo
+      const cacheKey = `${barberoId}-${selectedService.id}-${year}-${month}`;
+      
+      // Verificar si ya tenemos este cálculo en cache
+      if (availabilityCache.current.has(cacheKey)) {
+        const cachedDays = availabilityCache.current.get(cacheKey) || [];
+        setDaysWithSlots(new Set(cachedDays));
+        setIsCalculatingAvailability(false);
+        return;
+      }
+
       const availableDays = new Set<string>();
       
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateString = formatDateString(year, month, day);
-        if (await isDateFullyAvailable(dateString)) {
-          availableDays.add(dateString);
+      // OPTIMIZACIÓN 1: Procesar en lotes de 7 días (semana)
+      const BATCH_SIZE = 7;
+      const batches = [];
+      
+      for (let i = 1; i <= daysInMonth; i += BATCH_SIZE) {
+        const batch = [];
+        for (let j = i; j < Math.min(i + BATCH_SIZE, daysInMonth + 1); j++) {
+          batch.push(j);
         }
+        batches.push(batch);
+      }
+
+      // OPTIMIZACIÓN 2: Procesar lotes en paralelo con delay para UX
+      for (const batch of batches) {
+        const batchPromises = batch.map(async (day) => {
+          const dateString = formatDateString(year, month, day);
+          const isAvailable = await isDateFullyAvailable(dateString);
+          
+          if (isAvailable) {
+            availableDays.add(dateString);
+          }
+          
+          return { day, dateString, isAvailable };
+        });
+
+        // Esperar que termine el lote actual
+        await Promise.all(batchPromises);
+        
+        // Actualizar progreso y UI progresivamente
+        setCalculationProgress(prev => ({ 
+          ...prev, 
+          current: Math.min(batch[batch.length - 1], daysInMonth) 
+        }));
+        
+        // Update UI progressively para mejor UX
+        setDaysWithSlots(new Set(availableDays));
+        
+        // Pequeño delay para permitir que la UI se actualice
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
+      // Guardar en cache
+      availabilityCache.current.set(cacheKey, [...availableDays]);
+      
       setDaysWithSlots(availableDays);
+      setIsCalculatingAvailability(false);
+      setCalculationProgress({ current: daysInMonth, total: daysInMonth });
     };
 
     calculateAvailabilityForMonth();
   }, [currentMonth, barberoId, selectedService, isDateFullyAvailable, formatDateString]);
+
+  // Limpiar cache cuando cambien parámetros críticos
+  useEffect(() => {
+    availabilityCache.current.clear();
+  }, [barberoId, selectedService]);
 
   const isDateAvailable = useCallback(
     (date: string) => {
@@ -310,6 +376,40 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
       )}
       {/* Calendar */}
       <div className="rounded-2xl border border-gray-700 bg-gray-900/50 p-6 backdrop-blur-sm">
+        {/* Loading Animation Temática de Barbería */}
+        {isCalculatingAvailability && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl border border-amber-700/50">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="flex space-x-1">
+                <Scissors className="w-5 h-5 text-amber-400 animate-pulse" />
+                <Zap className="w-4 h-4 text-orange-400 animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+              </div>
+              <span className="text-amber-100 text-sm font-medium">
+                Calculando disponibilidad...
+              </span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ 
+                  width: calculationProgress.total > 0 
+                    ? `${(calculationProgress.current / calculationProgress.total) * 100}%` 
+                    : '0%' 
+                }}
+              />
+            </div>
+            <p className="text-xs text-amber-200 mt-2 text-center">
+              {calculationProgress.current} de {calculationProgress.total} días revisados
+              <span className="inline-flex ml-2 space-x-1">
+                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <span className="w-1 h-1 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+              </span>
+            </p>
+          </div>
+        )}
+        
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">
             Selecciona una fecha
