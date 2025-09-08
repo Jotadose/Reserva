@@ -1,0 +1,174 @@
+/* =====================================================
+   MEJORAS MÓVILES PARA SISTEMA DE RESERVAS - TAILWIND COMPATIBLE
+   ===================================================== */
+
+/* Optimizaciones generales para móvil */
+@media (max-width: 768px) {
+  /* Calendario - Reducir espaciado usando selectores más específicos */
+  .bg-gray-900 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Header de navegación */
+  .mb-6.flex.items-center.justify-between {
+    margin-bottom: 1rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Título del mes */
+  .text-xl.font-semibold.text-white {
+    font-size: 1rem !important;
+    min-width: 160px !important;
+  }
+  
+  /* Botones de navegación */
+  .rounded-lg.bg-gray-800 {
+    padding: 0.5rem !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  /* Grid de días de la semana */
+  .grid.grid-cols-7.gap-2:first-of-type {
+    margin-bottom: 0.5rem !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Headers de días */
+  .grid.grid-cols-7.gap-2:first-of-type > div {
+    padding: 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Grid principal de días */
+  .grid.grid-cols-7.gap-2:last-of-type {
+    gap: 0.25rem !important;
+  }
+  
+  /* Celdas de días */
+  .grid.grid-cols-7.gap-2:last-of-type > button {
+    padding: 0.5rem !important;
+    min-height: 44px !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Stats de performance */
+  .bg-green-900\/20 {
+    padding: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Grid de horarios */
+  .grid.grid-cols-2.gap-3,
+  .grid.sm\\:grid-cols-3,
+  .grid.md\\:grid-cols-4,
+  .grid.lg\\:grid-cols-6 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Botones de horarios */
+  .grid.grid-cols-2.gap-3 button,
+  .grid.sm\\:grid-cols-3 button,
+  .grid.md\\:grid-cols-4 button,
+  .grid.lg\\:grid-cols-6 button {
+    padding: 0.75rem 0.5rem !important;
+    min-height: 44px !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Panel de información */
+  .bg-blue-900\/20 {
+    padding: 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+  
+  /* Botones de barbero */
+  .grid.grid-cols-2.md\\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .grid.grid-cols-2.md\\:grid-cols-4 button {
+    padding: 0.75rem !important;
+    min-height: 44px !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 374px) {
+  .text-xl.font-semibold.text-white,
+  .text-2xl.font-bold.text-white {
+    font-size: 0.875rem !important;
+    min-width: 140px !important;
+  }
+  
+  .grid.grid-cols-7.gap-2:last-of-type > button {
+    padding: 0.375rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Mejoras de touch para dispositivos móviles */
+@media (hover: none) and (pointer: coarse) {
+  /* Todos los botones necesitan ser más grandes */
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    touch-action: manipulation;
+  }
+  
+  /* Feedback táctil */
+  button:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Eliminar hover states */
+  .hover\\:bg-gray-700:hover,
+  .hover\\:bg-rose-700:hover,
+  .hover\\:bg-blue-700:hover {
+    background-color: inherit !important;
+  }
+}
+
+/* Mejoras de legibilidad */
+@media (max-width: 768px) {
+  /* Aumentar tamaños de texto pequeño */
+  .text-xs {
+    font-size: 0.8125rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.9375rem !important;
+  }
+  
+  /* Mejorar contraste */
+  .text-gray-400 {
+    color: #9ca3af !important;
+  }
+  
+  .text-gray-300 {
+    color: #d1d5db !important;
+  }
+}
+
+/* Optimizaciones de performance */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .animate-pulse {
+    animation-duration: 2s !important;
+  }
+  
+  .animate-bounce {
+    animation-duration: 1.5s !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin {
+    animation: none !important;
+  }
+}
