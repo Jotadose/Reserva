@@ -81,7 +81,10 @@ export default async function handler(req, res) {
         } else if (action === 'check') {
           return await handleDisponibilidadCheck(req, res, params);
         }
-        break;
+        return res.status(400).json({ 
+          error: 'Invalid disponibilidad action',
+          available: ['month', 'check']
+        });
         
       case 'health':
         return res.status(200).json({ 
@@ -343,7 +346,7 @@ async function handleDisponibilidadMonth(req, res, params) {
 
     // STEP 4: Obtener reservas del mes
     const { data: reservas, error: reservasError } = await supabase
-      .from('reservas_mvp')
+      .from('reservas')
       .select('fecha, hora_inicio, hora_fin, estado')
       .eq('id_barbero', barberoId)
       .gte('fecha', startDate)
@@ -628,10 +631,10 @@ async function handleReservas(req, res, params) {
     if (id) {
       // Obtener reserva específica
       const { data, error } = await supabase
-        .from('reservas_mvp')
+        .from('reservas')
         .select(`
           *,
-          cliente:clientes(id_cliente, nombre, telefono, email),
+          clientes(id_cliente, nombre, telefono, email),
           servicios(id_servicio, nombre, precio, duracion_minutos)
         `)
         .eq('id_reserva', id)
@@ -642,10 +645,10 @@ async function handleReservas(req, res, params) {
     } else {
       // Obtener reservas con filtros
       let query = supabase
-        .from('reservas_mvp')
+        .from('reservas')
         .select(`
           *,
-          cliente:clientes(id_cliente, nombre, telefono, email),
+          clientes(id_cliente, nombre, telefono, email),
           servicios(id_servicio, nombre, precio, duracion_minutos)
         `);
       
@@ -665,7 +668,7 @@ async function handleReservas(req, res, params) {
   
   if (req.method === 'POST') {
     const { data, error } = await supabase
-      .from('reservas_mvp')
+      .from('reservas')
       .insert(req.body)
       .select()
       .single();
@@ -677,7 +680,7 @@ async function handleReservas(req, res, params) {
   if (req.method === 'PUT') {
     const { id } = params;
     const { data, error } = await supabase
-      .from('reservas_mvp')
+      .from('reservas')
       .update(req.body)
       .eq('id_reserva', id)
       .select()
