@@ -695,17 +695,37 @@ async function handleReservas(req, res, params) {
   if (req.method === 'POST') {
     console.log('📝 Crear reserva:', req.body);
     
-    // Validar datos requeridos
-    const { id_cliente, id_barbero, id_servicio, fecha_reserva, hora_inicio, hora_fin, duracion_minutos, precio_total } = req.body;
+    // Validar datos requeridos (hora_fin no es requerida, se calculará automáticamente)
+    const { id_cliente, id_barbero, id_servicio, fecha_reserva, hora_inicio } = req.body;
     
-    if (!id_cliente || !id_barbero || !id_servicio || !fecha_reserva || !hora_inicio || !hora_fin) {
+    if (!id_cliente || !id_barbero || !id_servicio || !fecha_reserva || !hora_inicio) {
       return res.status(400).json({ 
         error: 'Faltan campos requeridos',
-        required: ['id_cliente', 'id_barbero', 'id_servicio', 'fecha_reserva', 'hora_inicio', 'hora_fin']
+        required: ['id_cliente', 'id_barbero', 'id_servicio', 'fecha_reserva', 'hora_inicio'],
+        received: { id_cliente, id_barbero, id_servicio, fecha_reserva, hora_inicio }
       });
     }
     
     try {
+      // 1. Obtener datos del servicio para calcular duración y precio
+      const { data: servicio, error: servicioError } = await supabase
+        .from('servicios')
+        .select('duracion, precio')
+        .eq('id_servicio', id_servicio)
+        .single();
+        
+      if (servicioError || !servicio) {
+        console.error('❌ Error obteniendo servicio:', servicioError);
+        return res.status(400).json({ error: 'Servicio no encontrado' });
+      }
+      
+      // 2. Calcular hora_fin basada en duración del servicio
+      const [horaInicio, minutosInicio] = hora_inicio.split(':').map(Number);
+      const totalMinutos = horaInicio * 60 + minutosInicio + servicio.duracion;
+      const horaFin = Math.floor(totalMinutos / 60);
+      const minutosFin = totalMinutos % 60;
+      const hora_fin = `${horaFin.toString().padStart(2, '0')}:${minutosFin.toString().padStart(2, '0')}`;
+      
       const reservaData = {
         id_cliente,
         id_barbero,
@@ -713,14 +733,15 @@ async function handleReservas(req, res, params) {
         fecha_reserva,
         hora_inicio,
         hora_fin,
-        duracion_minutos: duracion_minutos || 30,
-        precio_total: precio_total || 0,
+        duracion_minutos: servicio.duracion, // Usar 'duracion_minutos' según el schema real de la BD
+        precio_total: servicio.precio,
         estado: 'confirmada',
         notas_cliente: req.body.notas_cliente || null,
         notas_internas: req.body.notas_internas || null
       };
       
       console.log('📝 Datos de reserva procesados:', reservaData);
+      console.log('🕐 Calculado automáticamente:', { hora_fin, duracion_minutos: servicio.duracion, precio_total: servicio.precio });
       
       const { data, error } = await supabase
         .from('reservas')
@@ -728,20 +749,21 @@ async function handleReservas(req, res, params) {
         .select(`
           *,
           cliente:usuarios!reservas_id_cliente_fkey(id_usuario, nombre, telefono, email),
-          servicio:servicios(id_servicio, nombre, precio, duracion)
+          barbero:barberos!reservas_id_barbero_fkey(id_barbero),
+          servicio:servicios!reservas_id_servicio_fkey(id_servicio, nombre, precio, duracion)
         `)
         .single();
         
       if (error) {
         console.error('❌ Error creando reserva:', error);
-        return res.status(400).json({ error: error.message });
+        return res.status(400).json({ error: error.message, details: error });
       }
       
       console.log('✅ Reserva creada exitosamente:', data.id_reserva);
       return res.status(201).json({ data });
     } catch (err) {
       console.error('❌ Error en POST reservas:', err);
-      return res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json({ error: 'Error interno del servidor', details: err.message });
     }
   }
   
