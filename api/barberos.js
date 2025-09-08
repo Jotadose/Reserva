@@ -56,7 +56,9 @@ export default async function handler(req, res) {
 }
 
 async function getBarberos(req, res) {
-  const { data, error } = await supabase
+  const { activo } = req.query; // Permitir filtrar por activo opcionalmente
+  
+  let query = supabase
     .from("usuarios")
     .select(
       `
@@ -83,8 +85,14 @@ async function getBarberos(req, res) {
     `
     )
     .eq("rol", "barbero")
-    .eq("activo", true)
     .order("nombre");
+
+  // Solo filtrar por activo si se especifica en la query
+  if (activo !== undefined) {
+    query = query.eq("activo", activo === 'true');
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return res.status(400).json({ error: error.message });

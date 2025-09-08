@@ -57,9 +57,14 @@ export function useDisponibilidad() {
         const horarios = (barberoData as any).barberos;
         
         // Verificar si el barbero trabaja en este día
-        const fechaObj = new Date(fecha);
+        // Verificar día de trabajo - Usar forma segura para evitar problemas de zona horaria
+        const [year, month, day] = fecha.split('-').map(Number);
+        const fechaObj = new Date(year, month - 1, day); // month es 0-indexed
         const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
         const diaActual = diasSemana[fechaObj.getDay()];
+        
+        console.log(`🗓️ Hook - Fecha: ${fecha}, Día calculado: ${diaActual} (getDay: ${fechaObj.getDay()})`);
+        console.log(`🗂️ Hook - Días trabajo barbero: ${JSON.stringify(horarios.dias_trabajo)}`);
         
         if (!horarios.dias_trabajo.includes(diaActual)) {
           console.log(`Barbero no trabaja los ${diaActual}s`);

@@ -27,7 +27,7 @@ export function useBarberos() {
       setLoading(true);
       setError(null);
 
-      const resp = await fetch("/api/barberos?activo=true");
+      const resp = await fetch("/api/barberos");
       const json = await resp.json();
       
       if (!resp.ok) {

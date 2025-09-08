@@ -16,16 +16,18 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
   const { barberos, loading } = useBarberos();
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
 
-  // 🎯 OBTENER TODAS LAS ESPECIALIDADES ÚNICAS
+  // 🎯 OBTENER TODAS LAS ESPECIALIDADES ÚNICAS (solo barberos activos)
   const allSpecialties = useMemo(() => {
-    const specs = barberos.flatMap((barbero) => barbero.especialidades || []);
+    const barberosActivos = barberos.filter(barbero => barbero.activo);
+    const specs = barberosActivos.flatMap((barbero) => barbero.especialidades || []);
     return [...new Set(specs)];
   }, [barberos]);
 
-  // 🔍 FILTRAR BARBEROS POR ESPECIALIDAD
+  // 🔍 FILTRAR BARBEROS POR ESPECIALIDAD (solo activos)
   const filteredBarberos = useMemo(() => {
-    if (selectedSpecialty === "all") return barberos;
-    return barberos.filter((barbero) =>
+    const barberosActivos = barberos.filter(barbero => barbero.activo);
+    if (selectedSpecialty === "all") return barberosActivos;
+    return barberosActivos.filter((barbero) =>
       barbero.especialidades?.includes(selectedSpecialty)
     );
   }, [barberos, selectedSpecialty]);

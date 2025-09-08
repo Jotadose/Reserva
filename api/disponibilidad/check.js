@@ -128,10 +128,14 @@ export default async function handler(req, res) {
 
     const horarios = barbero.barberos;
     
-    // Verificar día de trabajo
-    const fechaObj = new Date(date);
+    // Verificar día de trabajo - Usar forma segura para evitar problemas de zona horaria
+    const [year, month, day] = date.split('-').map(Number);
+    const fechaObj = new Date(year, month - 1, day); // month es 0-indexed
     const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const diaActual = diasSemana[fechaObj.getDay()];
+    
+    console.log(`🗓️ Fecha: ${date}, Día calculado: ${diaActual} (getDay: ${fechaObj.getDay()})`);
+    console.log(`🗂️ Días trabajo barbero: ${JSON.stringify(horarios.dias_trabajo)}`);
     
     if (!horarios.dias_trabajo.includes(diaActual)) {
       return res.status(409).json({
