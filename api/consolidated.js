@@ -319,6 +319,7 @@ async function handleDisponibilidadMonth(req, res, params) {
         nombre,
         activo,
         barberos (
+          id_barbero,
           horario_inicio,
           horario_fin,
           dias_trabajo
@@ -329,9 +330,11 @@ async function handleDisponibilidadMonth(req, res, params) {
       .eq('activo', true)
       .single();
 
-    if (barberoError || !barbero) {
+    if (barberoError || !barbero || !barbero.barberos) {
       return res.status(404).json({ error: 'Barbero no encontrado' });
     }
+
+    const realBarberoId = barbero.barberos.id_barbero;
 
     // STEP 2: Obtener información del servicio
     const { data: servicio, error: servicioError } = await supabase
@@ -354,7 +357,7 @@ async function handleDisponibilidadMonth(req, res, params) {
     const { data: reservas, error: reservasError } = await supabase
       .from('reservas')
       .select('fecha_reserva, hora_inicio, hora_fin, estado')
-      .eq('id_barbero', barberoId)
+      .eq('id_barbero', realBarberoId)
       .gte('fecha_reserva', startDate)
       .lte('fecha_reserva', endDate)
       .in('estado', ['confirmada', 'pendiente']);
@@ -368,7 +371,7 @@ async function handleDisponibilidadMonth(req, res, params) {
     const { data: bloqueos, error: bloqueosError } = await supabase
       .from('bloqueos_horarios')
       .select('fecha_inicio, fecha_fin, hora_inicio, hora_fin')
-      .eq('id_barbero', barberoId)
+      .eq('id_barbero', realBarberoId)
       .gte('fecha_inicio', startDate)
       .lte('fecha_fin', endDate);
 
@@ -419,8 +422,8 @@ async function handleDisponibilidadMonth(req, res, params) {
 
     // STEP 7: Procesar todos los días
     const result = {
-      barberoId: parseInt(barberoId),
-      serviceId: parseInt(serviceId),
+      barberoId: barberoId,
+      serviceId: serviceId,
       month: parseInt(month),
       year: parseInt(year),
       availableDays: [],
@@ -817,6 +820,12 @@ function generateAvailableSlots(horaInicio, horaFin, duration, reservas, bloqueo
   
   // Marcar reservas
   reservas.forEach(reserva => {
+    // Validar que los campos de hora no sean null/undefined
+    if (!reserva.inicio || !reserva.fin) {
+      console.warn('⚠️ Reserva con horas inválidas:', reserva);
+      return;
+    }
+    
     const [rStartH, rStartM] = reserva.inicio.split(':').map(Number);
     const [rEndH, rEndM] = reserva.fin.split(':').map(Number);
     
@@ -827,6 +836,15 @@ function generateAvailableSlots(horaInicio, horaFin, duration, reservas, bloqueo
   
   // Marcar bloqueos
   bloqueos.forEach(bloqueo => {
+    // Validar que los campos de hora no sean null/undefined
+    if (!bloqueo.inicio || !bloqueo.fin) {
+      // Si no hay horas específicas, bloquear todo el día
+      for (let m = 0; m < 24 * 60; m++) {
+        occupied[m] = true;
+      }
+      return;
+    }
+    
     const [bStartH, bStartM] = bloqueo.inicio.split(':').map(Number);
     const [bEndH, bEndM] = bloqueo.fin.split(':').map(Number);
     
