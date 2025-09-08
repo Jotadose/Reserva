@@ -86,7 +86,7 @@ export function useReservasMVP() {
       if (filtros?.cliente) params.set("cliente", filtros.cliente);
       if (filtros?.incluir_eliminadas) params.set("incluir_eliminadas", "true");
       const qs = params.toString();
-      const url = qs ? `/api/reservas?${qs}` : "/api/reservas";
+      const url = qs ? `/api/consolidated?type=reservas&${qs}` : "/api/consolidated?type=reservas";
       const resp = await fetch(url);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error obteniendo reservas");
@@ -103,7 +103,7 @@ export function useReservasMVP() {
 
   const getReservaById = async (id: string): Promise<ReservaMVP | null> => {
     try {
-      const resp = await fetch(`/api/reservas/${id}`);
+      const resp = await fetch(`/api/consolidated?type=reservas&id=${id}`);
       const json = await resp.json();
       
       if (!resp.ok) {
@@ -131,7 +131,7 @@ export function useReservasMVP() {
         serviceId: params.id_servicio,
       });
 
-      const resp = await fetch(`/api/disponibilidad/check?${queryParams}`);
+      const resp = await fetch(`/api/consolidated?type=disponibilidad&action=check&${queryParams}`);
       
       // Check if response is HTML (authentication error)
       const contentType = resp.headers.get('content-type');
@@ -179,7 +179,7 @@ export function useReservasMVP() {
     try {
       setLoading(true);
       setError(null);
-      const resp = await fetch("/api/reservas", {
+      const resp = await fetch("/api/consolidated?type=reservas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reservaData),
@@ -224,7 +224,7 @@ export function useReservasMVP() {
     try {
       setLoading(true);
       setError(null);
-      const resp = await fetch(`/api/reservas?id=${encodeURIComponent(id)}`, {
+      const resp = await fetch(`/api/consolidated?type=reservas&id=${encodeURIComponent(id)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),

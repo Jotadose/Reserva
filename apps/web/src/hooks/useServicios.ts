@@ -43,7 +43,7 @@ export function useServicios() {
 
   const getServicioById = async (id: string) => {
     try {
-      const resp = await fetch(`/api/servicios/${id}`);
+      const resp = await fetch(`/api/consolidated?type=servicios&id=${id}`);
       const json = await resp.json();
       
       if (!resp.ok) {
@@ -95,7 +95,7 @@ export function useServicios() {
     servicio: Omit<Servicio, "id_servicio" | "created_at" | "updated_at">
   ) => {
     try {
-      const resp = await fetch("/api/servicios", {
+      const resp = await fetch("/api/consolidated?type=servicios", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -121,7 +121,7 @@ export function useServicios() {
   // Actualizar un servicio (solo admin)
   const actualizarServicio = async (id: string, updates: Partial<Servicio>) => {
     try {
-      const resp = await fetch(`/api/servicios/${id}`, {
+      const resp = await fetch(`/api/consolidated?type=servicios&id=${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +147,7 @@ export function useServicios() {
   // Desactivar un servicio (solo admin)
   const desactivarServicio = async (id: string) => {
     try {
-      const resp = await fetch(`/api/servicios/${id}`, {
+      const resp = await fetch(`/api/consolidated?type=servicios&id=${id}`, {
         method: "DELETE",
       });
       

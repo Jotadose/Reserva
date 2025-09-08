@@ -67,7 +67,7 @@ export function useBarberos() {
 
   const getBarberoById = async (id: string) => {
     try {
-      const resp = await fetch(`/api/barberos/${id}`);
+      const resp = await fetch(`/api/consolidated?type=barberos&id=${id}`);
       const json = await resp.json();
       
       if (!resp.ok) {

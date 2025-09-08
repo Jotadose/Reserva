@@ -113,7 +113,7 @@ async function handleBarberos(req, res, params) {
         .single();
         
       if (error) return res.status(404).json({ error: 'Barbero no encontrado' });
-      return res.status(200).json(data);
+      return res.status(200).json({ data });
     } else {
       // Obtener todos los barberos (filtrar por activo y rol)
       const showInactive = params.includeInactive === 'true';
@@ -152,7 +152,7 @@ async function handleBarberos(req, res, params) {
         console.error('Error fetching barberos:', error);
         return res.status(500).json({ error: error.message });
       }
-      return res.status(200).json(data || []);
+      return res.status(200).json({ data: data || [] });
     }
   }
   
@@ -190,7 +190,7 @@ async function handleBarberos(req, res, params) {
       
     if (barberoError) return res.status(400).json({ error: barberoError.message });
     
-    return res.status(201).json({ ...usuario, barberos: barbero });
+    return res.status(201).json({ data: { ...usuario, barberos: barbero } });
   }
   
   if (req.method === 'PUT') {
@@ -240,7 +240,7 @@ async function handleBarberos(req, res, params) {
       .single();
       
     if (error) return res.status(400).json({ error: error.message });
-    return res.status(200).json(data);
+    return res.status(200).json({ data });
   }
   
   return res.status(405).json({ error: 'Method not allowed' });
@@ -460,7 +460,7 @@ async function handleServicios(req, res, params) {
       .order('nombre');
       
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data || []);
+    return res.status(200).json({ data: data || [] });
   }
   return res.status(405).json({ error: 'Method not allowed' });
 }
@@ -473,7 +473,7 @@ async function handleUsuarios(req, res, params) {
       .order('nombre');
       
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data || []);
+    return res.status(200).json({ data: data || [] });
   }
   return res.status(405).json({ error: 'Method not allowed' });
 }
@@ -491,7 +491,7 @@ async function handleReservas(req, res, params) {
       .order('hora_inicio', { ascending: false });
       
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data || []);
+    return res.status(200).json({ data: data || [] });
   }
   return res.status(405).json({ error: 'Method not allowed' });
 }
@@ -504,7 +504,7 @@ async function handleBloqueos(req, res, params) {
       .order('fecha_inicio');
       
     if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json(data || []);
+    return res.status(200).json({ data: data || [] });
   }
   return res.status(405).json({ error: 'Method not allowed' });
 }

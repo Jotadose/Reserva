@@ -35,7 +35,7 @@ export function useUsuarios() {
       const params = new URLSearchParams();
       if (rol) params.set("rol", rol);
       const qs = params.toString();
-      const url = qs ? `/api/usuarios?${qs}` : "/api/usuarios";
+      const url = qs ? `/api/consolidated?type=usuarios&${qs}` : "/api/consolidated?type=usuarios";
       
       const resp = await fetch(url);
       const json = await resp.json();
@@ -57,7 +57,7 @@ export function useUsuarios() {
 
   const getUsuarioById = async (id: string): Promise<Usuario | null> => {
     try {
-      const resp = await fetch(`/api/usuarios/${id}`);
+      const resp = await fetch(`/api/consolidated?type=usuarios&id=${id}`);
       const json = await resp.json();
       
       if (!resp.ok) {
@@ -78,7 +78,7 @@ export function useUsuarios() {
       setLoading(true);
       setError(null);
 
-      const resp = await fetch("/api/usuarios", {
+      const resp = await fetch("/api/consolidated?type=usuarios", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,7 +113,7 @@ export function useUsuarios() {
       setLoading(true);
       setError(null);
 
-      const resp = await fetch(`/api/usuarios/${id}`, {
+      const resp = await fetch(`/api/consolidated?type=usuarios&id=${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +153,7 @@ export function useUsuarios() {
   // Buscar usuario por email (para login)
   const buscarPorEmail = async (email: string): Promise<Usuario | null> => {
     try {
-      const resp = await fetch(`/api/usuarios?email=${encodeURIComponent(email)}&activo=true`);
+      const resp = await fetch(`/api/consolidated?type=usuarios&email=${encodeURIComponent(email)}&activo=true`);
       const json = await resp.json();
       
       if (!resp.ok) {
