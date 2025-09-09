@@ -1,6 +1,6 @@
 import { supabase } from '../lib/database.js';
 
-console.log('🔍 CONSOLIDATED API LOADING:', {
+console.log('🔍 CONSOLIDATED API LOADING - v2.1 (Post-fix schema):', {
   supabaseExists: !!supabase,
   timestamp: new Date().toISOString()
 });
@@ -274,7 +274,8 @@ async function handleBarberos(req, res, params) {
     
     console.log('✅ Barbero profile created:', barbero);
     
-    // Obtener el barbero completo con la estructura correcta
+    // 🔧 PATCH: Obtener el barbero completo con la estructura correcta (v2.1)
+    console.log('🔍 Attempting to fetch complete barbero with id_usuario:', usuario.id_usuario);
     const { data: barberoCompleto, error: fetchError } = await supabase
       .from('usuarios')
       .select(`
