@@ -361,20 +361,28 @@ export const GestionBarberosAvanzada: React.FC = () => {
   };
 
   const handleCrearBarbero = async (datosBarbero: any) => {
+    console.log('🚀 Enviando formulario de barbero:', datosBarbero);
+    
     try {
-      await crearBarbero(datosBarbero);
+      const result = await crearBarbero(datosBarbero);
+      console.log('✅ Barbero creado con éxito:', result);
+      
       setMostrandoFormulario(false);
+      
       addToast({
-        title: "Barbero creado",
-        message: "El nuevo barbero ha sido registrado exitosamente",
+        title: "¡Barbero creado!",
+        message: `${datosBarbero.nombre} ha sido registrado exitosamente`,
         type: "success",
       });
+      
     } catch (error) {
-      console.error('Error al crear barbero:', error);
+      console.error('❌ Error al guardar barbero:', error);
+      
+      // Mostrar error pero no bloquear si el barbero se creó
       addToast({
-        title: "Error",
-        message: "No se pudo crear el barbero. Revisa los datos e intenta nuevamente.",
-        type: "error",
+        title: "Atención",
+        message: "Hubo un problema con la respuesta, pero el barbero podría haberse creado. Recarga la página para verificar.",
+        type: "warning",
       });
     }
   };
