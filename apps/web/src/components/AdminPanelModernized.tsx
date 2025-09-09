@@ -21,9 +21,9 @@ import { useUsuarios } from "../hooks/useUsuarios";
 // Componentes avanzados ya desarrollados
 import { AgendaDisponibilidad } from "./admin/AgendaDisponibilidad";
 import { ConfiguracionHorariosTotal } from "./admin/ConfiguracionHorariosTotal";
-import { GestionBarberosSimple } from "./admin/GestionBarberosSimple";
-import { GestionServicios } from "./admin/GestionServicios";
-import { AdminBookingsView } from "./admin/AdminBookingsView";
+import { GestionBarberosMejorada } from "./admin/GestionBarberosMejorada";
+import { GestionServiciosCorregida } from "./admin/GestionServiciosCorregida";
+import { GestionReservasMejorada } from "./admin/GestionReservasMejorada";
 
 // Sistema de diseño unificado
 import { DESIGN_TOKENS, getButtonClass, getCardClass } from "../styles/designSystem";
@@ -293,9 +293,9 @@ export const AdminPanelModernized: React.FC = () => {
       {/* Contenido principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "dashboard" && <DashboardView />}
-        {activeTab === "reservas" && <AdminBookingsView />}
-        {activeTab === "barberos" && <GestionBarberosSimple />}
-        {activeTab === "servicios" && <GestionServicios />}
+        {activeTab === "reservas" && <GestionReservasMejorada />}
+        {activeTab === "barberos" && <GestionBarberosMejorada />}
+        {activeTab === "servicios" && <GestionServiciosCorregida />}
         {activeTab === "agenda" && <AgendaDisponibilidad />}
         {activeTab === "configuracion" && <ConfiguracionHorariosTotal />}
       </div>

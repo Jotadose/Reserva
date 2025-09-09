@@ -139,7 +139,13 @@ export const AdminBookingsView: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 text-${statusColor}-800`}
+                        className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          statusColor === 'green' ? 'bg-green-100 text-green-800' :
+                          statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                          statusColor === 'blue' ? 'bg-blue-100 text-blue-800' :
+                          statusColor === 'red' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}
                       >
                         {reserva.estado.charAt(0).toUpperCase() +
                           reserva.estado.slice(1)}

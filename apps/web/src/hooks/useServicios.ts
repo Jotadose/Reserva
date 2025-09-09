@@ -146,6 +146,11 @@ export function useServicios() {
 
   // Desactivar un servicio (solo admin)
   const desactivarServicio = async (id: string) => {
+    return actualizarServicio(id, { activo: false });
+  };
+
+  // Eliminar un servicio (solo admin)
+  const eliminarServicio = async (id: string) => {
     try {
       const resp = await fetch(`/api/consolidated?type=servicios&id=${id}`, {
         method: "DELETE",
@@ -154,13 +159,13 @@ export function useServicios() {
       const json = await resp.json();
       
       if (!resp.ok) {
-        throw new Error(json.error || "Error desactivando servicio");
+        throw new Error(json.error || "Error eliminando servicio");
       }
 
       // Actualizar la lista local
       await fetchServicios();
     } catch (err) {
-      console.error("Error deactivating servicio:", err);
+      console.error("Error deleting servicio:", err);
       throw err;
     }
   };
@@ -182,5 +187,6 @@ export function useServicios() {
     crearServicio,
     actualizarServicio,
     desactivarServicio,
+    eliminarServicio,
   };
 }

@@ -119,6 +119,79 @@ export function useBarberos() {
     );
   };
 
+  // Crear un nuevo barbero (solo admin)
+  const crearBarbero = async (barberoData: any) => {
+    try {
+      const resp = await fetch("/api/consolidated?type=barberos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(barberoData),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error creando barbero");
+      }
+
+      // Actualizar la lista local
+      await fetchBarberos();
+      return json.data;
+    } catch (err) {
+      console.error("Error creating barbero:", err);
+      throw err;
+    }
+  };
+
+  // Actualizar un barbero (solo admin)
+  const actualizarBarbero = async (id: string, updates: any) => {
+    try {
+      const resp = await fetch(`/api/consolidated?type=barberos&id=${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error actualizando barbero");
+      }
+
+      // Actualizar la lista local
+      await fetchBarberos();
+      return json.data;
+    } catch (err) {
+      console.error("Error updating barbero:", err);
+      throw err;
+    }
+  };
+
+  // Eliminar un barbero (solo admin)
+  const eliminarBarbero = async (id: string) => {
+    try {
+      const resp = await fetch(`/api/consolidated?type=barberos&id=${id}`, {
+        method: "DELETE",
+      });
+      
+      const json = await resp.json();
+      
+      if (!resp.ok) {
+        throw new Error(json.error || "Error eliminando barbero");
+      }
+
+      // Actualizar la lista local
+      await fetchBarberos();
+    } catch (err) {
+      console.error("Error deleting barbero:", err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     fetchBarberos();
   }, []);
@@ -131,5 +204,8 @@ export function useBarberos() {
     getBarberoById,
     getBarberosPorEspecialidad,
     getBarberosDisponibles,
+    crearBarbero,
+    actualizarBarbero,
+    eliminarBarbero,
   };
 }
