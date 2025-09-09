@@ -273,10 +273,43 @@ async function handleBarberos(req, res, params) {
     }
     
     console.log('✅ Barbero profile created:', barbero);
-    const result = { ...usuario, barberos: barbero };
-    console.log('✅ Final result:', result);
     
-    return res.status(201).json({ data: result });
+    // Obtener el barbero completo con la estructura correcta
+    const { data: barberoCompleto, error: fetchError } = await supabase
+      .from('usuarios')
+      .select(`
+        id_usuario,
+        nombre,
+        email,
+        telefono,
+        rol,
+        activo,
+        avatar_url,
+        configuracion,
+        created_at,
+        barberos (
+          id_barbero,
+          especialidades,
+          horario_inicio,
+          horario_fin,
+          dias_trabajo,
+          tiempo_descanso,
+          comision_base,
+          biografia,
+          calificacion_promedio,
+          total_cortes
+        )
+      `)
+      .eq('id_usuario', usuario.id_usuario)
+      .single();
+    
+    if (fetchError) {
+      console.log('❌ Error fetching created barbero:', fetchError);
+      return res.status(500).json({ error: 'Error al obtener barbero creado' });
+    }
+    
+    console.log('✅ Final barbero completo:', barberoCompleto);
+    return res.status(201).json({ data: barberoCompleto });
   }
   
   if (req.method === 'PUT') {
