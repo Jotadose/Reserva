@@ -154,7 +154,7 @@ async function handleBarberos(req, res, params) {
           created_at,
           barberos (
             id_barbero,
-            especialidades,
+            servicios,
             horario_inicio,
             horario_fin,
             dias_trabajo,
@@ -187,7 +187,7 @@ async function handleBarberos(req, res, params) {
           created_at,
           barberos (
             id_barbero,
-            especialidades,
+            servicios,
             horario_inicio,
             horario_fin,
             dias_trabajo,
@@ -215,7 +215,7 @@ async function handleBarberos(req, res, params) {
   
   if (req.method === 'POST') {
     console.log('🔧 POST barberos - Body received:', req.body);
-    const { nombre, telefono, email, especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, activo } = req.body;
+    const { nombre, telefono, email, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, activo } = req.body;
     
     // Validación básica
     if (!nombre || !email) {
@@ -246,7 +246,7 @@ async function handleBarberos(req, res, params) {
     console.log('✅ User created:', usuario);
     console.log('🔧 Creating barbero profile with data:', {
       id_usuario: usuario.id_usuario,
-      especialidades: especialidades || [],
+      servicios: servicios || [],
       horario_inicio: horario_inicio || '09:00',
       horario_fin: horario_fin || '18:00',
       dias_trabajo: dias_trabajo || ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'],
@@ -258,7 +258,7 @@ async function handleBarberos(req, res, params) {
       .from('barberos')
       .insert({
         id_barbero: usuario.id_usuario,  // 🔧 FIX: usar id_barbero, no id_usuario
-        especialidades: especialidades || [],
+        servicios: servicios || [],
         horario_inicio: horario_inicio || '09:00',
         horario_fin: horario_fin || '18:00',
         dias_trabajo: dias_trabajo || ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'],
@@ -292,7 +292,7 @@ async function handleBarberos(req, res, params) {
     // Obtener datos del barbero
     const { data: barberoData, error: barberoErrorFetch } = await supabase
       .from('barberos')
-      .select('id_barbero, especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
+      .select('id_barbero, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
       .eq('id_barbero', usuario.id_usuario)  // 🔧 FIX: usar id_barbero para el filtro
       .single();
     
@@ -323,7 +323,7 @@ async function handleBarberos(req, res, params) {
       if (updates[field] !== undefined) usuarioUpdates[field] = updates[field];
     });
     
-    ['especialidades', 'horario_inicio', 'horario_fin', 'dias_trabajo', 'tiempo_descanso', 'biografia'].forEach(field => {
+    ['servicios', 'horario_inicio', 'horario_fin', 'dias_trabajo', 'tiempo_descanso', 'biografia'].forEach(field => {
       if (updates[field] !== undefined) barberoUpdates[field] = updates[field];
     });
     
@@ -342,7 +342,7 @@ async function handleBarberos(req, res, params) {
       const { error: barberoError } = await supabase
         .from('barberos')
         .update(barberoUpdates)
-        .eq('id_usuario', id);
+        .eq('id_barbero', id);
         
       if (barberoError) return res.status(400).json({ error: barberoError.message });
     }
@@ -352,7 +352,7 @@ async function handleBarberos(req, res, params) {
       .from('usuarios')
       .select(`
         id_usuario, nombre, email, telefono, rol, activo,
-        barberos (especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso)
+        barberos (servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso)
       `)
       .eq('id_usuario', id)
       .single();

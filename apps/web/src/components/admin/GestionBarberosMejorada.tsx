@@ -37,7 +37,7 @@ interface BarberoFormData {
   horario_inicio: string;
   horario_fin: string;
   dias_trabajo: string[];
-  especialidades: string[];
+  servicios: string[]; // 🔄 CAMBIO: especialidades -> servicios
   activo: boolean;
 }
 
@@ -52,7 +52,7 @@ const DIAS_SEMANA = [
   { value: 'domingo', label: 'Domingo' }
 ];
 
-const ESPECIALIDADES_DISPONIBLES = [
+const SERVICIOS_DISPONIBLES = [ // 🔄 CAMBIO: ESPECIALIDADES -> SERVICIOS
   { value: 'corte', label: 'Corte de Cabello' },
   { value: 'barba', label: 'Barba' },
   { value: 'afeitado', label: 'Afeitado' },
@@ -81,7 +81,7 @@ export const GestionBarberosMejorada: React.FC = () => {
     horario_inicio: '09:00',
     horario_fin: '18:00',
     dias_trabajo: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-    especialidades: ['corte'],
+    servicios: ['corte'], // 🔄 CAMBIO: especialidades -> servicios
     activo: true
   });
 
@@ -97,7 +97,7 @@ export const GestionBarberosMejorada: React.FC = () => {
       horario_inicio: '09:00',
       horario_fin: '18:00',
       dias_trabajo: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-      especialidades: ['corte'],
+      servicios: ['corte'], // 🔄 CAMBIO: especialidades -> servicios
       activo: true
     });
     setBarberoEditando(null);
@@ -118,8 +118,8 @@ export const GestionBarberosMejorada: React.FC = () => {
       dias_trabajo: Array.isArray(barbero.dias_trabajo) 
         ? barbero.dias_trabajo 
         : ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-      especialidades: Array.isArray(barbero.especialidades)
-        ? barbero.especialidades
+      servicios: Array.isArray(barbero.servicios) // 🔄 CAMBIO: especialidades -> servicios
+        ? barbero.servicios
         : ['corte'],
       activo: barbero.activo !== false
     });
@@ -197,16 +197,16 @@ export const GestionBarberosMejorada: React.FC = () => {
     }
   };
 
-  const handleEspecialidadChange = (especialidad: string, checked: boolean) => {
+  const handleServicioChange = (servicio: string, checked: boolean) => { // 🔄 CAMBIO: especialidad -> servicio
     if (checked) {
       setFormData(prev => ({
         ...prev,
-        especialidades: [...prev.especialidades, especialidad]
+        servicios: [...prev.servicios, servicio] // 🔄 CAMBIO: especialidades -> servicios
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        especialidades: prev.especialidades.filter(e => e !== especialidad)
+        servicios: prev.servicios.filter(s => s !== servicio) // 🔄 CAMBIO: especialidades -> servicios
       }));
     }
   };
@@ -348,20 +348,20 @@ export const GestionBarberosMejorada: React.FC = () => {
                 )}
               </div>
 
-              {/* Especialidades */}
-              {barbero.especialidades && barbero.especialidades.length > 0 && (
+              {/* Servicios */}
+              {barbero.servicios && barbero.servicios.length > 0 && ( // 🔄 CAMBIO: especialidades -> servicios
                 <div>
                   <div className="flex items-center text-gray-300 text-sm mb-2">
                     <Star className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                    Especialidades:
+                    Servicios: {/* 🔄 CAMBIO: Especialidades -> Servicios */}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {barbero.especialidades.map((esp: string) => (
+                    {barbero.servicios.map((servicio: string) => ( // 🔄 CAMBIO: especialidades -> servicios
                       <span
-                        key={esp}
+                        key={servicio}
                         className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded"
                       >
-                        {esp.charAt(0).toUpperCase() + esp.slice(1).replace('_', ' ')}
+                        {servicio.charAt(0).toUpperCase() + servicio.slice(1).replace('_', ' ')}
                       </span>
                     ))}
                   </div>
@@ -489,19 +489,19 @@ export const GestionBarberosMejorada: React.FC = () => {
                 </div>
               </div>
 
-              {/* Especialidades */}
+              {/* Servicios */}
               <div>
-                <h4 className="text-base sm:text-lg font-medium text-white mb-3">Especialidades</h4>
+                <h4 className="text-base sm:text-lg font-medium text-white mb-3">Servicios</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {ESPECIALIDADES_DISPONIBLES.map(esp => (
-                    <label key={esp.value} className="flex items-center text-sm text-gray-300">
+                  {SERVICIOS_DISPONIBLES.map(servicio => (
+                    <label key={servicio.value} className="flex items-center text-sm text-gray-300">
                       <input
                         type="checkbox"
                         className="mr-2"
-                        checked={formData.especialidades.includes(esp.value)}
-                        onChange={(e) => handleEspecialidadChange(esp.value, e.target.checked)}
+                        checked={formData.servicios.includes(servicio.value)}
+                        onChange={(e) => handleServicioChange(servicio.value, e.target.checked)}
                       />
-                      <span className="truncate">{esp.label}</span>
+                      <span className="truncate">{servicio.label}</span>
                     </label>
                   ))}
                 </div>

@@ -146,8 +146,8 @@ export function TestMVPHooks() {
                       <strong>{barbero.nombre}</strong> ({barbero.email})
                     </p>
                     <p className="text-sm">
-                      Especialidades:{" "}
-                      {barbero.especialidades?.join(", ") || "Ninguna"}
+                      Servicios:{" "} {/* 🔄 CAMBIO: Especialidades -> Servicios */}
+                      {barbero.servicios?.join(", ") || "Ninguna"} {/* 🔄 CAMBIO: especialidades -> servicios */}
                     </p>
                     <p className="text-sm">
                       Horario: {barbero.horario_inicio} - {barbero.horario_fin}

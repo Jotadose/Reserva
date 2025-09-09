@@ -16,19 +16,19 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
   const { barberos, loading } = useBarberos();
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
 
-  // 🎯 OBTENER TODAS LAS ESPECIALIDADES ÚNICAS (solo barberos activos)
+  // 🎯 OBTENER TODOS LOS SERVICIOS ÚNICOS (solo barberos activos)
   const allSpecialties = useMemo(() => {
     const barberosActivos = barberos.filter(barbero => barbero.activo);
-    const specs = barberosActivos.flatMap((barbero) => barbero.especialidades || []);
-    return [...new Set(specs)];
+    const servicios = barberosActivos.flatMap((barbero) => barbero.servicios || []); // 🔄 CAMBIO: especialidades -> servicios
+    return [...new Set(servicios)];
   }, [barberos]);
 
-  // 🔍 FILTRAR BARBEROS POR ESPECIALIDAD (solo activos)
+  // 🔍 FILTRAR BARBEROS POR SERVICIO (solo activos)
   const filteredBarberos = useMemo(() => {
     const barberosActivos = barberos.filter(barbero => barbero.activo);
     if (selectedSpecialty === "all") return barberosActivos;
     return barberosActivos.filter((barbero) =>
-      barbero.especialidades?.includes(selectedSpecialty)
+      barbero.servicios?.includes(selectedSpecialty) // 🔄 CAMBIO: especialidades -> servicios
     );
   }, [barberos, selectedSpecialty]);
 
@@ -87,7 +87,7 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
           </div>
         </div>
 
-        {/* 🔍 FILTRO POR ESPECIALIDADES */}
+        {/* 🔍 FILTRO POR SERVICIOS */}
         {allSpecialties.length > 0 && (
           <div className="mb-6">
             <p className="mb-3 text-sm font-medium text-gray-300">
@@ -106,7 +106,7 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
               </button>
               {allSpecialties.map((specialty) => {
                 const count = barberos.filter((b) =>
-                  b.especialidades?.includes(specialty)
+                  b.servicios?.includes(specialty) // 🔄 CAMBIO: especialidades -> servicios
                 ).length;
                 return (
                   <button
@@ -228,24 +228,24 @@ const BarberSelection: React.FC<BarberSelectionProps> = ({
                   </div>
                 </div>
 
-                {/* 💡 ESPECIALIDADES */}
-                {barbero.especialidades &&
-                  barbero.especialidades.length > 0 && (
+                {/* 💡 SERVICIOS */}
+                {barbero.servicios && // 🔄 CAMBIO: especialidades -> servicios
+                  barbero.servicios.length > 0 && (
                     <div className="mb-3">
                       <p className="mb-2 text-sm font-medium text-gray-300">
-                        Especialidades:
+                        Servicios: {/* 🔄 CAMBIO: Especialidades -> Servicios */}
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {barbero.especialidades.map((esp, index) => (
+                        {barbero.servicios.map((servicio: string, index: number) => ( // 🔄 CAMBIO: especialidades -> servicios
                           <span
-                            key={`${barbero.id_barbero}-${esp}-${index}`}
+                            key={`${barbero.id_barbero}-${servicio}-${index}`}
                             className={`rounded-full px-2 py-1 text-xs ${
-                              selectedSpecialty === esp
+                              selectedSpecialty === servicio
                                 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
                                 : "bg-gray-700 text-gray-300"
                             }`}
                           >
-                            {esp}
+                            {servicio}
                           </span>
                         ))}
                       </div>

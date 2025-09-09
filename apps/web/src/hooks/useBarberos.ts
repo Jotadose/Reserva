@@ -5,7 +5,7 @@ export interface Barbero {
   nombre: string;
   email: string;
   telefono?: string;
-  especialidades: string[];
+  servicios: string[]; // 🔄 CAMBIO: especialidades -> servicios
   horario_inicio: string;
   horario_fin: string;
   dias_trabajo: string[];
@@ -43,7 +43,7 @@ export function useBarberos() {
         nombre: item.nombre,
         email: item.email,
         telefono: item.telefono,
-        especialidades: item.barberos?.especialidades || [],
+        servicios: item.barberos?.servicios || item.barberos?.especialidades || [], // 🔄 Compatibilidad con ambos campos
         horario_inicio: item.barberos?.horario_inicio || "09:00:00",
         horario_fin: item.barberos?.horario_fin || "18:00:00",
         dias_trabajo: item.barberos?.dias_trabajo || [],
@@ -86,7 +86,7 @@ export function useBarberos() {
         nombre: item.nombre,
         email: item.email,
         telefono: item.telefono,
-        especialidades: item.barberos?.especialidades || [],
+        servicios: item.barberos?.servicios || item.barberos?.especialidades || [], // 🔄 Compatibilidad con ambos campos
         horario_inicio: item.barberos?.horario_inicio || "09:00:00",
         horario_fin: item.barberos?.horario_fin || "18:00:00",
         dias_trabajo: item.barberos?.dias_trabajo || [],
@@ -108,7 +108,7 @@ export function useBarberos() {
   const getBarberosPorEspecialidad = (especialidad: string) => {
     return barberos.filter(
       (barbero) =>
-        barbero.especialidades.includes(especialidad) && barbero.activo
+        barbero.servicios.includes(especialidad) && barbero.activo // 🔄 CAMBIO: especialidades -> servicios
     );
   };
 

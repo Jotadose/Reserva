@@ -174,7 +174,7 @@ export function BookingSystemMVP() {
                 <option value="">Selecciona un barbero</option>
                 {barberos?.map((barbero) => (
                   <option key={barbero.id_barbero} value={barbero.id_barbero}>
-                    {barbero.nombre} - {barbero.especialidades?.join(", ")}
+                    {barbero.nombre} - {barbero.servicios?.join(", ")} {/* 🔄 CAMBIO: especialidades -> servicios */}
                   </option>
                 ))}
               </select>
