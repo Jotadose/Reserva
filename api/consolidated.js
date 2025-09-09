@@ -257,7 +257,7 @@ async function handleBarberos(req, res, params) {
     const { data: barbero, error: barberoError } = await supabase
       .from('barberos')
       .insert({
-        id_usuario: usuario.id_usuario,
+        id_barbero: usuario.id_usuario,  // 🔧 FIX: usar id_barbero, no id_usuario
         especialidades: especialidades || [],
         horario_inicio: horario_inicio || '09:00',
         horario_fin: horario_fin || '18:00',
@@ -293,7 +293,7 @@ async function handleBarberos(req, res, params) {
     const { data: barberoData, error: barberoErrorFetch } = await supabase
       .from('barberos')
       .select('id_barbero, especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
-      .eq('id_usuario', usuario.id_usuario)
+      .eq('id_barbero', usuario.id_usuario)  // 🔧 FIX: usar id_barbero para el filtro
       .single();
     
     if (barberoErrorFetch) {
