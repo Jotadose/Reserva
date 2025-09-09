@@ -274,42 +274,40 @@ async function handleBarberos(req, res, params) {
     
     console.log('✅ Barbero profile created:', barbero);
     
-    // 🔧 PATCH: Obtener el barbero completo con la estructura correcta (v2.1)
-    console.log('🔍 Attempting to fetch complete barbero with id_usuario:', usuario.id_usuario);
-    const { data: barberoCompleto, error: fetchError } = await supabase
+    // 🔧 PATCH v2.2: Construir respuesta sin usar relaciones complejas
+    console.log('🔍 Building response manually to avoid schema cache issues');
+    
+    // Obtener datos del usuario
+    const { data: usuarioData, error: fetchUsuarioError } = await supabase
       .from('usuarios')
-      .select(`
-        id_usuario,
-        nombre,
-        email,
-        telefono,
-        rol,
-        activo,
-        avatar_url,
-        configuracion,
-        created_at,
-        barberos (
-          id_barbero,
-          especialidades,
-          horario_inicio,
-          horario_fin,
-          dias_trabajo,
-          tiempo_descanso,
-          comision_base,
-          biografia,
-          calificacion_promedio,
-          total_cortes
-        )
-      `)
+      .select('id_usuario, nombre, email, telefono, rol, activo, avatar_url, configuracion, created_at')
       .eq('id_usuario', usuario.id_usuario)
       .single();
     
-    if (fetchError) {
-      console.log('❌ Error fetching created barbero:', fetchError);
-      return res.status(500).json({ error: 'Error al obtener barbero creado' });
+    if (fetchUsuarioError) {
+      console.log('❌ Error fetching usuario:', fetchUsuarioError);
+      return res.status(500).json({ error: 'Error al obtener datos del usuario' });
     }
     
-    console.log('✅ Final barbero completo:', barberoCompleto);
+    // Obtener datos del barbero
+    const { data: barberoData, error: barberoErrorFetch } = await supabase
+      .from('barberos')
+      .select('id_barbero, especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
+      .eq('id_usuario', usuario.id_usuario)
+      .single();
+    
+    if (barberoErrorFetch) {
+      console.log('❌ Error fetching barbero data:', barberoErrorFetch);
+      return res.status(500).json({ error: 'Error al obtener datos del barbero' });
+    }
+    
+    // Construir respuesta manualmente
+    const barberoCompleto = {
+      ...usuarioData,
+      barberos: barberoData
+    };
+    
+    console.log('✅ Final barbero completo (manual build):', barberoCompleto);
     return res.status(201).json({ data: barberoCompleto });
   }
   
