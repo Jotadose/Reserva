@@ -14,7 +14,7 @@
  * - Días especiales y analíticas → ConfiguracionHorariosOptimizada
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Calendar,
   Users,
@@ -23,10 +23,14 @@ import {
   Settings,
   ArrowRight,
   Clock,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 
-import { Button, Card } from "../ui";
+import { Button, Card, LoadingSpinner } from "../ui";
 import { useToast } from "../../contexts/ToastContext";
+import { useBarberos } from "../../hooks/useBarberos";
+import { useReservasMVP } from "../../hooks/useReservasMVP";
 
 // Importar el componente optimizado
 import ConfiguracionHorariosOptimizada from "./ConfiguracionHorariosOptimizada";
@@ -58,13 +62,17 @@ interface OpcionHorarios {
 export const ConfiguracionHorariosTotal: React.FC = () => {
   const [accionSeleccionada, setAccionSeleccionada] = useState<AccionHorarios | null>(null);
   const { showToast } = useToast();
+  
+  // Hooks para datos reales
+  const { barberos, loading: loadingBarberos } = useBarberos();
+  const { reservas, loading: loadingReservas } = useReservasMVP();
 
-  // Configuración de opciones disponibles
+  // Configuración de opciones disponibles con métricas reales
   const opcionesHorarios: OpcionHorarios[] = [
     {
       id: "barberos-horarios",
       titulo: "Horarios por Barbero",
-      descripcion: "Configura horarios individuales, días de trabajo y descansos",
+      descripcion: `Configura horarios individuales para ${barberos?.length || 0} barbero(s) activo(s)`,
       icon: Users,
       componente: "GestionBarberosAvanzada",
       disponible: true,
@@ -72,7 +80,7 @@ export const ConfiguracionHorariosTotal: React.FC = () => {
     {
       id: "agenda-disponibilidad", 
       titulo: "Vista de Agenda",
-      descripcion: "Calendario semanal con disponibilidad en tiempo real",
+      descripcion: `Calendario semanal con ${reservas?.length || 0} reservas registradas`,
       icon: Calendar,
       componente: "AgendaDisponibilidad",
       disponible: true,
@@ -193,71 +201,80 @@ export const ConfiguracionHorariosTotal: React.FC = () => {
         </p>
       </div>
 
-      {/* Grid de opciones responsivo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {opcionesHorarios.map((opcion) => (
-          <Card 
-            key={opcion.id} 
-            padding="lg" 
-            className={`
-              relative cursor-pointer transition-all duration-200
-              ${opcion.disponible 
-                ? "hover:bg-slate-700/50 hover:border-blue-500/50 hover:scale-[1.02]" 
-                : "opacity-60 cursor-not-allowed"
-              }
-            `}
-            onClick={() => handleRedireccion(opcion)}
-          >
-            <div className="space-y-4">
-              {/* Icon y título */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`
-                    p-2 lg:p-3 rounded-lg flex-shrink-0
+      {/* Grid de opciones mejorado - completamente responsivo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+        {(loadingBarberos || loadingReservas) ? (
+          <div className="col-span-full flex justify-center py-8">
+            <div className="flex items-center gap-3">
+              <LoadingSpinner />
+              <span className="text-slate-400">Cargando datos...</span>
+            </div>
+          </div>
+        ) : (
+          opcionesHorarios.map((opcion) => (
+            <Card 
+              key={opcion.id} 
+              padding="lg" 
+              className={`
+                relative cursor-pointer transition-all duration-300
+                ${opcion.disponible 
+                  ? "hover:bg-slate-700/50 hover:border-blue-500/50 hover:scale-[1.02] hover:shadow-lg" 
+                  : "opacity-60 cursor-not-allowed"
+                }
+              `}
+              onClick={() => handleRedireccion(opcion)}
+            >
+              <div className="space-y-3 lg:space-y-4">
+                {/* Icon y título mejorados */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`
+                      p-2 lg:p-3 rounded-lg flex-shrink-0 transition-colors
+                      ${opcion.disponible 
+                        ? "bg-blue-500/20 text-blue-400" 
+                        : "bg-slate-600/50 text-slate-500"
+                      }
+                    `}>
+                      <opcion.icon className="h-5 w-5 lg:h-6 lg:w-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-white text-sm lg:text-base mb-1 truncate">
+                        {opcion.titulo}
+                      </h3>
+                      {opcion.componente && opcion.disponible && (
+                        <p className="text-xs text-slate-500 truncate hidden sm:block">
+                          → {opcion.componente}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {opcion.disponible && (
+                    <ArrowRight className="h-4 w-4 lg:h-5 lg:w-5 text-slate-400 flex-shrink-0 ml-2 transition-transform group-hover:translate-x-1" />
+                  )}
+                </div>
+
+                {/* Descripción mejorada */}
+                <p className="text-slate-400 text-xs lg:text-sm line-clamp-2 leading-relaxed">
+                  {opcion.descripcion}
+                </p>
+
+                {/* Status badge mejorado */}
+                <div className="flex justify-end">
+                  <span className={`
+                    px-2 py-1 text-xs rounded-full font-medium transition-colors
                     ${opcion.disponible 
-                      ? "bg-blue-500/20 text-blue-400" 
-                      : "bg-slate-600/50 text-slate-500"
+                      ? "bg-green-500/20 text-green-400" 
+                      : "bg-yellow-500/20 text-yellow-400"
                     }
                   `}>
-                    <opcion.icon className="h-5 w-5 lg:h-6 lg:w-6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-white text-sm lg:text-base truncate">
-                      {opcion.titulo}
-                    </h3>
-                    {opcion.componente && (
-                      <p className="text-xs text-slate-500 truncate">
-                        → {opcion.componente}
-                      </p>
-                    )}
-                  </div>
+                    {opcion.disponible ? "Disponible" : "En desarrollo"}
+                  </span>
                 </div>
-                
-                {opcion.disponible && (
-                  <ArrowRight className="h-4 w-4 lg:h-5 lg:w-5 text-slate-400 flex-shrink-0 ml-2" />
-                )}
               </div>
-
-              {/* Descripción */}
-              <p className="text-slate-400 text-xs lg:text-sm line-clamp-2">
-                {opcion.descripcion}
-              </p>
-
-              {/* Status badge */}
-              <div className="flex justify-end">
-                <span className={`
-                  px-2 py-1 text-xs rounded-full
-                  ${opcion.disponible 
-                    ? "bg-green-500/20 text-green-400" 
-                    : "bg-yellow-500/20 text-yellow-400"
-                  }
-                `}>
-                  {opcion.disponible ? "Disponible" : "En desarrollo"}
-                </span>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Información adicional */}

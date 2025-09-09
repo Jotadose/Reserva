@@ -140,17 +140,22 @@ export const GestionBarberosMejorada: React.FC = () => {
     e.preventDefault();
     
     try {
+      console.log('🚀 Enviando formulario de barbero:', formData);
+      
       if (barberoEditando) {
         // Actualizar barbero existente
         await actualizarBarbero(barberoEditando.id_barbero, formData);
+        console.log('✅ Barbero actualizado correctamente');
       } else {
         // Crear nuevo barbero
         await crearBarbero(formData);
+        console.log('✅ Barbero creado correctamente');
       }
       cerrarModal();
-    } catch (error) {
-      console.error("Error al guardar barbero:", error);
-      alert("Error al guardar el barbero");
+    } catch (error: any) {
+      console.error("❌ Error al guardar barbero:", error);
+      const errorMessage = error?.message || "Error desconocido al guardar el barbero";
+      alert(`Error: ${errorMessage}`);
     }
   };
 

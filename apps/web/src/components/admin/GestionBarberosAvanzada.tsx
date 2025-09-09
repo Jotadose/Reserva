@@ -252,9 +252,16 @@ const barberosMock: Barbero[] = [
 
 export const GestionBarberosAvanzada: React.FC = () => {
   const [vista, setVista] = useState<VistaGestion>("lista");
+  const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   
   // Obtener datos reales de barberos desde la API
-  const { barberos: barberosAPI, loading: loadingBarberos, error: errorBarberos } = useBarberos();
+  const { 
+    barberos: barberosAPI, 
+    loading: loadingBarberos, 
+    error: errorBarberos,
+    crearBarbero,
+    actualizarBarbero
+  } = useBarberos();
   
   // Convertir datos de API a formato esperado por el componente
   const barberos = useMemo(() => {
@@ -325,23 +332,253 @@ export const GestionBarberosAvanzada: React.FC = () => {
   const [barberoSeleccionado, setBarberoSeleccionado] = useState<string | null>(
     null
   );
-  const [editando, setEditando] = useState<string | null>(null);
-  const { showToast } = useToast();
+  const { addToast } = useToast();
 
   const barberoActual = useMemo(
     () => barberos.find((b) => b.id === barberoSeleccionado),
     [barberos, barberoSeleccionado]
   );
 
-  const handleToggleActivo = (barberoId: string) => {
-    setBarberos((prev) =>
-      prev.map((b) => (b.id === barberoId ? { ...b, activo: !b.activo } : b))
-    );
-    showToast({
-      title: "Estado actualizado",
-      message: "El estado del barbero ha sido modificado",
-      type: "success",
+  const handleToggleActivo = async (barberoId: string) => {
+    try {
+      const barbero = barberos.find(b => b.id === barberoId);
+      if (barbero) {
+        await actualizarBarbero(barberoId, { activo: !barbero.activo });
+        addToast({
+          title: "Estado actualizado",
+          message: "El estado del barbero ha sido modificado",
+          type: "success",
+        });
+      }
+    } catch (error) {
+      console.error('Error al actualizar barbero:', error);
+      addToast({
+        title: "Error",
+        message: "No se pudo actualizar el estado del barbero",
+        type: "error",
+      });
+    }
+  };
+
+  const handleCrearBarbero = async (datosBarbero: any) => {
+    try {
+      await crearBarbero(datosBarbero);
+      setMostrandoFormulario(false);
+      addToast({
+        title: "Barbero creado",
+        message: "El nuevo barbero ha sido registrado exitosamente",
+        type: "success",
+      });
+    } catch (error) {
+      console.error('Error al crear barbero:', error);
+      addToast({
+        title: "Error",
+        message: "No se pudo crear el barbero. Revisa los datos e intenta nuevamente.",
+        type: "error",
+      });
+    }
+  };
+
+  const renderFormularioNuevoBarbero = () => {
+    const [formData, setFormData] = useState({
+      nombre: '',
+      email: '',
+      telefono: '',
+      horario_inicio: '09:00',
+      horario_fin: '18:00',
+      dias_trabajo: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
+      especialidades: ['corte'],
+      activo: true
     });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      handleCrearBarbero(formData);
+    };
+
+    return (
+      <Card padding="lg" className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-semibold text-white">Nuevo Barbero</h4>
+          <Button variant="ghost" size="sm" icon={X} onClick={() => setMostrandoFormulario(false)}>
+            Cerrar
+          </Button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Nombre</label>
+              <Input
+                type="text"
+                value={formData.nombre}
+                onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))}
+                placeholder="Nombre completo"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@ejemplo.com"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Teléfono</label>
+              <Input
+                type="tel"
+                value={formData.telefono}
+                onChange={(e) => setFormData(prev => ({ ...prev, telefono: e.target.value }))}
+                placeholder="+56912345678"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Estado</label>
+              <Select
+                value={formData.activo ? 'activo' : 'inactivo'}
+                onChange={(value) => setFormData(prev => ({ ...prev, activo: value === 'activo' }))}
+                options={[
+                  { value: 'activo', label: 'Activo' },
+                  { value: 'inactivo', label: 'Inactivo' }
+                ]}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Hora inicio</label>
+              <Input
+                type="time"
+                value={formData.horario_inicio}
+                onChange={(e) => setFormData(prev => ({ ...prev, horario_inicio: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Hora fin</label>
+              <Input
+                type="time"
+                value={formData.horario_fin}
+                onChange={(e) => setFormData(prev => ({ ...prev, horario_fin: e.target.value }))}
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" variant="primary">
+              Crear Barbero
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setMostrandoFormulario(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Card>
+    );
+  };
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white">Gestión de Barberos</h3>
+          <p className="text-slate-400">
+            {barberos.length} barberos registrados
+          </p>
+        </div>
+        <Button variant="primary" icon={Plus} onClick={() => setMostrandoFormulario(true)}>
+          Nuevo Barbero
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {barberos.map((barbero) => (
+          <Card key={barbero.id} padding="lg">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">{barbero.nombre}</h4>
+                  <p className="text-slate-400 text-sm">{barbero.email}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant={barbero.activo ? "success" : "danger"}>
+                      {barbero.activo ? "Activo" : "Inactivo"}
+                    </Badge>
+                    <span className="text-slate-400 text-xs">
+                      {barbero.metricas.reservasCompletadas} reservas
+                      completadas
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Clock}
+                  onClick={() => {
+                    setBarberoSeleccionado(barbero.id);
+                    setVista("horarios");
+                  }}
+                >
+                  Horarios
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={TrendingUp}
+                  onClick={() => {
+                    setBarberoSeleccionado(barbero.id);
+                    setVista("metricas");
+                  }}
+                >
+                  Métricas
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={barbero.activo ? X : Check}
+                  onClick={() => handleToggleActivo(barbero.id)}
+                >
+                  {barbero.activo ? "Desactivar" : "Activar"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-700">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-green-400">
+                  {new Intl.NumberFormat("es-CL", {
+                    style: "currency",
+                    currency: "CLP",
+                    minimumFractionDigits: 0,
+                  }).format(barbero.metricas.ingresosMes)}
+                </div>
+                <div className="text-xs text-slate-400">Ingresos del mes</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-blue-400">
+                  {barbero.metricas.satisfaccionCliente}/5
+                </div>
+                <div className="text-xs text-slate-400">Satisfacción</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-semibold text-purple-400">
+                  {barbero.metricas.puntualidad}%
+                </div>
+                <div className="text-xs text-slate-400">Puntualidad</div>
+              </div>
+            </div>
+          </Card>
+        ))}
   };
 
   const renderListaBarberos = () => (
@@ -353,10 +590,12 @@ export const GestionBarberosAvanzada: React.FC = () => {
             {barberos.length} barberos registrados
           </p>
         </div>
-        <Button variant="primary" icon={Plus}>
+        <Button variant="primary" icon={Plus} onClick={() => setMostrandoFormulario(true)}>
           Nuevo Barbero
         </Button>
       </div>
+
+      {mostrandoFormulario && renderFormularioNuevoBarbero()}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {barberos.map((barbero) => (

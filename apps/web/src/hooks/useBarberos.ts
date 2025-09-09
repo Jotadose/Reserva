@@ -122,20 +122,38 @@ export function useBarberos() {
   // Crear un nuevo barbero (solo admin)
   const crearBarbero = async (barberoData: any) => {
     try {
+      // Asegurar que los datos tienen la estructura correcta
+      const payload = {
+        nombre: barberoData.nombre,
+        telefono: barberoData.telefono,
+        email: barberoData.email,
+        especialidades: barberoData.especialidades || [],
+        horario_inicio: barberoData.horario_inicio || '09:00',
+        horario_fin: barberoData.horario_fin || '18:00',
+        dias_trabajo: barberoData.dias_trabajo || ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
+        tiempo_descanso: barberoData.tiempo_descanso || 15,
+        activo: barberoData.activo !== false
+      };
+      
+      console.log('🔧 Enviando datos de barbero:', payload);
+      
       const resp = await fetch("/api/consolidated?type=barberos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(barberoData),
+        body: JSON.stringify(payload),
       });
       
       const json = await resp.json();
       
       if (!resp.ok) {
+        console.error('❌ Error de la API:', json);
         throw new Error(json.error || "Error creando barbero");
       }
 
+      console.log('✅ Barbero creado exitosamente:', json);
+      
       // Actualizar la lista local
       await fetchBarberos();
       return json.data;

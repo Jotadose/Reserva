@@ -214,7 +214,16 @@ async function handleBarberos(req, res, params) {
   }
   
   if (req.method === 'POST') {
+    console.log('🔧 POST barberos - Body received:', req.body);
     const { nombre, telefono, email, especialidades, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, activo } = req.body;
+    
+    // Validación básica
+    if (!nombre || !email) {
+      console.log('❌ Validation failed: missing nombre or email');
+      return res.status(400).json({ error: 'Nombre y email son requeridos' });
+    }
+    
+    console.log('🔧 Creating user with data:', { nombre, telefono, email, rol: 'barbero', activo: activo !== false });
     
     // Crear usuario primero
     const { data: usuario, error: usuarioError } = await supabase
@@ -229,7 +238,20 @@ async function handleBarberos(req, res, params) {
       .select()
       .single();
       
-    if (usuarioError) return res.status(400).json({ error: usuarioError.message });
+    if (usuarioError) {
+      console.log('❌ Error creating user:', usuarioError);
+      return res.status(400).json({ error: usuarioError.message });
+    }
+    
+    console.log('✅ User created:', usuario);
+    console.log('🔧 Creating barbero profile with data:', {
+      id_usuario: usuario.id_usuario,
+      especialidades: especialidades || [],
+      horario_inicio: horario_inicio || '09:00',
+      horario_fin: horario_fin || '18:00',
+      dias_trabajo: dias_trabajo || ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'],
+      tiempo_descanso: tiempo_descanso || 15
+    });
     
     // Crear perfil de barbero
     const { data: barbero, error: barberoError } = await supabase
@@ -245,9 +267,16 @@ async function handleBarberos(req, res, params) {
       .select()
       .single();
       
-    if (barberoError) return res.status(400).json({ error: barberoError.message });
+    if (barberoError) {
+      console.log('❌ Error creating barbero profile:', barberoError);
+      return res.status(400).json({ error: barberoError.message });
+    }
     
-    return res.status(201).json({ data: { ...usuario, barberos: barbero } });
+    console.log('✅ Barbero profile created:', barbero);
+    const result = { ...usuario, barberos: barbero };
+    console.log('✅ Final result:', result);
+    
+    return res.status(201).json({ data: result });
   }
   
   if (req.method === 'PUT') {
