@@ -175,37 +175,39 @@ export const GestionServiciosCorregida: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white flex items-center">
-          <Scissors className="h-6 w-6 mr-2 text-yellow-500" />
-          Gestión de Servicios
+      {/* Header - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center">
+          <Scissors className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-yellow-500" />
+          <span className="hidden sm:inline">Gestión de Servicios</span>
+          <span className="sm:hidden">Servicios</span>
         </h2>
         <button
           onClick={abrirModalNuevo}
-          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-semibold flex items-center transition-colors"
+          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-3 rounded-md font-semibold flex items-center justify-center transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Servicio
+          <span className="hidden sm:inline">Nuevo Servicio</span>
+          <span className="sm:hidden">Agregar</span>
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="bg-gray-800 rounded-lg p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Filtros - Mobile First */}
+      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
               placeholder="Buscar servicios..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
 
           <select
-            className="px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
             value={filtroCategoria}
             onChange={(e) => setFiltroCategoria(e.target.value)}
           >
@@ -219,23 +221,23 @@ export const GestionServiciosCorregida: React.FC = () => {
         </div>
       </div>
 
-      {/* Lista de servicios */}
+      {/* Lista de servicios - Mobile Optimized */}
       {serviciosFiltrados.length === 0 ? (
-        <div className="bg-gray-800 rounded-lg p-12 text-center">
-          <Scissors className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">No hay servicios que mostrar</p>
+        <div className="bg-gray-800 rounded-lg p-8 sm:p-12 text-center">
+          <Scissors className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-400 text-base sm:text-lg">No hay servicios que mostrar</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {serviciosFiltrados.map((servicio) => (
             <div
               key={servicio.id_servicio}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-yellow-500/50 transition-colors"
+              className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700 hover:border-yellow-500/50 transition-colors"
             >
               {/* Header del servicio */}
               <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-1 truncate">
                     {servicio.nombre}
                   </h3>
                   <span className="inline-block px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded-full">
@@ -244,7 +246,7 @@ export const GestionServiciosCorregida: React.FC = () => {
                   </span>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex space-x-1 sm:space-x-2 ml-2">
                   <button
                     onClick={() => abrirModalEditar(servicio)}
                     className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-gray-700 rounded transition-colors"
@@ -261,11 +263,11 @@ export const GestionServiciosCorregida: React.FC = () => {
               </div>
 
               {/* Información del servicio */}
-              <div className="space-y-2">
-                <p className="text-gray-300 text-sm">{servicio.descripcion}</p>
+              <div className="space-y-3">
+                <p className="text-gray-300 text-sm line-clamp-2">{servicio.descripcion}</p>
                 
-                <div className="flex justify-between items-center pt-2">
-                  <div className="flex items-center text-green-400 text-sm">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-green-400 text-sm font-medium">
                     <DollarSign className="h-4 w-4 mr-1" />
                     ${servicio.precio?.toLocaleString('es-CL')}
                   </div>
@@ -292,17 +294,17 @@ export const GestionServiciosCorregida: React.FC = () => {
         </div>
       )}
 
-      {/* Modal para crear/editar servicio */}
+      {/* Modal para crear/editar servicio - Mobile Responsive */}
       {modalAbierto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md border border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-white">
+          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-white">
                 {servicioEditando ? 'Editar Servicio' : 'Nuevo Servicio'}
               </h3>
               <button
                 onClick={cerrarModal}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-2 -m-2"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -316,7 +318,7 @@ export const GestionServiciosCorregida: React.FC = () => {
                 <input
                   type="text"
                   required
-                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 />
@@ -327,14 +329,14 @@ export const GestionServiciosCorregida: React.FC = () => {
                   Descripción
                 </label>
                 <textarea
-                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                   rows={3}
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Precio ($)
@@ -343,7 +345,7 @@ export const GestionServiciosCorregida: React.FC = () => {
                     type="number"
                     min="0"
                     required
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                     value={formData.precio}
                     onChange={(e) => setFormData({ ...formData, precio: parseInt(e.target.value) || 0 })}
                   />
@@ -358,7 +360,7 @@ export const GestionServiciosCorregida: React.FC = () => {
                     min="15"
                     step="15"
                     required
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                     value={formData.duracion}
                     onChange={(e) => setFormData({ ...formData, duracion: parseInt(e.target.value) || 30 })}
                   />
@@ -370,7 +372,7 @@ export const GestionServiciosCorregida: React.FC = () => {
                   Categoría
                 </label>
                 <select
-                  className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                   value={formData.categoria}
                   onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                 >
@@ -395,17 +397,17 @@ export const GestionServiciosCorregida: React.FC = () => {
                 </label>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-semibold flex items-center justify-center transition-colors"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-3 rounded-md font-semibold flex items-center justify-center transition-colors text-sm sm:text-base"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {servicioEditando ? 'Actualizar' : 'Crear'}

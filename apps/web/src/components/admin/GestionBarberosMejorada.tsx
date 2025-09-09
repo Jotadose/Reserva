@@ -228,42 +228,44 @@ export const GestionBarberosMejorada: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white flex items-center">
-          <Users className="h-6 w-6 mr-2 text-yellow-500" />
-          Gestión de Barberos
+      {/* Header - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center">
+          <Users className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-yellow-500" />
+          <span className="hidden sm:inline">Gestión de Barberos</span>
+          <span className="sm:hidden">Barberos</span>
         </h2>
         <button
           onClick={abrirModalNuevo}
-          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-semibold flex items-center transition-colors"
+          className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-3 rounded-md font-semibold flex items-center justify-center transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Nuevo Barbero
+          <span className="hidden sm:inline">Nuevo Barbero</span>
+          <span className="sm:hidden">Agregar</span>
         </button>
       </div>
 
-      {/* Lista de barberos */}
+      {/* Lista de barberos - Mobile Optimized */}
       {!barberos || barberos.length === 0 ? (
-        <div className="bg-gray-800 rounded-lg p-12 text-center">
-          <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">No hay barberos registrados</p>
+        <div className="bg-gray-800 rounded-lg p-8 sm:p-12 text-center">
+          <Users className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-400 text-base sm:text-lg">No hay barberos registrados</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {barberos.map((barbero) => (
             <div
               key={barbero.id_barbero}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-yellow-500/50 transition-colors"
+              className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700 hover:border-yellow-500/50 transition-colors"
             >
               {/* Header del barbero */}
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center">
-                    <User className="h-6 w-6 text-white" />
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                       {barbero.nombre}
                     </h3>
                     <span className={`inline-block px-2 py-1 text-xs rounded-full ${
@@ -276,7 +278,7 @@ export const GestionBarberosMejorada: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+                <div className="flex space-x-1 sm:space-x-2 ml-2 flex-shrink-0">
                   <button
                     onClick={() => handleToggleActivo(barbero)}
                     className={`p-2 rounded transition-colors ${
@@ -307,14 +309,14 @@ export const GestionBarberosMejorada: React.FC = () => {
               <div className="space-y-2 mb-4">
                 {barbero.email && (
                   <div className="flex items-center text-gray-300 text-sm">
-                    <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                    {barbero.email}
+                    <Mail className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{barbero.email}</span>
                   </div>
                 )}
                 {barbero.telefono && (
                   <div className="flex items-center text-gray-300 text-sm">
-                    <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                    {barbero.telefono}
+                    <Phone className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
+                    <span>{barbero.telefono}</span>
                   </div>
                 )}
               </div>
@@ -322,7 +324,7 @@ export const GestionBarberosMejorada: React.FC = () => {
               {/* Horario de trabajo */}
               <div className="mb-4">
                 <div className="flex items-center text-gray-300 text-sm mb-2">
-                  <Clock className="h-4 w-4 mr-2 text-gray-400" />
+                  <Clock className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
                   Horario: {barbero.horario_inicio} - {barbero.horario_fin}
                 </div>
                 
@@ -345,7 +347,7 @@ export const GestionBarberosMejorada: React.FC = () => {
               {barbero.especialidades && barbero.especialidades.length > 0 && (
                 <div>
                   <div className="flex items-center text-gray-300 text-sm mb-2">
-                    <Star className="h-4 w-4 mr-2 text-gray-400" />
+                    <Star className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
                     Especialidades:
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -365,17 +367,17 @@ export const GestionBarberosMejorada: React.FC = () => {
         </div>
       )}
 
-      {/* Modal para crear/editar barbero */}
+      {/* Modal para crear/editar barbero - Mobile Responsive */}
       {modalAbierto && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-white">
+          <div className="bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-lg border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-white">
                 {barberoEditando ? 'Editar Barbero' : 'Nuevo Barbero'}
               </h3>
               <button
                 onClick={cerrarModal}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-2 -m-2"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -383,7 +385,7 @@ export const GestionBarberosMejorada: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Información básica */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Nombre Completo
@@ -391,7 +393,7 @@ export const GestionBarberosMejorada: React.FC = () => {
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                   />
@@ -403,27 +405,25 @@ export const GestionBarberosMejorada: React.FC = () => {
                   </label>
                   <input
                     type="email"
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Teléfono
                   </label>
                   <input
                     type="tel"
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                   />
                 </div>
 
-                <div className="flex items-center pt-6">
+                <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="activo"
@@ -439,26 +439,26 @@ export const GestionBarberosMejorada: React.FC = () => {
 
               {/* Horario de trabajo */}
               <div>
-                <h4 className="text-lg font-medium text-white mb-3">Horario de Trabajo</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <h4 className="text-base sm:text-lg font-medium text-white mb-3">Horario de Trabajo</h4>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Hora de inicio
+                      Hora inicio
                     </label>
                     <input
                       type="time"
-                      className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                       value={formData.horario_inicio}
                       onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Hora de fin
+                      Hora fin
                     </label>
                     <input
                       type="time"
-                      className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
                       value={formData.horario_fin}
                       onChange={(e) => setFormData({ ...formData, horario_fin: e.target.value })}
                     />
@@ -468,8 +468,8 @@ export const GestionBarberosMejorada: React.FC = () => {
 
               {/* Días de trabajo */}
               <div>
-                <h4 className="text-lg font-medium text-white mb-3">Días de Trabajo</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <h4 className="text-base sm:text-lg font-medium text-white mb-3">Días de Trabajo</h4>
+                <div className="grid grid-cols-2 gap-2">
                   {DIAS_SEMANA.map(dia => (
                     <label key={dia.value} className="flex items-center text-sm text-gray-300">
                       <input
@@ -486,8 +486,8 @@ export const GestionBarberosMejorada: React.FC = () => {
 
               {/* Especialidades */}
               <div>
-                <h4 className="text-lg font-medium text-white mb-3">Especialidades</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <h4 className="text-base sm:text-lg font-medium text-white mb-3">Especialidades</h4>
+                <div className="grid grid-cols-2 gap-2">
                   {ESPECIALIDADES_DISPONIBLES.map(esp => (
                     <label key={esp.value} className="flex items-center text-sm text-gray-300">
                       <input
@@ -496,23 +496,23 @@ export const GestionBarberosMejorada: React.FC = () => {
                         checked={formData.especialidades.includes(esp.value)}
                         onChange={(e) => handleEspecialidadChange(esp.value, e.target.checked)}
                       />
-                      {esp.label}
+                      <span className="truncate">{esp.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={cerrarModal}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-md font-semibold flex items-center justify-center transition-colors"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-3 rounded-md font-semibold flex items-center justify-center transition-colors text-sm sm:text-base"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {barberoEditando ? 'Actualizar' : 'Crear'}
