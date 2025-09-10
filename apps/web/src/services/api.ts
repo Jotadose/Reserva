@@ -21,7 +21,8 @@ import type {
 // CONFIGURACIÓN DE LA API
 // ===================================================================
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://reserva-mauve.vercel.app/api";
+// Usar base relativa por defecto para evitar CORS y páginas HTML de error
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 // ===================================================================
 // TIPOS BASE
@@ -144,31 +145,33 @@ export class ReservasApiService extends BaseApiService {
       include_relations: options?.includeRelations,
     };
 
-    return this.get<Reserva[]>("/reservas", params);
+  return this.get<Reserva>("/consolidated", { type: "reservas", ...params }) as any;
   }
 
   async getById(
     id: string,
     includeRelations = true
   ): Promise<ApiResponse<Reserva>> {
-    return this.get<Reserva>(`/reservas/${id}`, {
+    return this.get<Reserva>(`/consolidated`, {
+      type: "reservas",
+      id,
       include_relations: includeRelations,
     });
   }
 
   async create(data: Partial<Reserva>): Promise<ApiResponse<Reserva>> {
-    return this.post<Reserva>("/reservas", data);
+  return this.post<Reserva>("/consolidated?type=reservas", data);
   }
 
   async update(
     id: string,
     updates: Partial<Reserva>
   ): Promise<ApiResponse<Reserva>> {
-    return this.put<Reserva>(`/reservas/${id}`, updates);
+  return this.put<Reserva>(`/consolidated?type=reservas&id=${encodeURIComponent(id)}`, updates);
   }
 
   async delete(id: string): Promise<ApiResponse<boolean>> {
-    return this.delete<boolean>(`/reservas/${id}`);
+  return this.delete<boolean>(`/consolidated?type=reservas&id=${encodeURIComponent(id)}`);
   }
 
   async getByDateRange(
@@ -182,7 +185,7 @@ export class ReservasApiService extends BaseApiService {
       id_barbero: barberoId,
     };
 
-    return this.get<Reserva[]>("/reservas/range", params);
+  return this.get<Reserva[]>("/consolidated", { type: "reservas", action: "range", ...params });
   }
 }
 
@@ -196,26 +199,26 @@ export class ServiciosApiService extends BaseApiService {
       ...options?.pagination,
     };
 
-    return this.get<Servicio[]>("/servicios", params);
+  return this.get<Servicio[]>("/consolidated", { type: "servicios", ...params });
   }
 
   async getById(id: string): Promise<ApiResponse<Servicio>> {
-    return this.get<Servicio>(`/servicios/${id}`);
+  return this.get<Servicio>(`/consolidated`, { type: "servicios", id });
   }
 
   async create(data: Partial<Servicio>): Promise<ApiResponse<Servicio>> {
-    return this.post<Servicio>("/servicios", data);
+  return this.post<Servicio>("/consolidated?type=servicios", data);
   }
 
   async update(
     id: string,
     updates: Partial<Servicio>
   ): Promise<ApiResponse<Servicio>> {
-    return this.put<Servicio>(`/servicios/${id}`, updates);
+  return this.put<Servicio>(`/consolidated?type=servicios&id=${encodeURIComponent(id)}`, updates);
   }
 
   async delete(id: string): Promise<ApiResponse<boolean>> {
-    return this.delete<boolean>(`/servicios/${id}`);
+  return this.delete<boolean>(`/consolidated?type=servicios&id=${encodeURIComponent(id)}`);
   }
 }
 
@@ -229,30 +232,30 @@ export class UsuariosApiService extends BaseApiService {
       ...options?.pagination,
     };
 
-    return this.get<Usuario[]>("/usuarios", params);
+  return this.get<Usuario[]>("/consolidated", { type: "usuarios", ...params });
   }
 
   async getById(id: string): Promise<ApiResponse<Usuario>> {
-    return this.get<Usuario>(`/usuarios/${id}`);
+  return this.get<Usuario>(`/consolidated`, { type: "usuarios", id });
   }
 
   async getByEmail(email: string): Promise<ApiResponse<Usuario>> {
-    return this.get<Usuario>(`/usuarios/email/${encodeURIComponent(email)}`);
+  return this.get<Usuario>(`/consolidated`, { type: "usuarios", email });
   }
 
   async create(data: Partial<Usuario>): Promise<ApiResponse<Usuario>> {
-    return this.post<Usuario>("/usuarios", data);
+  return this.post<Usuario>("/consolidated?type=usuarios", data);
   }
 
   async update(
     id: string,
     updates: Partial<Usuario>
   ): Promise<ApiResponse<Usuario>> {
-    return this.put<Usuario>(`/usuarios/${id}`, updates);
+  return this.put<Usuario>(`/consolidated?type=usuarios&id=${encodeURIComponent(id)}`, updates);
   }
 
   async delete(id: string): Promise<ApiResponse<boolean>> {
-    return this.delete<boolean>(`/usuarios/${id}`);
+  return this.delete<boolean>(`/consolidated?type=usuarios&id=${encodeURIComponent(id)}`);
   }
 }
 
@@ -262,7 +265,7 @@ export class DisponibilidadApiService extends BaseApiService {
     id_barbero?: string;
     id_servicio?: string;
   }): Promise<ApiResponse<DisponibilidadSlot[]>> {
-    return this.get<DisponibilidadSlot[]>("/disponibilidad", params);
+  return this.get<DisponibilidadSlot[]>("/consolidated", { type: "disponibilidad", action: "check", ...params });
   }
 }
 
