@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { useBarberos } from "../../hooks/useBarberos";
+import { useServicios } from "../../hooks/useApiHooks";
 
 // ===================================================================
 // TIPOS
@@ -52,16 +53,14 @@ const DIAS_SEMANA = [
   { value: 'domingo', label: 'Domingo' }
 ];
 
-const SERVICIOS_DISPONIBLES = [ // 🔄 CAMBIO: ESPECIALIDADES -> SERVICIOS
-  { value: 'corte', label: 'Corte de Cabello' },
-  { value: 'barba', label: 'Barba' },
-  { value: 'afeitado', label: 'Afeitado' },
-  { value: 'afeitado_tradicional', label: 'Afeitado Tradicional' },
-  { value: 'bigote', label: 'Bigote' },
-  { value: 'coloracion', label: 'Coloración' },
-  { value: 'styling', label: 'Styling' },
-  { value: 'diseno', label: 'Diseño' }
-];
+// ===================================================================
+// COMPONENTE PRINCIPAL
+// ===================================================================
+
+export const GestionBarberosMejorada: React.FC = () => {
+  // 🔄 Estados
+  const { barberos, loading, error, crearBarbero, actualizarBarbero, eliminarBarbero } = useBarberos();
+  const { servicios, loading: serviciosLoading } = useServicios(); // 🆕 Obtener servicios de la API
 
 // ===================================================================
 // COMPONENTE PRINCIPAL
@@ -492,19 +491,25 @@ export const GestionBarberosMejorada: React.FC = () => {
               {/* Servicios */}
               <div>
                 <h4 className="text-base sm:text-lg font-medium text-white mb-3">Servicios</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {SERVICIOS_DISPONIBLES.map(servicio => (
-                    <label key={servicio.value} className="flex items-center text-sm text-gray-300">
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={formData.servicios.includes(servicio.value)}
-                        onChange={(e) => handleServicioChange(servicio.value, e.target.checked)}
-                      />
-                      <span className="truncate">{servicio.label}</span>
-                    </label>
-                  ))}
-                </div>
+                {serviciosLoading ? (
+                  <div className="text-gray-400">Cargando servicios...</div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                    {servicios.map((servicio: any) => (
+                      <label key={servicio.id_servicio} className="flex items-center text-sm text-gray-300 hover:text-white transition-colors">
+                        <input
+                          type="checkbox"
+                          className="mr-2 rounded"
+                          checked={formData.servicios.includes(servicio.id_servicio)}
+                          onChange={(e) => handleServicioChange(servicio.id_servicio, e.target.checked)}
+                        />
+                        <span className="truncate" title={`${servicio.nombre} - $${servicio.precio}`}>
+                          {servicio.nombre} <span className="text-xs text-gray-400">${servicio.precio}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">

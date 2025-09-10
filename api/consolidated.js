@@ -371,24 +371,33 @@ async function handleBarberos(req, res, params) {
     
     console.log('✅ Usuario data fetched successfully');
     
-    // Obtener datos del barbero
+    // Obtener datos del barbero (puede haber duplicados, tomar el más reciente)
     const { data: barberoData, error: barberoErrorFetch } = await supabase
       .from('barberos')
-      .select('id_barbero, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
+      .select('id_barbero, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes, created_at')
       .eq('id_barbero', id)  // id_barbero en barberos = id_usuario en usuarios
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1);
     
     if (barberoErrorFetch) {
       console.error('❌ Error fetching barbero data:', barberoErrorFetch);
       return res.status(500).json({ error: 'Error al obtener datos del barbero actualizados: ' + barberoErrorFetch.message });
     }
     
-    console.log('✅ Barbero data fetched successfully:', barberoData);
+    // Tomar el primer (más reciente) registro si existe
+    const barberoRecord = Array.isArray(barberoData) ? barberoData[0] : barberoData;
+    
+    if (!barberoRecord) {
+      console.error('❌ No barbero record found');
+      return res.status(404).json({ error: 'No se encontraron datos del barbero' });
+    }
+    
+    console.log('✅ Barbero data fetched successfully:', barberoRecord);
     
     // Construir respuesta manualmente
     const barberoCompleto = {
       ...usuarioData,
-      barberos: barberoData
+      barberos: barberoRecord
     };
     
     return res.status(200).json({ data: barberoCompleto });
