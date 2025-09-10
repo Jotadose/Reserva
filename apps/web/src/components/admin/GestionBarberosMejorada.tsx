@@ -66,6 +66,13 @@ export const GestionBarberosMejorada: React.FC = () => {
   const { barberos, loading, error, crearBarbero, actualizarBarbero, eliminarBarbero } = useBarberos();
   const { servicios, loading: serviciosLoading } = useServicios(); // 🆕 Obtener servicios de la API
 
+  // Mapa id_servicio -> servicio para mostrar nombre/precio
+  const serviciosMap = React.useMemo(() => {
+    const m = new Map<string, { nombre: string; precio?: number }>();
+    for (const s of servicios || []) m.set(s.id_servicio, { nombre: s.nombre, precio: s.precio });
+    return m;
+  }, [servicios]);
+
   // Estados locales
   const [modalAbierto, setModalAbierto] = useState(false);
   const [barberoEditando, setBarberoEditando] = useState<any>(null);
@@ -76,7 +83,7 @@ export const GestionBarberosMejorada: React.FC = () => {
     horario_inicio: '09:00',
     horario_fin: '18:00',
     dias_trabajo: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-    servicios: ['corte'], // 🔄 CAMBIO: especialidades -> servicios
+  servicios: [],
     activo: true
   });
 
@@ -92,7 +99,7 @@ export const GestionBarberosMejorada: React.FC = () => {
       horario_inicio: '09:00',
       horario_fin: '18:00',
       dias_trabajo: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-      servicios: ['corte'], // 🔄 CAMBIO: especialidades -> servicios
+  servicios: [],
       activo: true
     });
     setBarberoEditando(null);
@@ -113,9 +120,7 @@ export const GestionBarberosMejorada: React.FC = () => {
       dias_trabajo: Array.isArray(barbero.dias_trabajo) 
         ? barbero.dias_trabajo 
         : ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-      servicios: Array.isArray(barbero.servicios) // 🔄 CAMBIO: especialidades -> servicios
-        ? barbero.servicios
-        : ['corte'],
+  servicios: Array.isArray(barbero.servicios) ? barbero.servicios : [],
       activo: barbero.activo !== false
     });
     setBarberoEditando(barbero);
@@ -344,23 +349,31 @@ export const GestionBarberosMejorada: React.FC = () => {
               </div>
 
               {/* Servicios */}
-              {barbero.servicios && barbero.servicios.length > 0 && ( // 🔄 CAMBIO: especialidades -> servicios
+              {barbero.servicios && barbero.servicios.length > 0 && (
                 <div>
                   <div className="flex items-center text-gray-300 text-sm mb-2">
                     <Star className="h-4 w-4 mr-2 text-gray-400 flex-shrink-0" />
-                    Servicios: {/* 🔄 CAMBIO: Especialidades -> Servicios */}
+                    Servicios:
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {barbero.servicios.map((servicio: string) => ( // 🔄 CAMBIO: especialidades -> servicios
-                      <span
-                        key={servicio}
-                        className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded"
-                      >
-                        {servicio.charAt(0).toUpperCase() + servicio.slice(1).replace('_', ' ')}
-                      </span>
-                    ))}
+                    {barbero.servicios.map((servicioId: string) => {
+                      const info = serviciosMap.get(servicioId);
+                      const label = info?.nombre || servicioId;
+                      return (
+                        <span
+                          key={servicioId}
+                          className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded"
+                          title={info?.precio ? `$${info.precio}` : undefined}
+                        >
+                          {label}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
+              )}
+              {(!barbero.servicios || barbero.servicios.length === 0) && (
+                <div className="text-gray-400 text-sm">Sin servicios asignados</div>
               )}
             </div>
           ))}
