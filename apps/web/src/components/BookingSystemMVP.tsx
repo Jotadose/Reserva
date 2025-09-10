@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useBarberos } from "../hooks/useBarberos";
+import useBarberos from "../hooks/useBarberos";
 import { useServicios } from "../hooks/useServicios";
 import { useReservasMVP } from "../hooks/useReservasMVP";
 import { useUsuarios } from "../hooks/useUsuarios";

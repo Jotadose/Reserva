@@ -4,7 +4,7 @@ import { TimeSlot, Booking, Service } from "../types/booking";
 import { useDisponibilidad } from "../hooks/useDisponibilidad";
 import { useBloqueos } from "../hooks/useBloqueos";
 import { isDateAvailable as sharedIsDateAvailable } from "shared";
-import { useBarberos } from "../hooks/useBarberos";
+import useBarberos from "../hooks/useBarberos";
 import { useAppStore } from "../store/appStore";
 import { DESIGN_TOKENS } from "../styles/designSystem";
 import { useCalendarAvailability } from "../hooks/useCalendarAvailability";

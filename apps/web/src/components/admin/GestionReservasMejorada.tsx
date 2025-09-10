@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 
 import { useReservasMVP } from "../../hooks/useReservasMVP";
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 import { useUsuarios } from "../../hooks/useUsuarios";
 import { useServicios } from "../../hooks/useServicios";
 

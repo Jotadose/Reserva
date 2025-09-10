@@ -38,7 +38,7 @@ import ClientForm from "./ClientForm";
 import BookingConfirmation from "./BookingConfirmation";
 import ServiceSelection from "./ServiceSelection";
 import { TimeSlot, Booking, Service } from "../types/booking";
-import { useBarberos } from "../hooks/useBarberos";
+import useBarberos from "../hooks/useBarberos";
 
 interface AdminPanelAdvancedProps {}
 

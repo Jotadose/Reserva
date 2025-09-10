@@ -43,7 +43,7 @@ import {
 } from "../ui";
 
 import { useToast } from "../../contexts/ToastContext";
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 
 // ===================================================================
 // TIPOS E INTERFACES

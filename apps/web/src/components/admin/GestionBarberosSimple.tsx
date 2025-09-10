@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import { User, Clock, Calendar, Edit3, Plus, Save, X, Trash2, Check } from "lucide-react";
 import { Card, Button, Input } from "../ui";
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 
 // Tipos de datos
 interface BarberoEditado {

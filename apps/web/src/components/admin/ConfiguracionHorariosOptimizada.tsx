@@ -33,7 +33,7 @@ import {
 
 import { Button, Card, Badge, EmptyState } from "../ui";
 import { useToast } from "../../contexts/ToastContext";
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 
 // ===================================================================
 // TIPOS E INTERFACES - ENFOCADAS EN FUNCIONES ESPECÍFICAS

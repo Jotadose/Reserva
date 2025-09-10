@@ -22,7 +22,7 @@ import {
   AlertCircle,
   Ban,
 } from "lucide-react";
-import { useBarberos } from "../../hooks/useBarberos";
+import { useBarberos } from "../../hooks/useBarberos.ts";
 import { useReservasMVP } from "../../hooks/useReservasMVP";
 import { useWorkingDays } from "../../hooks/useWorkingDays";
 import {

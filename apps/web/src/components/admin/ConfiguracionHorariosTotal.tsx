@@ -29,7 +29,7 @@ import {
 
 import { Button, Card, LoadingSpinner } from "../ui";
 import { useToast } from "../../contexts/ToastContext";
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 import { useReservasMVP } from "../../hooks/useReservasMVP";
 
 // Importar el componente optimizado

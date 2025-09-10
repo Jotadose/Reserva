@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { User, Star, ArrowRight, Clock, CheckCircle } from "lucide-react";
-import { useBarberos } from "../hooks/useBarberos";
+import useBarberos from "../hooks/useBarberos";
 
 interface BarberSelectionProps {
   selectedBarberId: string;

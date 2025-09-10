@@ -24,7 +24,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { useBarberos } from "../../hooks/useBarberos";
+import useBarberos from "../../hooks/useBarberos";
 import { useServicios } from "../../hooks/useApiHooks";
 
 // ===================================================================
