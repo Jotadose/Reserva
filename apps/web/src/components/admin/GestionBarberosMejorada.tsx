@@ -57,11 +57,6 @@ const DIAS_SEMANA = [
 // COMPONENTE PRINCIPAL
 // ===================================================================
 
-export const GestionBarberosMejorada: React.FC = () => {
-  // 🔄 Estados
-  const { barberos, loading, error, crearBarbero, actualizarBarbero, eliminarBarbero } = useBarberos();
-  const { servicios, loading: serviciosLoading } = useServicios(); // 🆕 Obtener servicios de la API
-
 // ===================================================================
 // COMPONENTE PRINCIPAL
 // ===================================================================
@@ -69,6 +64,7 @@ export const GestionBarberosMejorada: React.FC = () => {
 export const GestionBarberosMejorada: React.FC = () => {
   // Hooks de datos
   const { barberos, loading, error, crearBarbero, actualizarBarbero, eliminarBarbero } = useBarberos();
+  const { servicios, loading: serviciosLoading } = useServicios(); // 🆕 Obtener servicios de la API
 
   // Estados locales
   const [modalAbierto, setModalAbierto] = useState(false);
