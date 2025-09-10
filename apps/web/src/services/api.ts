@@ -21,8 +21,10 @@ import type {
 // CONFIGURACIÓN DE LA API
 // ===================================================================
 
-// Usar base relativa por defecto para evitar CORS y páginas HTML de error
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+// Usar URL absoluta por defecto para asegurar funcionalidad fuera de entorno proxied
+// Mantiene compatibilidad con VITE_API_URL si está configurado
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://reserva-mauve.vercel.app/api";
 
 // ===================================================================
 // TIPOS BASE

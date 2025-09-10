@@ -8,12 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  reservasApi,
-  serviciosApi,
-  usuariosApi,
-  ApiResponse,
-} from "../services/api";
+import { reservasApi, serviciosApi, usuariosApi } from "../services/api";
 
 // ===================================================================
 // TIPOS UNIFICADOS
@@ -428,7 +423,8 @@ export function useServicios() {
   }, []);
 
   useEffect(() => {
-    fetchServicios({ filters: { activo: true } });
+    // Cargar todos los servicios por defecto (evitar filtros que el backend no soporte)
+    fetchServicios();
   }, [fetchServicios]);
 
   return {
