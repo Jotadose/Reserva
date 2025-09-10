@@ -1,3 +1,4 @@
+
 // Probar conexión a través de la API que sabemos que funciona
 const API_BASE = 'https://reserva-mauve.vercel.app/api/consolidated';
 

@@ -347,18 +347,35 @@ async function handleBarberos(req, res, params) {
       if (barberoError) return res.status(400).json({ error: barberoError.message });
     }
     
-    // Obtener datos actualizados
-    const { data, error } = await supabase
+    // Obtener datos actualizados (método manual como en POST)
+    const { data: usuarioData, error: fetchUsuarioError } = await supabase
       .from('usuarios')
-      .select(`
-        id_usuario, nombre, email, telefono, rol, activo,
-        barberos (servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso)
-      `)
+      .select('id_usuario, nombre, email, telefono, rol, activo, avatar_url, configuracion, created_at')
       .eq('id_usuario', id)
       .single();
-      
-    if (error) return res.status(400).json({ error: error.message });
-    return res.status(200).json({ data });
+    
+    if (fetchUsuarioError) {
+      return res.status(500).json({ error: 'Error al obtener datos del usuario actualizados' });
+    }
+    
+    // Obtener datos del barbero
+    const { data: barberoData, error: barberoErrorFetch } = await supabase
+      .from('barberos')
+      .select('id_barbero, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
+      .eq('id_barbero', id)
+      .single();
+    
+    if (barberoErrorFetch) {
+      return res.status(500).json({ error: 'Error al obtener datos del barbero actualizados' });
+    }
+    
+    // Construir respuesta manualmente
+    const barberoCompleto = {
+      ...usuarioData,
+      barberos: barberoData
+    };
+    
+    return res.status(200).json({ data: barberoCompleto });
   }
   
   return res.status(405).json({ error: 'Method not allowed' });
