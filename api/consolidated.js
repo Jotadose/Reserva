@@ -339,13 +339,23 @@ async function handleBarberos(req, res, params) {
     
     // Actualizar barbero
     if (Object.keys(barberoUpdates).length > 0) {
+      console.log('🔧 Updating barbero with data:', barberoUpdates);
+      console.log('🔧 Filtering by id_barbero:', id);
+      
       const { error: barberoError } = await supabase
         .from('barberos')
         .update(barberoUpdates)
         .eq('id_barbero', id);
         
-      if (barberoError) return res.status(400).json({ error: barberoError.message });
+      if (barberoError) {
+        console.error('❌ Error updating barbero:', barberoError);
+        return res.status(400).json({ error: barberoError.message });
+      }
+      
+      console.log('✅ Barbero updated successfully');
     }
+    
+    console.log('🔍 Fetching updated data for user:', id);
     
     // Obtener datos actualizados (método manual como en POST)
     const { data: usuarioData, error: fetchUsuarioError } = await supabase
@@ -355,19 +365,25 @@ async function handleBarberos(req, res, params) {
       .single();
     
     if (fetchUsuarioError) {
-      return res.status(500).json({ error: 'Error al obtener datos del usuario actualizados' });
+      console.error('❌ Error fetching usuario data:', fetchUsuarioError);
+      return res.status(500).json({ error: 'Error al obtener datos del usuario actualizados: ' + fetchUsuarioError.message });
     }
+    
+    console.log('✅ Usuario data fetched successfully');
     
     // Obtener datos del barbero
     const { data: barberoData, error: barberoErrorFetch } = await supabase
       .from('barberos')
       .select('id_barbero, servicios, horario_inicio, horario_fin, dias_trabajo, tiempo_descanso, comision_base, biografia, calificacion_promedio, total_cortes')
-      .eq('id_barbero', id)
+      .eq('id_barbero', id)  // id_barbero en barberos = id_usuario en usuarios
       .single();
     
     if (barberoErrorFetch) {
-      return res.status(500).json({ error: 'Error al obtener datos del barbero actualizados' });
+      console.error('❌ Error fetching barbero data:', barberoErrorFetch);
+      return res.status(500).json({ error: 'Error al obtener datos del barbero actualizados: ' + barberoErrorFetch.message });
     }
+    
+    console.log('✅ Barbero data fetched successfully:', barberoData);
     
     // Construir respuesta manualmente
     const barberoCompleto = {
