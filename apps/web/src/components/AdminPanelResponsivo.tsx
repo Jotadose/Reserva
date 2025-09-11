@@ -35,6 +35,11 @@ import { ConfiguracionHorariosTotal } from "./admin/ConfiguracionHorariosTotal";
 import { GestionBarberosMejorada } from "./admin/GestionBarberosMejorada";
 import { GestionServiciosCorregida } from "./admin/GestionServiciosCorregida";
 import { GestionReservasMejorada } from "./admin/GestionReservasMejorada";
+import { StatCard } from "./admin/StatCard";
+import { SummaryCard } from "./admin/SummaryCard";
+import { SystemStatus } from "./admin/SystemStatus";
+import { MobileMenu } from "./admin/MobileMenu";
+import { DesktopTabs } from "./admin/DesktopTabs";
 
 // Tipos
 interface Stats {
@@ -142,106 +147,32 @@ export const AdminPanelResponsivo: React.FC = () => {
     <div className="space-y-6">
       {/* Estadísticas principales - Mobile Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs sm:text-sm font-medium">Hoy</p>
-              <p className="text-lg sm:text-2xl font-bold text-white">{stats.reservasHoy}</p>
-            </div>
-            <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs sm:text-sm font-medium">Ingresos</p>
-              <p className="text-lg sm:text-2xl font-bold text-green-400">
-                ${stats.ingresosHoy.toLocaleString('es-CL')}
-              </p>
-            </div>
-            <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs sm:text-sm font-medium">Clientes</p>
-              <p className="text-lg sm:text-2xl font-bold text-white">{stats.totalClientes}</p>
-            </div>
-            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-400" />
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-400 text-xs sm:text-sm font-medium">Asistencia</p>
-              <p className="text-lg sm:text-2xl font-bold text-yellow-400">{stats.tasaAsistencia}%</p>
-            </div>
-            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400" />
-          </div>
-        </div>
+        <StatCard title="Hoy" value={stats.reservasHoy} icon={Calendar} iconColor="text-yellow-500" />
+        <StatCard title="Ingresos" value={`$${stats.ingresosHoy.toLocaleString('es-CL')}`} icon={DollarSign} iconColor="text-green-400" />
+        <StatCard title="Clientes" value={stats.totalClientes} icon={Users} iconColor="text-purple-400" />
+        <StatCard title="Asistencia" value={`${stats.tasaAsistencia}%`} icon={TrendingUp} iconColor="text-yellow-400" />
       </div>
 
       {/* Resúmenes semanales y mensuales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700">
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Resumen Semanal</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">Reservas:</span>
-              <span className="font-medium text-white">{stats.reservasSemana}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">Ingresos:</span>
-              <span className="font-medium text-green-400">
-                ${stats.ingresosSemana.toLocaleString('es-CL')}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700">
-          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Resumen Mensual</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">Reservas:</span>
-              <span className="font-medium text-white">{stats.reservasMes}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 text-sm">Ingresos:</span>
-              <span className="font-medium text-green-400">
-                ${stats.ingresosMes.toLocaleString('es-CL')}
-              </span>
-            </div>
-          </div>
-        </div>
+        <SummaryCard 
+          title="Resumen Semanal"
+          items={[
+            { label: "Reservas", value: stats.reservasSemana },
+            { label: "Ingresos", value: `$${stats.ingresosSemana.toLocaleString('es-CL')}` }
+          ]}
+        />
+        <SummaryCard 
+          title="Resumen Mensual"
+          items={[
+            { label: "Reservas", value: stats.reservasMes },
+            { label: "Ingresos", value: `$${stats.ingresosMes.toLocaleString('es-CL')}` }
+          ]}
+        />
       </div>
 
       {/* Estado del sistema */}
-      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700">
-        <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Estado del Sistema</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
-            <span className="text-sm text-gray-300">
-              Barberos activos: <span className="text-white font-medium">{barberos?.length || 0}</span>
-            </span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
-            <span className="text-sm text-gray-300">
-              Servicios: <span className="text-white font-medium">{servicios?.length || 0}</span>
-            </span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
-            <span className="text-sm text-gray-300">Sistema operativo</span>
-          </div>
-        </div>
-      </div>
+      <SystemStatus barberosCount={barberos?.length || 0} serviciosCount={servicios?.length || 0} />
     </div>
   );
 
@@ -314,71 +245,20 @@ export const AdminPanelResponsivo: React.FC = () => {
       </div>
 
       {/* Navegación Mobile - Overlay Menu */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden fixed inset-0 z-50 bg-black bg-opacity-50">
-          <div className="bg-gray-900 w-64 h-full shadow-xl">
-            <div className="p-4 border-b border-gray-800">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-white">Menú</h2>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-gray-400 hover:text-white rounded-md"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-2">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id as TabType);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                    activeTab === tab.id
-                      ? 'bg-yellow-500 text-black font-semibold'
-                      : 'text-gray-300 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  <span className="text-lg">{tab.emoji}</span>
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <MobileMenu 
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabClick={(tabId) => setActiveTab(tabId as TabType)}
+      />
 
       {/* Navegación Desktop - Tabs horizontales */}
-      <div className="hidden sm:block bg-gray-800 border-b border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-1 overflow-x-auto">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-t-lg transition-all duration-200 whitespace-nowrap text-sm lg:text-base border-b-2 ${
-                    isActive
-                      ? 'bg-gray-900 border-yellow-500 text-yellow-500 font-semibold'
-                      : 'border-transparent text-gray-300 hover:text-white hover:bg-gray-700'
-                  }`}
-                >
-                  <Icon className="h-4 w-4 lg:h-5 lg:w-5" />
-                  <span className="hidden lg:inline">{tab.label}</span>
-                  <span className="lg:hidden">{tab.emoji}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <DesktopTabs 
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabClick={(tabId) => setActiveTab(tabId as TabType)}
+      />
 
       {/* Contenido principal */}
       <div className="p-4 sm:p-6 lg:p-8">
