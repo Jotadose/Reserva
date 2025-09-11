@@ -135,10 +135,33 @@ export const AgendaDisponibilidad: React.FC = () => {
     }
   }, [barberoActivo]);
 
-  // Cargar bloqueos de la semana visible
+  // Rango visible (semana o mes) para cargar bloqueos
+  const rangoVisible = useMemo(() => {
+    if (vistaActual === "mes") {
+      const inicioMes = new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), 1);
+      // Alinear al lunes previo
+      const start = new Date(inicioMes);
+      const day = start.getDay(); // 0=Dom, 1=Lun
+      const diffToMonday = (day + 6) % 7; // Dom->6, Lun->0, ...
+      start.setDate(start.getDate() - diffToMonday);
+
+      // Fin: 6 semanas completas (42 días)
+      const end = new Date(start);
+      end.setDate(start.getDate() + 41);
+      return { start, end };
+    }
+    // semana
+    const start = new Date(fechaSeleccionada);
+    start.setDate(start.getDate() - start.getDay());
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { start, end };
+  }, [fechaSeleccionada, vistaActual]);
+
+  // Cargar bloqueos del rango visible
   useEffect(() => {
-    const from = diasSemana[0]?.toISOString().slice(0, 10);
-    const to = diasSemana[6]?.toISOString().slice(0, 10);
+    const from = rangoVisible.start?.toISOString().slice(0, 10);
+    const to = rangoVisible.end?.toISOString().slice(0, 10);
     if (from && to)
       fetchBloqueos({
         from,
@@ -147,7 +170,7 @@ export const AgendaDisponibilidad: React.FC = () => {
           barberoSeleccionado === "todos" ? undefined : barberoSeleccionado,
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechaSeleccionada, barberoSeleccionado]);
+  }, [rangoVisible.start?.getTime(), rangoVisible.end?.getTime(), barberoSeleccionado, vistaActual]);
 
   // 📅 GENERAR DÍAS DE LA SEMANA
   const diasSemana = useMemo(() => {
@@ -214,11 +237,17 @@ export const AgendaDisponibilidad: React.FC = () => {
   };
 
   // 🔧 HANDLERS
-  const navegarSemana = (direccion: "anterior" | "siguiente") => {
+  const navegarPeriodo = (direccion: "anterior" | "siguiente") => {
     const nuevaFecha = new Date(fechaSeleccionada);
-    nuevaFecha.setDate(
-      nuevaFecha.getDate() + (direccion === "siguiente" ? 7 : -7)
-    );
+    if (vistaActual === "mes") {
+      nuevaFecha.setMonth(
+        nuevaFecha.getMonth() + (direccion === "siguiente" ? 1 : -1)
+      );
+    } else {
+      nuevaFecha.setDate(
+        nuevaFecha.getDate() + (direccion === "siguiente" ? 7 : -7)
+      );
+    }
     setFechaSeleccionada(nuevaFecha);
   };
 
@@ -399,6 +428,163 @@ export const AgendaDisponibilidad: React.FC = () => {
   );
 
   // ===================================================================
+  // COMPONENTE: VISTA MENSUAL
+  // ===================================================================
+  const VistaMensual: React.FC = () => {
+    // Generar grilla de 6 semanas (42 días)
+    const inicioMes = new Date(fechaSeleccionada.getFullYear(), fechaSeleccionada.getMonth(), 1);
+    const start = new Date(inicioMes);
+    const day = start.getDay();
+    const diffToMonday = (day + 6) % 7;
+    start.setDate(start.getDate() - diffToMonday);
+    const days: Date[] = Array.from({ length: 42 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+
+    const esMismoMes = (d: Date) => d.getMonth() === fechaSeleccionada.getMonth();
+
+    // Helper: nombre de día en español (lunes..domingo)
+    const dayName = (d: Date) => {
+      const map = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+      return map[d.getDay()];
+    };
+
+    const reservasDelDia = (d: Date) => {
+      const fechaStr = d.toISOString().split("T")[0];
+      return reservas.filter((r) => {
+        const okFecha = r.fecha_reserva === fechaStr;
+        const okBarbero =
+          barberoSeleccionado === "todos" || r.id_barbero === barberoSeleccionado;
+        return okFecha && okBarbero;
+      });
+    };
+
+    const bloqueosDelDia = (d: Date) => {
+      const fechaStr = d.toISOString().split("T")[0];
+      return bloqueos.filter((b) => {
+        const okFecha = b.fecha === fechaStr;
+        const okBarbero =
+          barberoSeleccionado === "todos"
+            ? true
+            : b.id_barbero === barberoSeleccionado || b.id_barbero === null;
+        return okFecha && okBarbero;
+      });
+    };
+
+    const diaDisponible = (d: Date) => {
+      const fechaStr = d.toISOString().split("T")[0];
+      const laborableShop = isWorkingDay(d);
+      let laborableBarbero = true;
+      if (barberoSeleccionado !== "todos" && barberoActivo) {
+        laborableBarbero = barberoActivo.dias_trabajo?.includes(dayName(d)) ?? true;
+      }
+      const laborable = laborableShop && laborableBarbero;
+      const reservasDia = reservasDelDia(d).map((r) => ({
+        hora_inicio: r.hora_inicio,
+        hora_fin: r.hora_fin,
+        duracion_minutos: r.duracion_minutos || 0,
+      }));
+      const cap = computeDayCapacity(
+        fechaStr,
+        reservasDia as any,
+        BOOKING_RULES.defaultServiceDuration
+      );
+      const available = sharedIsDateAvailable(
+        fechaStr,
+        {
+          blockedDates: {},
+          workingDays: laborable ? new Set<number>([d.getDay()]) : new Set<number>(),
+          capacityMap: { [fechaStr]: cap },
+        },
+        BOOKING_RULES.defaultServiceDuration
+      );
+      return { laborable, cap, available };
+    };
+
+    const onClickDia = (d: Date) => {
+      const fechaStr = d.toISOString().split("T")[0];
+      setNuevoBloqueo((v) => ({
+        ...v,
+        fecha_inicio: fechaStr,
+        fecha_fin: fechaStr,
+        id_barbero: barberoSeleccionado || "todos",
+      }));
+      setModalActual("bloqueo");
+    };
+
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+        {/* Encabezados de días */}
+        <div className="grid grid-cols-7 bg-slate-700/50 border-b border-slate-700">
+          {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((d) => (
+            <div key={d} className="p-3 text-center text-sm font-medium text-slate-200">
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Celdas del mes */}
+        <div className="grid grid-cols-7">
+          {days.map((d) => {
+            const fechaStr = d.toISOString().split("T")[0];
+            const { laborable, cap, available } = diaDisponible(d);
+            const esHoy = new Date().toDateString() === d.toDateString();
+            const fueraDeMes = !esMismoMes(d);
+            const _reservas = reservasDelDia(d);
+            const _bloqueos = bloqueosDelDia(d);
+            const noGap = laborable && !cap.hasGap;
+            return (
+              <button
+                key={fechaStr}
+                onClick={() => onClickDia(d)}
+                title={
+                  !laborable
+                    ? "Cerrado"
+                    : available
+                    ? `Disponible (máx libre ${cap.maxGap}m)`
+                    : `Sin hueco ≥ ${BOOKING_RULES.defaultServiceDuration}m`
+                }
+                className={`h-28 border border-slate-700 relative p-2 text-left transition-colors ${
+                  laborable ? "hover:bg-slate-700/40" : "bg-slate-900/40"
+                } ${fueraDeMes ? "opacity-50" : ""}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-semibold ${esHoy ? "text-yellow-400" : "text-white"}`}>
+                    {d.getDate()}
+                  </span>
+                  {noGap && (
+                    <span className="text-[10px] text-orange-400" title={`Cap máx libre: ${cap.maxGap}m`}>
+                      •
+                    </span>
+                  )}
+                </div>
+                {/* Indicadores */}
+                <div className="absolute bottom-1 left-1 right-1 flex items-center gap-2 text-[11px]">
+                  {_reservas.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      {_reservas.length} res.
+                    </span>
+                  )}
+                  {_bloqueos.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30">
+                      {_bloqueos.length} bloqueos
+                    </span>
+                  )}
+                  {!laborable && (
+                    <span className="ml-auto text-red-300/80">Cerrado</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // ===================================================================
   // COMPONENTE: VISTA POR BARBERO
   // ===================================================================
   const VistaPorBarbero = () => (
@@ -525,7 +711,7 @@ export const AgendaDisponibilidad: React.FC = () => {
           {/* Navegación de fecha */}
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => navegarSemana("anterior")}
+              onClick={() => navegarPeriodo("anterior")}
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -544,7 +730,7 @@ export const AgendaDisponibilidad: React.FC = () => {
             </div>
 
             <button
-              onClick={() => navegarSemana("siguiente")}
+              onClick={() => navegarPeriodo("siguiente")}
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700"
             >
               <ChevronRight className="h-5 w-5" />
@@ -649,6 +835,9 @@ export const AgendaDisponibilidad: React.FC = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
             </div>
           );
+        }
+        if (vistaActual === "mes") {
+          return <VistaMensual />;
         }
         if (barberoSeleccionado === "todos") {
           return <VistaPorBarbero />;
