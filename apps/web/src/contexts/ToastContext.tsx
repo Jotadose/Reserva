@@ -53,10 +53,12 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     <ToastContext.Provider value={contextValue}>
       {children}
 
-      {/* Toast Container */}
-      <div className="fixed right-0 top-0 z-50 w-full max-w-sm space-y-4 p-6">
+      {/* Toast Container - no bloquea el nav */}
+      <div className="fixed right-0 top-0 z-30 w-full max-w-sm space-y-4 p-6 pointer-events-none">
         {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} onClose={removeToast} />
+          <div key={toast.id} className="pointer-events-auto">
+            <Toast {...toast} onClose={removeToast} />
+          </div>
         ))}
       </div>
     </ToastContext.Provider>
