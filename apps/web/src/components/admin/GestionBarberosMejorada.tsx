@@ -11,7 +11,6 @@ import React, { useState } from "react";
 import {
   User,
   Clock,
-  Calendar,
   Edit3,
   Plus,
   Save,
@@ -24,8 +23,8 @@ import {
   Users,
 } from "lucide-react";
 
-import useBarberos from "../../hooks/useBarberos";
-import { useServicios } from "../../hooks/useApiHooks";
+import useBarberos, { type Barbero } from "../../hooks/useBarberos";
+import { useServicios, type Servicio } from "../../hooks/useServicios";
 
 // ===================================================================
 // TIPOS
@@ -75,7 +74,7 @@ export const GestionBarberosMejorada: React.FC = () => {
 
   // Estados locales
   const [modalAbierto, setModalAbierto] = useState(false);
-  const [barberoEditando, setBarberoEditando] = useState<any>(null);
+  const [barberoEditando, setBarberoEditando] = useState<Barbero | null>(null);
   const [formData, setFormData] = useState<BarberoFormData>({
     nombre: '',
     email: '',
@@ -110,7 +109,7 @@ export const GestionBarberosMejorada: React.FC = () => {
     setModalAbierto(true);
   };
 
-  const abrirModalEditar = (barbero: any) => {
+  const abrirModalEditar = (barbero: Barbero) => {
     setFormData({
       nombre: barbero.nombre || '',
       email: barbero.email || '',
@@ -121,7 +120,7 @@ export const GestionBarberosMejorada: React.FC = () => {
         ? barbero.dias_trabajo 
         : ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
   servicios: Array.isArray(barbero.servicios) ? barbero.servicios : [],
-      activo: barbero.activo !== false
+        activo: barbero.activo !== false
     });
     setBarberoEditando(barbero);
     setModalAbierto(true);
@@ -152,9 +151,9 @@ export const GestionBarberosMejorada: React.FC = () => {
         console.log('✅ Barbero creado correctamente');
       }
       cerrarModal();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Error al guardar barbero:", error);
-      const errorMessage = error?.message || "Error desconocido al guardar el barbero";
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido al guardar el barbero";
       alert(`Error: ${errorMessage}`);
     }
   };
@@ -170,7 +169,7 @@ export const GestionBarberosMejorada: React.FC = () => {
     }
   };
 
-  const handleToggleActivo = async (barbero: any) => {
+  const handleToggleActivo = async (barbero: Barbero) => {
     try {
       await actualizarBarbero(barbero.id_barbero, { activo: !barbero.activo });
     } catch (error) {
@@ -400,37 +399,40 @@ export const GestionBarberosMejorada: React.FC = () => {
               {/* Información básica */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="nombre" className="block text-sm font-medium text-gray-300 mb-1">
                     Nombre Completo
                   </label>
                   <input
                     type="text"
                     required
                     className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
+                    id="nombre"
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                     Email
                   </label>
                   <input
                     type="email"
                     className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
+                    id="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="telefono" className="block text-sm font-medium text-gray-300 mb-1">
                     Teléfono
                   </label>
                   <input
                     type="tel"
                     className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
+                    id="telefono"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                   />
@@ -455,23 +457,25 @@ export const GestionBarberosMejorada: React.FC = () => {
                 <h4 className="text-base sm:text-lg font-medium text-white mb-3">Horario de Trabajo</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="horario_inicio" className="block text-sm font-medium text-gray-300 mb-1">
                       Hora inicio
                     </label>
                     <input
                       type="time"
                       className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
+                      id="horario_inicio"
                       value={formData.horario_inicio}
                       onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="horario_fin" className="block text-sm font-medium text-gray-300 mb-1">
                       Hora fin
                     </label>
                     <input
                       type="time"
                       className="w-full px-3 py-3 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm sm:text-base"
+                      id="horario_fin"
                       value={formData.horario_fin}
                       onChange={(e) => setFormData({ ...formData, horario_fin: e.target.value })}
                     />
@@ -504,7 +508,7 @@ export const GestionBarberosMejorada: React.FC = () => {
                   <div className="text-gray-400">Cargando servicios...</div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                    {servicios.map((servicio: any) => (
+                    {servicios.map((servicio: Servicio) => (
                       <label key={servicio.id_servicio} className="flex items-center text-sm text-gray-300 hover:text-white transition-colors">
                         <input
                           type="checkbox"
