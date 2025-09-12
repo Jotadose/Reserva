@@ -14,7 +14,7 @@ import { AdminPanelAdvanced } from "./AdminPanelAdvanced";
 export const AdminMasterComponent: React.FC = () => {
   return (
     <AdminProvider>
-      <AdminPanelAdvanced />
+      <AdminPanelModernized />
     </AdminProvider>
   );
 };
