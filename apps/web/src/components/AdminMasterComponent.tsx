@@ -1,10 +1,11 @@
-import React from 'react';
-import { AdminPanelModernized } from './AdminPanelModernized';
-import { AdminProvider } from './admin/AdminContext';
+import React from "react";
+import { AdminPanelModernized } from "./AdminPanelModernized";
+import { AdminProvider } from "./admin/AdminContext";
+import { AdminPanelAdvanced } from "./AdminPanelAdvanced";
 
 /**
  * Componente principal para administración
- * 
+ *
  * Proporciona:
  * - Panel modernizado unificado
  * - Contexto de administración
@@ -13,7 +14,7 @@ import { AdminProvider } from './admin/AdminContext';
 export const AdminMasterComponent: React.FC = () => {
   return (
     <AdminProvider>
-      <AdminPanelModernized />
+      <AdminPanelAdvanced />
     </AdminProvider>
   );
 };
