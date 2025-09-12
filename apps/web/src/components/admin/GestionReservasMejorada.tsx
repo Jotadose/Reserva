@@ -152,32 +152,8 @@ export const GestionReservasMejorada: React.FC = () => {
   }, [reservas]);
 
   // ===================================================================
-  // MANEJADORES DE EVENTOS
+  // FUNCIONES AUXILIARES
   // ===================================================================
-
-  const handleCompletarReserva = async (reservaId: string) => {
-    if (window.confirm('¿Confirmar que la reserva ha sido completada?')) {
-      try {
-        await completarReserva(reservaId);
-        await refetchReservas();
-      } catch (error) {
-        console.error('Error completando reserva:', error);
-        alert('Error al completar la reserva');
-      }
-    }
-  };
-
-  const handleCancelarReserva = async (reservaId: string) => {
-    if (window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
-      try {
-        await cancelarReserva(reservaId);
-        await refetchReservas();
-      } catch (error) {
-        console.error('Error cancelando reserva:', error);
-        alert('Error al cancelar la reserva');
-      }
-    }
-  };
 
   const handleExportarCSV = () => {
     const csvHeaders = 'Fecha,Hora,Cliente,Barbero,Servicio,Precio,Estado\n';

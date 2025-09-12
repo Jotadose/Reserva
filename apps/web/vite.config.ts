@@ -17,41 +17,14 @@ export default defineConfig({
   build: {
     // Optimizaciones de bundle
     target: 'esnext',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    minify: 'esbuild',
     // Code splitting optimizado
     rollupOptions: {
       output: {
         manualChunks: {
           // Vendor chunks separados
           'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['lucide-react'],
-          // Chunks por funcionalidad
-          'admin': [
-            './src/components/admin/AdminPanelModernized.tsx',
-            './src/components/admin/GestionReservas.tsx',
-            './src/components/admin/GestionReservasMejorada.tsx',
-            './src/components/admin/SistemaReportesSupremo.tsx',
-            './src/components/admin/ConfiguracionServiciosAvanzada.tsx',
-            './src/components/admin/AgendaDisponibilidad.tsx',
-            './src/components/admin/GestionBarberos.tsx',
-            './src/components/admin/GestionClientesSuprema.tsx'
-          ],
-          'booking': [
-            './src/components/BookingCalendar.tsx',
-            './src/components/BookingFlow.tsx',
-            './src/components/BarberSelection.tsx',
-            './src/components/ServiceSelection.tsx'
-          ],
-          'analytics': [
-            './src/components/SimpleAnalytics.tsx',
-            './src/hooks/useAdminStats.ts'
-          ]
+          'ui-vendor': ['lucide-react']
         },
         // Optimizar nombres de chunks
         chunkFileNames: (chunkInfo) => {
