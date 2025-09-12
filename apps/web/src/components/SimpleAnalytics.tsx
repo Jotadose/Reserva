@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   TrendingUp,
   DollarSign,
@@ -30,18 +30,29 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
   // 🚨 TEMPORALMENTE: Si no hay datos, mostrar analytics con 0
   // Esto previene mostrar números incorrectos hasta que se arregle la carga de datos
 
-  // Función para formatear moneda chilena
-  const formatChileanPesos = (amount: number) => {
+  // Formateador de moneda memoizado
+  const currencyFormatter = useMemo(() => {
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
-  };
+    });
+  }, []);
+
+  const formatChileanPesos = useCallback((amount: number) => {
+    return currencyFormatter.format(amount);
+  }, [currencyFormatter]);
 
   // 🚨 VALIDACIÓN: Asegurar datos válidos antes de cualquier cálculo
-  const validBookings = bookings && Array.isArray(bookings) ? bookings : [];
+  const validBookings = useMemo(() => {
+    return bookings && Array.isArray(bookings) ? bookings : [];
+  }, [bookings]);
+
+  // Función de normalización de fechas memoizada
+  const normalizeDate = useCallback((dateStr?: string) => {
+    return dateStr ? new Date(dateStr).toISOString().split("T")[0] : "";
+  }, []);
 
   // Métricas esenciales para una barbería - OPTIMIZADAS
   const metrics = useMemo(() => {
@@ -50,17 +61,14 @@ export const SimpleAnalytics: React.FC<SimpleAnalyticsProps> = ({
       sampleBooking: validBookings[0],
     });
 
-    // 🛠️ NORMALIZACIÓN DE FECHAS - Evita problemas de zona horaria
-    const normalizeDate = (dateStr?: string) =>
-      dateStr ? new Date(dateStr).toISOString().split("T")[0] : "";
-
+    // 🛠️ FECHAS CALCULADAS - Usando función memoizada
     const today = normalizeDate(new Date().toISOString());
-    const yesterday = normalizeDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    const yesterday = normalizeDate(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
     const thisWeek = normalizeDate(
-      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     );
     const nextWeek = normalizeDate(
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     );
 
     // 🎯 FILTRAR SOLO RESERVAS VÁLIDAS PARA MÉTRICAS (confirmadas/completadas)

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Users, DollarSign, TrendingUp, CheckCircle } from 'lucide-react';
+import { Calendar, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { SummaryCard } from './SummaryCard';
 import { SystemStatus } from './SystemStatus';

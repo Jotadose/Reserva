@@ -14,7 +14,7 @@
  * - Días especiales y analíticas → ConfiguracionHorariosOptimizada
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Calendar,
   Users,

@@ -11,7 +11,7 @@
  * - Análisis de popularidad y rentabilidad
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Scissors,
   Tag,
@@ -282,6 +282,11 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
     string | null
   >(null);
   const [editando, setEditando] = useState<string | null>(null);
+  const [filtros, setFiltros] = useState({
+    categoria: "todas",
+    estado: "todos",
+    busqueda: "",
+  });
   const { showToast } = useToast();
 
   const servicioActual = useMemo(
@@ -289,7 +294,65 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
     [servicios, servicioSeleccionado]
   );
 
-  const handleToggleActivo = (servicioId: string) => {
+  // Servicios filtrados memoizados
+  const serviciosFiltrados = useMemo(() => {
+    return servicios.filter(servicio => {
+      const matchCategoria = filtros.categoria === "todas" || servicio.categoria === filtros.categoria;
+      const matchEstado = filtros.estado === "todos" || 
+        (filtros.estado === "activos" && servicio.configuracion.activo) ||
+        (filtros.estado === "inactivos" && !servicio.configuracion.activo);
+      const matchBusqueda = filtros.busqueda === "" || 
+        servicio.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+        servicio.descripcion.toLowerCase().includes(filtros.busqueda.toLowerCase());
+      
+      return matchCategoria && matchEstado && matchBusqueda;
+    });
+  }, [servicios, filtros]);
+
+  // Estadísticas memoizadas
+  const estadisticas = useMemo(() => {
+    const serviciosActivos = servicios.filter(s => s.configuracion.activo);
+    const ingresosTotales = servicios.reduce(
+      (total, s) => total + s.precios.base * s.popularidad.reservasMes,
+      0
+    );
+    const satisfaccionPromedio = servicios.reduce(
+      (total, s) => total + s.popularidad.satisfaccionPromedio,
+      0
+    ) / servicios.length;
+    const reservasTotales = servicios.reduce(
+      (total, s) => total + s.popularidad.reservasMes,
+      0
+    );
+
+    return {
+      serviciosActivos: serviciosActivos.length,
+      ingresosTotales,
+      satisfaccionPromedio,
+      reservasTotales
+    };
+  }, [servicios]);
+
+  // Handlers memoizados
+  const handleFiltroChange = useCallback((campo: string, valor: string) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  }, []);
+
+  const handleEditarServicio = useCallback((servicioId: string) => {
+    setServicioSeleccionado(servicioId);
+    setEditando(servicioId);
+  }, []);
+
+  const handleEliminarServicio = useCallback((servicioId: string) => {
+    setServicios(prev => prev.filter(s => s.id !== servicioId));
+    showToast({
+      title: "Servicio eliminado",
+      message: "El servicio ha sido eliminado correctamente",
+      type: "success"
+    });
+  }, [showToast]);
+
+  const handleToggleActivo = useCallback((servicioId: string) => {
     setServicios((prev) =>
       prev.map((s) =>
         s.id === servicioId
@@ -308,7 +371,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
       message: "El estado del servicio ha sido modificado",
       type: "success",
     });
-  };
+  }, [showToast]);
 
   const getTendenciaColor = (tendencia: string) => {
     switch (tendencia) {
@@ -349,7 +412,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {servicios.map((servicio) => (
+        {serviciosFiltrados.map((servicio) => (
           <Card key={servicio.id} padding="lg">
             <div className="space-y-4">
               {/* Header del servicio */}
@@ -377,10 +440,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     icon={Edit3}
-                    onClick={() => {
-                      setServicioSeleccionado(servicio.id);
-                      setEditando(servicio.id);
-                    }}
+                    onClick={() => handleEditarServicio(servicio.id)}
                   />
                   <Button
                     variant="ghost"
@@ -547,7 +607,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
           <div className="text-center">
             <Scissors className="h-8 w-8 text-blue-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {servicios.filter((s) => s.configuracion.activo).length}
+              {estadisticas.serviciosActivos}
             </div>
             <div className="text-slate-400">Servicios Activos</div>
           </div>
@@ -561,13 +621,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
                 style: "currency",
                 currency: "CLP",
                 minimumFractionDigits: 0,
-              }).format(
-                servicios.reduce(
-                  (total, s) =>
-                    total + s.precios.base * s.popularidad.reservasMes,
-                  0
-                )
-              )}
+              }).format(estadisticas.ingresosTotales)}
             </div>
             <div className="text-slate-400">Ingresos Estimados</div>
           </div>
@@ -577,12 +631,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
           <div className="text-center">
             <Star className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {(
-                servicios.reduce(
-                  (total, s) => total + s.popularidad.satisfaccionPromedio,
-                  0
-                ) / servicios.length
-              ).toFixed(1)}
+              {estadisticas.satisfaccionPromedio.toFixed(1)}
             </div>
             <div className="text-slate-400">Satisfacción Promedio</div>
           </div>
@@ -592,10 +641,7 @@ export const ConfiguracionServiciosAvanzada: React.FC = () => {
           <div className="text-center">
             <BarChart3 className="h-8 w-8 text-purple-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-white">
-              {servicios.reduce(
-                (total, s) => total + s.popularidad.reservasMes,
-                0
-              )}
+              {estadisticas.reservasTotales}
             </div>
             <div className="text-slate-400">Reservas Totales</div>
           </div>

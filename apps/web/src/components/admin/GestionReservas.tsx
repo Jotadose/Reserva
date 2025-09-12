@@ -7,7 +7,7 @@
  * con filtros, búsqueda, acciones masivas y vista detallada
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Calendar,
   Search,
@@ -48,10 +48,10 @@ interface ReservaFiltros {
 }
 
 // ===================================================================
-// UTILIDADES
+// UTILIDADES MEMOIZADAS
 // ===================================================================
 
-const getEstadoBadge = (estado: string) => {
+const getEstadoBadge = React.memo((estado: string) => {
   switch (estado) {
     case "confirmada":
       return { variant: "success" as const, label: "Confirmada" };
@@ -64,7 +64,7 @@ const getEstadoBadge = (estado: string) => {
     default:
       return { variant: "secondary" as const, label: estado };
   }
-};
+});
 
 // ===================================================================
 // COMPONENTE PRINCIPAL
@@ -76,10 +76,12 @@ export const GestionReservas: React.FC = () => {
   const { reservas, loading, error } = useReservas();
   const { showToast } = useToast();
 
-  // Filtrado básico
+  // Filtrado optimizado con memoización
   const reservasFiltradas = useMemo(() => {
     if (!reservas) return [];
+    
     return reservas.filter((reserva) => {
+      // Filtro por estado
       if (
         filtros.estado &&
         filtros.estado !== "todos" &&
@@ -87,13 +89,37 @@ export const GestionReservas: React.FC = () => {
       ) {
         return false;
       }
+      
+      // Filtro por búsqueda
+      if (filtros.busqueda) {
+        const searchTerm = filtros.busqueda.toLowerCase();
+        const clienteNombre = reserva.cliente_info?.nombre?.toLowerCase() || "";
+        const servicioNombre = reserva.servicio_info?.nombre?.toLowerCase() || "";
+        
+        if (
+          !clienteNombre.includes(searchTerm) &&
+          !servicioNombre.includes(searchTerm)
+        ) {
+          return false;
+        }
+      }
+      
       return true;
     });
   }, [reservas, filtros]);
 
-  const handleFiltroChange = (key: keyof ReservaFiltros, value: string) => {
+  // Handlers memoizados
+  const handleFiltroChange = useCallback((key: keyof ReservaFiltros, value: string) => {
     setFiltros((prev) => ({ ...prev, [key]: value }));
-  };
+  }, []);
+
+  const handleBusquedaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiltroChange("busqueda", e.target.value);
+  }, [handleFiltroChange]);
+
+  const handleEstadoChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    handleFiltroChange("estado", e.target.value);
+  }, [handleFiltroChange]);
 
   return (
     <div className="space-y-6">
@@ -115,7 +141,7 @@ export const GestionReservas: React.FC = () => {
             placeholder="Buscar reservas..."
             icon={Search}
             value={filtros.busqueda || ""}
-            onChange={(e) => handleFiltroChange("busqueda", e.target.value)}
+            onChange={handleBusquedaChange}
           />
           <Select
             options={[
@@ -124,7 +150,7 @@ export const GestionReservas: React.FC = () => {
               { value: "confirmada", label: "Confirmadas" },
             ]}
             value={filtros.estado || "todos"}
-            onChange={(e) => handleFiltroChange("estado", e.target.value)}
+            onChange={handleEstadoChange}
           />
         </div>
       </Card>

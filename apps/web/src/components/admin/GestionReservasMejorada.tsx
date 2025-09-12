@@ -7,7 +7,7 @@
  * Integrado con AdminContext y API consolidada
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Calendar,
   Clock,
@@ -71,6 +71,29 @@ export const GestionReservasMejorada: React.FC = () => {
     fecha: '',
     busqueda: ''
   });
+
+  // Handlers memoizados
+  const handleFiltroChange = useCallback((campo: keyof FiltroReservas, valor: string) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+  }, []);
+
+  const handleCancelarReserva = useCallback(async (reservaId: string) => {
+    try {
+      await cancelarReserva(reservaId);
+      await refetchReservas();
+    } catch (error) {
+      console.error('Error al cancelar reserva:', error);
+    }
+  }, [cancelarReserva, refetchReservas]);
+
+  const handleCompletarReserva = useCallback(async (reservaId: string) => {
+    try {
+      await completarReserva(reservaId);
+      await refetchReservas();
+    } catch (error) {
+      console.error('Error al completar reserva:', error);
+    }
+  }, [completarReserva, refetchReservas]);
 
   // ===================================================================
   // DATOS COMPUTADOS

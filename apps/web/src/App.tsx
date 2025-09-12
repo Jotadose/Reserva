@@ -11,7 +11,7 @@
  * Comentarios en español para facilitar mantenimiento
  */
 
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import {
   Scissors,
   Menu,
@@ -21,13 +21,17 @@ import {
   Mail,
   MessageCircle,
 } from "lucide-react";
-import { AdminMasterComponent } from "./components/AdminMasterComponentModernized";
 import LandingPage from "./components/LandingPage";
 import { ToastProvider } from "./contexts/ToastContext";
 import { NotificationProvider } from "./hooks/useNotifications";
-import BookingFlow from "./flows/BookingFlow";
 import { useAppStore } from "./store/appStore";
 import { AuthProvider } from "./hooks/useAuth";
+
+// ===================================================================
+// LAZY LOADING - COMPONENTES PESADOS
+// ===================================================================
+const AdminMasterComponent = lazy(() => import("./components/AdminMasterComponent"));
+const BookingFlow = lazy(() => import("./flows/BookingFlow"));
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<
@@ -180,9 +184,31 @@ function AppContent() {
           <LandingPage onStartBooking={startBookingProcess} />
         )}
 
-        {currentView === "booking" && <BookingFlow />}
+        {currentView === "booking" && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-black">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+                <p className="text-white text-lg">Cargando sistema de reservas...</p>
+              </div>
+            </div>
+          }>
+            <BookingFlow />
+          </Suspense>
+        )}
 
-        {currentView === "admin" && <AdminMasterComponent />}
+        {currentView === "admin" && (
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-black">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+                <p className="text-white text-lg">Cargando panel de administración...</p>
+              </div>
+            </div>
+          }>
+            <AdminMasterComponent />
+          </Suspense>
+        )}
       </main>
 
       {/* Footer */}

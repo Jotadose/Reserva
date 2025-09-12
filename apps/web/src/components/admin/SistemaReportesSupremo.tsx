@@ -11,7 +11,7 @@
  * - Dashboard ejecutivo en tiempo real
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -295,7 +295,8 @@ export const SistemaReportesSupremo: React.FC = () => {
     [tipoReporte]
   );
 
-  const handleActualizar = async () => {
+  // Handlers memoizados
+  const handleActualizar = useCallback(async () => {
     setActualizando(true);
     // Simular actualización de datos
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -306,17 +307,18 @@ export const SistemaReportesSupremo: React.FC = () => {
         "Los reportes han sido actualizados con la información más reciente",
       type: "success",
     });
-  };
+  }, [showToast]);
 
-  const handleExportar = (formato: string) => {
+  const handleExportar = useCallback((formato: string) => {
     showToast({
       title: "Exportando reporte",
       message: `Generando reporte en formato ${formato.toUpperCase()}...`,
       type: "info",
     });
-  };
+  }, [showToast]);
 
-  const getTendenciaIcon = (tendencia: string) => {
+  // Funciones de utilidad memoizadas
+  const getTendenciaIcon = useCallback((tendencia: string) => {
     switch (tendencia) {
       case "up":
         return <TrendingUp className="h-4 w-4 text-green-400" />;
@@ -325,9 +327,9 @@ export const SistemaReportesSupremo: React.FC = () => {
       default:
         return <Activity className="h-4 w-4 text-slate-400" />;
     }
-  };
+  }, []);
 
-  const getTendenciaColor = (tendencia: string) => {
+  const getTendenciaColor = useCallback((tendencia: string) => {
     switch (tendencia) {
       case "up":
         return "text-green-400";
@@ -336,15 +338,20 @@ export const SistemaReportesSupremo: React.FC = () => {
       default:
         return "text-slate-400";
     }
-  };
+  }, []);
 
-  const formatCurrency = (valor: number) => {
+  // Formateador de moneda memoizado
+  const formatCurrency = useMemo(() => {
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
       minimumFractionDigits: 0,
-    }).format(valor);
-  };
+    });
+  }, []);
+
+  const formatCurrencyValue = useCallback((valor: number) => {
+    return formatCurrency.format(valor);
+  }, [formatCurrency]);
 
   const renderDashboardEjecutivo = () => (
     <div className="space-y-6">
@@ -358,12 +365,12 @@ export const SistemaReportesSupremo: React.FC = () => {
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
-                {formatCurrency(reporteActual.ingresosBrutos)}
+                {formatCurrencyValue(reporteActual.ingresosBrutos)}
               </div>
               <div className="text-slate-400">Ingresos Brutos</div>
             </div>
             <div className="text-sm text-green-400">
-              +{formatCurrency(reporteActual.ingresosBrutos - 2540000)} vs mes
+              +{formatCurrencyValue(reporteActual.ingresosBrutos - 2540000)} vs mes
               anterior
             </div>
           </div>
@@ -395,7 +402,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
-                {formatCurrency(reporteActual.ticketPromedio)}
+                {formatCurrencyValue(reporteActual.ticketPromedio)}
               </div>
               <div className="text-slate-400">Ticket Promedio</div>
             </div>
@@ -432,7 +439,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-white">
                     {metrica.unidad === "CLP"
-                      ? formatCurrency(metrica.valor)
+                      ? formatCurrencyValue(metrica.valor)
                       : `${metrica.valor}${
                           metrica.unidad !== "servicios" &&
                           metrica.unidad !== "clientes"
@@ -467,7 +474,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                   <div className="text-slate-400 text-sm mt-2">
                     Meta:{" "}
                     {metrica.unidad === "CLP"
-                      ? formatCurrency(metrica.meta)
+                      ? formatCurrencyValue(metrica.meta)
                       : `${metrica.meta}${metrica.unidad}`}
                   </div>
                 )}
@@ -496,12 +503,12 @@ export const SistemaReportesSupremo: React.FC = () => {
                   })}
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <div className="text-green-400 font-medium">
-                      {formatCurrency(dato.ingresos)}
+                    <div className="text-center">
+                      <div className="text-green-400 font-medium">
+                        {formatCurrencyValue(dato.ingresos)}
+                      </div>
+                      <div className="text-slate-400 text-xs">Ingresos</div>
                     </div>
-                    <div className="text-slate-400 text-xs">Ingresos</div>
-                  </div>
                   <div className="text-center">
                     <div className="text-blue-400 font-medium">
                       {dato.servicios}
@@ -599,7 +606,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             <DollarSign className="h-10 w-10 text-green-400 mx-auto" />
             <div>
               <div className="text-3xl font-bold text-white">
-                {formatCurrency(reporteActual.ingresosBrutos)}
+                {formatCurrencyValue(reporteActual.ingresosBrutos)}
               </div>
               <div className="text-slate-400">Ingresos Brutos</div>
             </div>
@@ -612,7 +619,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             <Target className="h-10 w-10 text-blue-400 mx-auto" />
             <div>
               <div className="text-3xl font-bold text-white">
-                {formatCurrency(reporteActual.ingresosNetos)}
+                {formatCurrencyValue(reporteActual.ingresosNetos)}
               </div>
               <div className="text-slate-400">Ingresos Netos</div>
             </div>
@@ -625,7 +632,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             <BarChart3 className="h-10 w-10 text-purple-400 mx-auto" />
             <div>
               <div className="text-3xl font-bold text-white">
-                {formatCurrency(reporteActual.costos)}
+                {formatCurrencyValue(reporteActual.costos)}
               </div>
               <div className="text-slate-400">Costos Operacionales</div>
             </div>
@@ -649,7 +656,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-green-400 font-medium">
-                {formatCurrency(1650000)}
+                {formatCurrencyValue(1650000)}
               </div>
               <div className="text-slate-400 text-sm">58% del total</div>
             </div>
@@ -664,7 +671,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-green-400 font-medium">
-                {formatCurrency(675000)}
+                {formatCurrencyValue(675000)}
               </div>
               <div className="text-slate-400 text-sm">24% del total</div>
             </div>
@@ -679,7 +686,7 @@ export const SistemaReportesSupremo: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-green-400 font-medium">
-                {formatCurrency(525000)}
+                {formatCurrencyValue(525000)}
               </div>
               <div className="text-slate-400 text-sm">18% del total</div>
             </div>
@@ -712,7 +719,7 @@ export const SistemaReportesSupremo: React.FC = () => {
               <div className="flex items-center gap-6">
                 <div className="text-center">
                   <div className="text-green-400 font-medium">
-                    {formatCurrency(reporte.ingresosBrutos)}
+                    {formatCurrencyValue(reporte.ingresosBrutos)}
                   </div>
                   <div className="text-slate-400 text-xs">Bruto</div>
                 </div>
@@ -779,7 +786,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-green-400 font-bold text-lg">
-                    {formatCurrency(barbero.ingresoGenerado)}
+                    {formatCurrencyValue(barbero.ingresoGenerado)}
                   </div>
                   <div className="text-slate-400 text-sm">
                     Ingresos generados
@@ -827,7 +834,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-green-400 font-bold text-lg">
-                    {formatCurrency(barbero.comisiones)}
+                    {formatCurrencyValue(barbero.comisiones)}
                   </div>
                 </div>
               </div>
@@ -837,7 +844,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Ingreso por hora:</span>
                   <span className="text-white font-medium">
-                    {formatCurrency(
+                    {formatCurrencyValue(
                       Math.round(
                         barbero.ingresoGenerado / barbero.horasTrabajadas
                       )
@@ -855,7 +862,7 @@ export const SistemaReportesSupremo: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Ticket promedio:</span>
                   <span className="text-white font-medium">
-                    {formatCurrency(
+                    {formatCurrencyValue(
                       Math.round(
                         barbero.ingresoGenerado / barbero.serviciosRealizados
                       )
@@ -885,7 +892,7 @@ export const SistemaReportesSupremo: React.FC = () => {
               <div className="text-green-400 font-medium">Más Ingresos</div>
               <div className="text-white font-bold">Michael Rodriguez</div>
               <div className="text-green-300 text-sm">
-                {formatCurrency(1650000)}
+                {formatCurrencyValue(1650000)}
               </div>
             </div>
 
