@@ -73,7 +73,7 @@ export const BookingSystemYerko: React.FC = () => {
       const date = new Date(today)
       date.setDate(today.getDate() + i)
       
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'lowercase' })
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
       
       // Verificar si el día está habilitado
       if (YERKO_SCHEDULE.workingDays.includes(dayName)) {

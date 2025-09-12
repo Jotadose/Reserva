@@ -402,6 +402,16 @@ export const LandingPageYerko: React.FC = () => {
           <p className="text-gray-400 text-sm">
             © 2024 {YERKO_CONTACT.businessName}. Todos los derechos reservados.
           </p>
+          
+          {/* Enlace discreto al admin */}
+          <div className="mt-2">
+            <button
+              onClick={() => navigate('/admin')}
+              className="text-gray-500 hover:text-purple-400 text-xs transition-colors duration-200"
+            >
+              Admin
+            </button>
+          </div>
         </div>
       </footer>
     </div>
