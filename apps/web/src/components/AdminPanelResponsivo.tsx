@@ -32,7 +32,7 @@ import { useUsuarios } from "../hooks/useUsuarios";
 // Componentes responsivos
 import { AgendaDisponibilidad } from "./admin/AgendaDisponibilidad";
 import { ConfiguracionHorariosTotal } from "./admin/ConfiguracionHorariosTotal";
-import { GestionBarberosMejorada } from "./admin/GestionBarberosMejorada";
+import GestionBarberosMejorada from "./admin/GestionBarberos";
 import { GestionServiciosCorregida } from "./admin/GestionServiciosCorregida";
 import { GestionReservasMejorada } from "./admin/GestionReservasMejorada";
 import { StatCard } from "./admin/StatCard";

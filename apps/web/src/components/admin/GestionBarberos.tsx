@@ -627,4 +627,4 @@ export const GestionBarberosMejorada: React.FC = () => {
   );
 };
 
-export default GestionBarberosAvanzadaOptimizada;
+export default GestionBarberosMejorada;
