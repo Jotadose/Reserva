@@ -26,7 +26,7 @@ import { DESIGN_TOKENS, getButtonClass, getCardClass } from "../styles/designSys
 // ===================================================================
 const AgendaDisponibilidad = lazy(() => import("./admin/AgendaDisponibilidad").then(module => ({ default: module.AgendaDisponibilidad })));
 const ConfiguracionHorariosTotal = lazy(() => import("./admin/ConfiguracionHorariosTotal").then(module => ({ default: module.ConfiguracionHorariosTotal })));
-const GestionBarberos = lazy(() => import("./admin/GestionBarberos"));
+const GestionBarberos = lazy(() => import("./admin/GestionBarberos").then(module => ({ default: module.default })));
 const GestionServiciosCorregida = lazy(() => import("./admin/GestionServiciosCorregida").then(module => ({ default: module.GestionServiciosCorregida })));
 const GestionReservasMejorada = lazy(() => import("./admin/GestionReservasMejorada").then(module => ({ default: module.GestionReservasMejorada })));
 
