@@ -1,0 +1,21 @@
+{
+  "name": "Agendex - Sistema de Reservas",
+  "short_name": "Agendex",
+  "description": "Plataforma SaaS para gestión de reservas y citas en barberías",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
