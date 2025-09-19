@@ -52,6 +52,7 @@ interface BookingWidgetProps {
   tenant: Tenant
   services: Service[]
   providers: Provider[]
+  compact?: boolean
 }
 
 interface BookingForm {
@@ -72,7 +73,7 @@ const AVAILABLE_TIMES = [
   '18:00', '18:30', '19:00'
 ]
 
-export function BookingWidget({ tenant, services, providers }: BookingWidgetProps) {
+export function BookingWidget({ tenant, services, providers, compact = false }: BookingWidgetProps) {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')

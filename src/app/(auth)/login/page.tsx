@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Scissors } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 
 function LoginForm() {
@@ -47,27 +47,30 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Agendex</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Sistema de reservas para barberías
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                <Scissors className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900">Agendex</h1>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
+              Inicia sesión en tu cuenta para gestionar tu barbería
+            </p>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Iniciar Sesión</CardTitle>
-            <CardDescription>
-              {tenantSlug 
-                ? `Accede a tu cuenta en ${tenantSlug}`
-                : 'Accede a tu cuenta de barbería'
-              }
-            </CardDescription>
-          </CardHeader>
-          
-          <form onSubmit={handleSubmit}>
+          <Card className="shadow-xl border-0">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+              <CardDescription>
+                {tenantSlug 
+                  ? `Accede a ${tenantSlug}`
+                  : 'Accede a tu dashboard de barbería'
+                }
+              </CardDescription>
+            </CardHeader>          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
                 <Alert variant="destructive">
@@ -121,8 +124,9 @@ function LoginForm() {
             <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
                 disabled={isLoading}
+                size="lg"
               >
                 {isLoading ? (
                   <>
