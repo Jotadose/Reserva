@@ -63,6 +63,8 @@ export interface AvailabilityBlock {
   end_datetime: string
   type: 'available' | 'break' | 'vacation' | 'blocked'
   reason?: string
+  is_recurring?: boolean
+  recurring_pattern?: Record<string, any>
   created_at: string
   updated_at: string
 }
@@ -72,6 +74,7 @@ export interface Booking {
   id: string
   tenant_id: string
   client_id?: string // puede ser null para clientes anónimos
+  user_id?: string // compatibilidad con el componente
   provider_id: string
   service_id: string
   scheduled_date: string // fecha de la reserva
@@ -90,6 +93,15 @@ export interface Booking {
   confirmation_sent: boolean
   reminder_sent_24h: boolean
   reminder_sent_2h: boolean
+  
+  // Campos adicionales para el componente
+  payment_status?: string
+  payment_method?: string
+  total_amount?: number
+  deposit_amount?: number
+  notes?: string
+  reminder_sent?: boolean
+  cancellation_reason?: string
   
   created_at: string
   updated_at: string

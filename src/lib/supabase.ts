@@ -301,6 +301,15 @@ export const bookingsAPI = {
       .select()
       .single(),
 
+  update: (tenantId: string, bookingId: string, data: any) =>
+    supabase
+      .from('bookings')
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .eq('id', bookingId)
+      .select()
+      .single(),
+
   updateStatus: (tenantId: string, bookingId: string, status: string) =>
     supabase
       .from('bookings')

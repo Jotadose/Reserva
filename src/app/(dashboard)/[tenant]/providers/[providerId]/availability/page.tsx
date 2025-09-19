@@ -15,6 +15,13 @@ interface ExtendedAvailabilityBlock extends AvailabilityBlock {
   // Campos adicionales si son necesarios
 }
 
+interface ExtendedProvider extends Provider {
+  users?: {
+    name: string
+    email: string
+  }
+}
+
 const BLOCK_TYPE_CONFIG = {
   available: {
     label: 'Disponible',
@@ -47,7 +54,7 @@ export default function ProviderAvailabilityPage() {
   const providerId = params.providerId as string
   
   const [availabilityBlocks, setAvailabilityBlocks] = useState<ExtendedAvailabilityBlock[]>([])
-  const [provider, setProvider] = useState<Provider | null>(null)
+  const [provider, setProvider] = useState<ExtendedProvider | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)

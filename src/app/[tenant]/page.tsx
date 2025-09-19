@@ -6,9 +6,9 @@ import { TenantServices } from '@/components/tenant/tenant-services'
 import { TenantInfo } from '@/components/tenant/tenant-info'
 
 interface TenantPageProps {
-  params: {
+  params: Promise<{
     tenant: string
-  }
+  }>
 }
 
 interface Tenant {
@@ -99,11 +99,11 @@ async function getTenantData(slug: string) {
     }
 
     // Transformar datos de providers para compatibilidad
-    const transformedProviders = (providers || []).map(provider => ({
+    const transformedProviders = (providers || []).map((provider: any) => ({
       id: provider.id,
-      name: provider.users.name,
-      email: provider.users.email,
-      role: provider.users.role,
+      name: provider.users?.name || 'Sin nombre',
+      email: provider.users?.email || 'Sin email',
+      role: provider.users?.role || 'barber',
       status: 'active'
     }))
 
@@ -119,7 +119,8 @@ async function getTenantData(slug: string) {
 }
 
 export default async function TenantPage({ params }: TenantPageProps) {
-  const tenantData = await getTenantData(params.tenant)
+  const { tenant: tenantSlug } = await params
+  const tenantData = await getTenantData(tenantSlug)
 
   if (!tenantData) {
     notFound()
@@ -173,7 +174,8 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
 // Generar metadata dinámicamente
 export async function generateMetadata({ params }: TenantPageProps) {
-  const tenantData = await getTenantData(params.tenant)
+  const { tenant: tenantSlug } = await params
+  const tenantData = await getTenantData(tenantSlug)
   
   if (!tenantData) {
     return {

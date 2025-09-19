@@ -37,6 +37,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           name: `Demo ${slug.charAt(0).toUpperCase() + slug.slice(1)}`,
           plan: 'basic',
           status: 'active',
+          slot_duration_minutes: 30,
           settings: {
             branding: {
               primaryColor: '#3B82F6',
@@ -62,8 +63,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
               storageLimit: 1000
             }
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
         
         setTenant(mockTenant)
@@ -87,6 +88,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           name: `Demo ${slug.charAt(0).toUpperCase() + slug.slice(1)}`,
           plan: 'basic',
           status: 'active',
+          slot_duration_minutes: 30,
           settings: {
             branding: {
               primaryColor: '#3B82F6',
@@ -112,8 +114,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
               storageLimit: 1000
             }
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
         setTenant(mockTenant)
         return

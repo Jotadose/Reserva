@@ -36,6 +36,7 @@ interface ExtendedBooking extends Booking {
     email: string
     phone?: string
   }
+  notes?: string
 }
 
 const BOOKING_STATUS_CONFIG = {
@@ -496,10 +497,10 @@ export default function BookingsPage() {
                               <User className="w-4 h-4 mr-1" />
                               {booking.providers?.users?.name || 'Proveedor no especificado'}
                             </div>
-                            {booking.total_amount && (
+                            {!!booking.total_price && (
                               <div className="flex items-center font-medium">
                                 <DollarSign className="w-4 h-4 mr-1" />
-                                {formatPrice(booking.total_amount)}
+                                {formatPrice(booking.total_price)}
                               </div>
                             )}
                           </div>

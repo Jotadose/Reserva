@@ -97,7 +97,9 @@ export function AvailabilityDialog({
         end_datetime: formatDateTimeLocal(endDate),
         reason: block.reason || '',
         is_recurring: block.is_recurring || false,
-        recurring_pattern: block.recurring_pattern || undefined
+        recurring_pattern: typeof block.recurring_pattern === 'string' 
+          ? block.recurring_pattern 
+          : JSON.stringify(block.recurring_pattern) || undefined
       })
     } else {
       // Valores por defecto para nuevo bloque

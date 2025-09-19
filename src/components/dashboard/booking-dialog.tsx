@@ -21,8 +21,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { bookingsAPI, providersAPI, servicesAPI, usersAPI } from '@/lib/supabase'
-import { Booking, Provider, Service, User } from '@/types/tenant'
+import { providersAPI, servicesAPI, bookingsAPI, usersAPI } from '@/lib/supabase'
+import { Provider, Service, Booking, User } from '@/types/tenant'
+
+interface ExtendedProvider extends Provider {
+  users?: {
+    name: string
+    email: string
+  }
+}
 
 interface BookingDialogProps {
   open: boolean
@@ -33,12 +40,12 @@ interface BookingDialogProps {
 }
 
 interface BookingFormData {
-  user_id: string
+  user_id?: string
   provider_id: string
   service_id: string
   booking_datetime: string
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
-  payment_status: 'pending' | 'paid' | 'refunded'
+  status: 'pending' | 'confirmed' | 'in_progress' | 'cancelled' | 'completed' | 'no_show'
+  payment_status?: string
   payment_method?: string
   total_amount?: number
   deposit_amount?: number
@@ -50,6 +57,7 @@ interface BookingFormData {
 const BOOKING_STATUSES = [
   { value: 'pending', label: 'Pendiente' },
   { value: 'confirmed', label: 'Confirmada' },
+  { value: 'in_progress', label: 'En progreso' },
   { value: 'cancelled', label: 'Cancelada' },
   { value: 'completed', label: 'Completada' },
   { value: 'no_show', label: 'No se presentó' }
@@ -90,7 +98,7 @@ export function BookingDialog({
     cancellation_reason: ''
   })
   
-  const [providers, setProviders] = useState<Provider[]>([])
+  const [providers, setProviders] = useState<ExtendedProvider[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
@@ -132,8 +140,9 @@ export function BookingDialog({
 
   useEffect(() => {
     if (booking) {
-      // Convertir datetime a formato input datetime-local
-      const bookingDate = new Date(booking.booking_datetime)
+      // Combinar scheduled_date y scheduled_time para crear datetime
+      const bookingDateTime = `${booking.scheduled_date}T${booking.scheduled_time}`
+      const bookingDate = new Date(bookingDateTime)
       const formatDateTimeLocal = (date: Date) => {
         const year = date.getFullYear()
         const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -144,14 +153,14 @@ export function BookingDialog({
       }
 
       setFormData({
-        user_id: booking.user_id,
+        user_id: booking.client_id,
         provider_id: booking.provider_id,
         service_id: booking.service_id,
         booking_datetime: formatDateTimeLocal(bookingDate),
         status: booking.status,
         payment_status: booking.payment_status || 'pending',
         payment_method: booking.payment_method || '',
-        total_amount: booking.total_amount || 0,
+        total_amount: booking.total_price || 0,
         deposit_amount: booking.deposit_amount || 0,
         notes: booking.notes || '',
         reminder_sent: booking.reminder_sent || false,
@@ -348,7 +357,7 @@ export function BookingDialog({
                 <SelectContent>
                   {services.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
-                      {service.name} - {service.price}€ ({service.duration}min)
+                      {service.name} - {service.price}€ ({service.duration_minutes}min)
                     </SelectItem>
                   ))}
                 </SelectContent>
