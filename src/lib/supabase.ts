@@ -349,6 +349,48 @@ export const notificationsAPI = {
       .eq('id', notificationId)
 }
 
+// Funciones para la tabla 'users'
+export const usersAPI = {
+  getAll: (tenantId: string) =>
+    supabase
+      .from('users')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('name'),
+
+  getById: (tenantId: string, userId: string) =>
+    supabase
+      .from('users')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('id', userId)
+      .single(),
+
+  create: (tenantId: string, data: any) =>
+    supabase
+      .from('users')
+      .insert({ ...data, tenant_id: tenantId })
+      .select()
+      .single(),
+
+  update: (tenantId: string, userId: string, data: any) =>
+    supabase
+      .from('users')
+      .update(data)
+      .eq('tenant_id', tenantId)
+      .eq('id', userId)
+      .select()
+      .single(),
+
+  delete: (tenantId: string, userId: string) =>
+    supabase
+      .from('users')
+      .update({ is_active: false })
+      .eq('tenant_id', tenantId)
+      .eq('id', userId)
+}
+
 // Funciones para la tabla 'audit_log'
 export const auditAPI = {
   log: (tenantId: string, userId: string, entityType: string, entityId: string, action: string, oldValues?: any, newValues?: any) =>
