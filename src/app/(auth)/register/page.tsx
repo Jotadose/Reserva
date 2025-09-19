@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ interface RegisterFormData {
   businessSlug?: string
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
     email: '',
@@ -483,7 +483,7 @@ export default function RegisterPage() {
               <div className="text-center text-sm text-gray-600">
                 ¿Ya tienes una cuenta?{' '}
                 <Link 
-                  href={`/login${tenantSlug ? `?tenant=${tenantSlug}` : ''}`}
+                  href={tenantSlug ? `/login?tenant=${tenantSlug}` : '/login'}
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Inicia sesión aquí
@@ -503,5 +503,24 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+function LoadingRegister() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        <p className="mt-2 text-gray-600">Cargando...</p>
+      </div>
+    </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<LoadingRegister />}>
+      <RegisterForm />
+    </Suspense>
   )
 }

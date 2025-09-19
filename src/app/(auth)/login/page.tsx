@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -48,7 +48,8 @@ export default function LoginPage() {
           router.push(callbackUrl)
         }
       }
-    } catch (_) {
+    } catch (error) {
+      console.error('Login error:', error)
       setError('Error inesperado. Por favor, intenta de nuevo.')
     } finally {
       setIsLoading(false)
@@ -146,7 +147,7 @@ export default function LoginPage() {
               <div className="text-center text-sm text-gray-600">
                 ¿No tienes una cuenta?{' '}
                 <Link 
-                  href={`/register${tenantSlug ? `?tenant=${tenantSlug}` : ''}`}
+                  href={tenantSlug ? `/register?tenant=${tenantSlug}` : '/register'}
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
                   Regístrate aquí
@@ -166,5 +167,24 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+function LoadingLogin() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        <p className="mt-2 text-gray-600">Cargando...</p>
+      </div>
+    </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingLogin />}>
+      <LoginForm />
+    </Suspense>
   )
 }

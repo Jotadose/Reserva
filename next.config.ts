@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Set output file tracing root to silence workspace warning
+  outputFileTracingRoot: __dirname,
   // Exclude api-backend directory from Next.js compilation
   webpack: (config, { isServer }) => {
     config.watchOptions = {
