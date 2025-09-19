@@ -48,7 +48,7 @@ export default function LoginPage() {
           router.push(callbackUrl)
         }
       }
-    } catch (error) {
+    } catch (_) {
       setError('Error inesperado. Por favor, intenta de nuevo.')
     } finally {
       setIsLoading(false)

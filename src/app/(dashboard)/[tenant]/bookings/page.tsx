@@ -100,7 +100,7 @@ export default function BookingsPage() {
   // Filtros
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [dateFilter, setDateFilter] = useState<string>('')
-  const [searchFilter, setSearchFilter] = useState<string>('')n
+  const [searchFilter, setSearchFilter] = useState<string>('')
   
   // TODO: Obtener tenant_id desde el contexto o API
   const tenantId = 'temp-tenant-id'

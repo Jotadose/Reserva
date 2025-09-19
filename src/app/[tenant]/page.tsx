@@ -21,7 +21,13 @@ interface Tenant {
   address?: string
   instagram?: string
   whatsapp?: string
-  working_hours: any
+  working_hours: {
+    [key: string]: {
+      open: string
+      close: string
+      closed?: boolean
+    }
+  }
   subscription_status: string
 }
 

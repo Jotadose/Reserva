@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { availabilityAPI, providersAPI } from '@/lib/supabase'
-import { AvailabilityBlock } from '@/types/tenant'
+import { AvailabilityBlock, Provider } from '@/types/tenant'
 import { AvailabilityDialog } from '@/components/dashboard/availability-dialog'
 
 interface ExtendedAvailabilityBlock extends AvailabilityBlock {
@@ -44,11 +44,10 @@ const BLOCK_TYPE_CONFIG = {
 
 export default function ProviderAvailabilityPage() {
   const params = useParams()
-  const tenantSlug = params.tenant as string
   const providerId = params.providerId as string
   
   const [availabilityBlocks, setAvailabilityBlocks] = useState<ExtendedAvailabilityBlock[]>([])
-  const [provider, setProvider] = useState<any>(null)
+  const [provider, setProvider] = useState<Provider | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)

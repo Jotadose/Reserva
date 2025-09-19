@@ -193,7 +193,7 @@ export function ProviderDialog({ open, onOpenChange, provider, tenantId, onSaved
                 </SelectContent>
               </Select>
               <p className="text-sm text-gray-500">
-                Solo se muestran usuarios con rol 'barber' que no sean proveedores aún
+                Solo se muestran usuarios con rol &apos;barber&apos; que no sean proveedores aún
               </p>
             </div>
           )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Plus, Edit, Trash2, UserCheck, Mail, Phone, Calendar, Clock } from 'lucide-react'
+import { Plus, Edit, Trash2, Mail, Calendar, User, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'

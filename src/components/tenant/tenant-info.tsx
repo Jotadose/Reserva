@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock, MapPin, Phone, Mail, Instagram } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatTime } from '@/lib/utils'
 
 interface Tenant {

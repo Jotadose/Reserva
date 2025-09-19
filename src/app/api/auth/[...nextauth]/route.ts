@@ -116,7 +116,7 @@ const authOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }: { token: JWT; user?: { id: string; tenant_id: string; role: string } }) {
       // Cuando el usuario se autentica por primera vez
       if (user) {
         token.user_id = user.id

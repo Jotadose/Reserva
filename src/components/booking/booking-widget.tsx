@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calendar, Clock, User, Phone, Mail, MessageSquare } from 'lucide-react'
+import { Clock, User } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,13 @@ interface Tenant {
   address?: string
   instagram?: string
   whatsapp?: string
-  working_hours: any
+  working_hours: {
+    [key: string]: {
+      open: string
+      close: string
+      closed?: boolean
+    }
+  }
   subscription_status: string
 }
 
@@ -133,7 +139,7 @@ export function BookingWidget({ tenant, services, providers }: BookingWidgetProp
       
       setSuccess(true)
       setStep(4)
-    } catch (err) {
+    } catch (_) {
       setError('Error al crear la reserva. Por favor intenta nuevamente.')
     } finally {
       setIsLoading(false)
