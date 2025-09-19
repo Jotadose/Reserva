@@ -1,9 +1,0 @@
-{
-  "name": "barberia-api-intermedia",
-  "version": "1.0.0",
-  "description": "API intermedia para sistema de barbería - FRONT → API → SUPABASE",
-  "type": "module",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.56.0"
-  }
-}
