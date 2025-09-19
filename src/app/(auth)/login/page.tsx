@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -20,7 +20,8 @@ function LoginForm() {
   
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const { signIn } = useAuth()
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   const tenantSlug = searchParams.get('tenant')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,24 +30,13 @@ function LoginForm() {
     setError('')
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        tenant_slug: tenantSlug,
-        redirect: false,
-      })
+      const result = await signIn(email, password)
 
-      if (result?.error) {
+      if (result.error) {
         setError(result.error)
-      } else if (result?.ok) {
-        // Obtener la sesión para redirigir correctamente
-        const session = await getSession()
-        if (session?.user?.tenant_id) {
-          // Redirigir al dashboard del tenant
-          router.push(`/dashboard/${session.user.tenant_id}`)
-        } else {
-          router.push(callbackUrl)
-        }
+      } else {
+        // Redirigir al callback URL o página principal
+        router.push(callbackUrl)
       }
     } catch (error) {
       console.error('Login error:', error)
