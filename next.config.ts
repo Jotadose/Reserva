@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   },
   // Set output file tracing root to silence workspace warning
   outputFileTracingRoot: __dirname,
+  // Optimize for Vercel deployment
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr', 'lucide-react']
+  },
   // Exclude api-backend directory from Next.js compilation
   webpack: (config, { isServer }) => {
     config.watchOptions = {
@@ -16,6 +20,8 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  // Ensure static optimization
+  trailingSlash: false,
 };
 
 export default nextConfig;

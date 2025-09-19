@@ -62,12 +62,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
-      return pathname === `/dashboard/${tenantSlug}` || pathname === `/dashboard/${tenantSlug}/dashboard`
+      return pathname === `/${tenantSlug}` || pathname === `/${tenantSlug}/dashboard`
     }
     if (href === '/providers') {
-      return pathname === `/dashboard/${tenantSlug}/providers` || pathname.startsWith(`/dashboard/${tenantSlug}/providers/`) && !pathname.startsWith(`/dashboard/${tenantSlug}/providers/availability`)
+      return pathname === `/${tenantSlug}/providers` || pathname.startsWith(`/${tenantSlug}/providers/`) && !pathname.startsWith(`/${tenantSlug}/providers/availability`)
     }
-    return pathname.startsWith(`/dashboard/${tenantSlug}${href}`)
+    return pathname.startsWith(`/${tenantSlug}${href}`)
   }
 
   return (
@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 return (
                   <Link
                     key={item.name}
-                    href={`/dashboard/${tenantSlug}${item.href}`}
+                    href={`/${tenantSlug}${item.href}`}
                     className={cn(
                       'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
                       active
@@ -107,10 +107,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 )
               })}
               <Link
-                href={`/dashboard/${tenantSlug}/providers/availability`}
+                href={`/${tenantSlug}/providers/availability`}
                 className={cn(
                   'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ml-6',
-                  pathname.startsWith(`/dashboard/${tenantSlug}/providers/availability`)
+                  pathname.startsWith(`/${tenantSlug}/providers/availability`)
                     ? 'bg-blue-100 text-blue-900'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
@@ -118,7 +118,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Calendar
                   className={cn(
                     'mr-3 h-5 w-5 flex-shrink-0',
-                    pathname.startsWith(`/dashboard/${tenantSlug}/providers/availability`) ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                    pathname.startsWith(`/${tenantSlug}/providers/availability`) ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
                   )}
                 />
                 Disponibilidad
@@ -169,7 +169,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   return (
                     <Link
                       key={item.name}
-                      href={`/dashboard/${tenantSlug}${item.href}`}
+                      href={`/${tenantSlug}${item.href}`}
                       className={cn(
                         'group flex items-center px-2 py-2 text-base font-medium rounded-md transition-colors',
                         active
@@ -189,10 +189,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   )
                 })}
                 <Link
-                  href={`/dashboard/${tenantSlug}/providers/availability`}
+                  href={`/${tenantSlug}/providers/availability`}
                   className={cn(
                     'group flex items-center px-2 py-2 text-base font-medium rounded-md transition-colors ml-6',
-                    pathname.startsWith(`/dashboard/${tenantSlug}/providers/availability`)
+                    pathname.startsWith(`/${tenantSlug}/providers/availability`)
                       ? 'bg-blue-100 text-blue-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   )}
@@ -201,7 +201,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Calendar
                     className={cn(
                       'mr-4 h-6 w-6 flex-shrink-0',
-                      pathname.startsWith(`/dashboard/${tenantSlug}/providers/availability`) ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                      pathname.startsWith(`/${tenantSlug}/providers/availability`) ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
                     )}
                   />
                   Disponibilidad
