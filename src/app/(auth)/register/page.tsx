@@ -65,10 +65,10 @@ export default function RegisterPage() {
     if (formData.password !== formData.confirmPassword) return 'Las contraseñas no coinciden'
     
     if (isOwnerRegistration) {
-      if (!formData.businessName.trim()) return 'El nombre de la barbería es requerido'
-      if (!formData.businessSlug.trim()) return 'El slug de la barbería es requerido'
-      if (formData.businessSlug.length < 3) return 'El slug debe tener al menos 3 caracteres'
-      if (!/^[a-z0-9-]+$/.test(formData.businessSlug)) {
+      if (!formData.businessName?.trim()) return 'El nombre de la barbería es requerido'
+      if (!formData.businessSlug?.trim()) return 'El slug de la barbería es requerido'
+      if ((formData.businessSlug?.length || 0) < 3) return 'El slug debe tener al menos 3 caracteres'
+      if (formData.businessSlug && !/^[a-z0-9-]+$/.test(formData.businessSlug)) {
         return 'El slug solo puede contener letras minúsculas, números y guiones'
       }
     }

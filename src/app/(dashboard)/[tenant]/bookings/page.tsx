@@ -51,6 +51,12 @@ const BOOKING_STATUS_CONFIG = {
     color: 'bg-green-100 text-green-800',
     borderColor: 'border-green-200'
   },
+  in_progress: {
+    label: 'En progreso',
+    icon: Clock,
+    color: 'bg-blue-100 text-blue-800',
+    borderColor: 'border-blue-200'
+  },
   cancelled: {
     label: 'Cancelada',
     icon: XCircle,
@@ -140,7 +146,7 @@ export default function BookingsPage() {
     // Filtro por fecha
     if (dateFilter) {
       filtered = filtered.filter(booking => 
-        booking.booking_datetime.startsWith(dateFilter)
+        booking.scheduled_date.startsWith(dateFilter)
       )
     }
     
@@ -174,7 +180,7 @@ export default function BookingsPage() {
     }
 
     try {
-      const { error } = await bookingsAPI.delete(tenantId, bookingId)
+      const { error } = await bookingsAPI.cancel(tenantId, bookingId, 'Eliminada por administrador')
       
       if (error) {
         throw new Error(error.message)
@@ -188,9 +194,7 @@ export default function BookingsPage() {
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      const { error } = await bookingsAPI.update(tenantId, bookingId, {
-        status: newStatus as any
-      })
+      const { error } = await bookingsAPI.updateStatus(tenantId, bookingId, newStatus)
       
       if (error) {
         throw new Error(error.message)
@@ -239,8 +243,8 @@ export default function BookingsPage() {
     const cancelled = bookings.filter(b => b.status === 'cancelled').length
     
     const totalRevenue = bookings
-      .filter(b => b.status === 'completed' && b.payment_status === 'paid')
-      .reduce((sum, b) => sum + (b.total_amount || 0), 0)
+      .filter(b => b.status === 'completed')
+      .reduce((sum, b) => sum + (b.total_price || 0), 0)
     
     return { total, pending, confirmed, completed, cancelled, totalRevenue }
   }
@@ -433,9 +437,8 @@ export default function BookingsPage() {
         ) : (
           filteredBookings.map((booking) => {
             const statusConfig = BOOKING_STATUS_CONFIG[booking.status]
-            const paymentConfig = PAYMENT_STATUS_CONFIG[booking.payment_status || 'pending']
             const StatusIcon = statusConfig.icon
-            const dateTime = formatDateTime(booking.booking_datetime)
+            const dateTime = `${booking.scheduled_date} ${booking.scheduled_time}`
 
             return (
               <Card key={booking.id} className={`hover:shadow-md transition-shadow ${statusConfig.borderColor} border`}>
@@ -446,9 +449,6 @@ export default function BookingsPage() {
                         <StatusIcon className="w-5 h-5" />
                         <Badge className={statusConfig.color}>
                           {statusConfig.label}
-                        </Badge>
-                        <Badge className={paymentConfig.color}>
-                          {paymentConfig.label}
                         </Badge>
                         <span className="text-sm text-gray-500">
                           #{booking.id.slice(-8)}
@@ -479,11 +479,11 @@ export default function BookingsPage() {
                         <div>
                           <div className="flex items-center text-sm text-gray-600 mb-1">
                             <Calendar className="w-4 h-4 mr-1" />
-                            <span className="capitalize">{dateTime.date}</span>
+                            <span className="capitalize">{booking.scheduled_date}</span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <Clock className="w-4 h-4 mr-1" />
-                            {dateTime.time}
+                            {booking.scheduled_time}
                           </div>
                         </div>
                         
