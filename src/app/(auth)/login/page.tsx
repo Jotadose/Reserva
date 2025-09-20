@@ -21,7 +21,6 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn } = useAuth()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
   const tenantSlug = searchParams.get('tenant')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,9 +33,16 @@ function LoginForm() {
 
       if (result.error) {
         setError(result.error)
+        return
+      }
+      
+      // Redirección inteligente basada en si el usuario tiene tenant
+      if (result.tenant) {
+        // Usuario tiene tenant, ir a su dashboard
+        router.push(`/${result.tenant}/dashboard`)
       } else {
-        // Redirigir al callback URL o página principal
-        router.push(callbackUrl)
+        // Usuario no tiene tenant, ir a onboarding
+        router.push('/onboarding')
       }
     } catch (error) {
       console.error('Login error:', error)

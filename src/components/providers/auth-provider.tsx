@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
+  signIn: (email: string, password: string) => Promise<{ error?: string; tenant?: string | null }>
   signUp: (email: string, password: string, metadata?: object) => Promise<{ error?: string }>
   signOut: () => Promise<void>
 }
@@ -58,6 +58,20 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
       if (error) {
         return { error: error.message }
+      }
+
+      // Verificar si el usuario tiene un tenant después del login exitoso
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('slug')
+          .eq('owner_id', session.user.id)
+          .eq('is_active', true)
+          .maybeSingle()
+
+        // Retornar información de redirección
+        return { tenant: tenant?.slug || null }
       }
 
       return {}

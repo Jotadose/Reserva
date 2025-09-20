@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -12,13 +12,16 @@ import {
   Menu, 
   X,
   User,
-  LogOut
+  LogOut,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase'
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
+  readonly children: React.ReactNode
 }
 
 const navigation = [
@@ -56,9 +59,96 @@ const navigation = [
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isValidating, setIsValidating] = useState(true)
+  const [tenantData, setTenantData] = useState<{ name: string } | null>(null)
+  
   const params = useParams()
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, signOut } = useAuth()
   const tenantSlug = params.tenant as string
+
+  // Validar acceso al tenant
+  useEffect(() => {
+    const validateAccess = async () => {
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      try {
+        // Verificar que el tenant existe y pertenece al usuario
+        const { data: tenant, error } = await supabase
+          .from('tenants')
+          .select('id, name, owner_id')
+          .eq('slug', tenantSlug)
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (error || !tenant) {
+          console.error('Tenant not found:', error)
+          router.push('/404')
+          return
+        }
+
+        if (tenant.owner_id !== user.id) {
+          // Usuario no es propietario, redirigir a su tenant o onboarding
+          const { data: userTenant } = await supabase
+            .from('tenants')
+            .select('slug')
+            .eq('owner_id', user.id)
+            .eq('is_active', true)
+            .maybeSingle()
+
+          if (userTenant) {
+            router.push(`/${userTenant.slug}/dashboard`)
+          } else {
+            router.push('/onboarding')
+          }
+          return
+        }
+
+        setTenantData({ name: tenant.name })
+        setIsValidating(false)
+      } catch (error) {
+        console.error('Error validating access:', error)
+        router.push('/login')
+      }
+    }
+
+    validateAccess()
+  }, [user, tenantSlug, router])
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error during logout:', error)
+    }
+  }
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setSidebarOpen(false)
+  }
+
+  const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setSidebarOpen(false)
+    }
+  }
+
+  if (isValidating) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Validando acceso...</p>
+        </div>
+      </div>
+    )
+  }
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
@@ -77,7 +167,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex flex-col flex-grow pt-5 overflow-y-auto bg-white border-r">
           <div className="flex items-center flex-shrink-0 px-4">
             <h1 className="text-xl font-bold text-gray-900">
-              {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
+              {tenantData?.name || tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
             </h1>
           </div>
           <div className="mt-8 flex-grow flex flex-col">
@@ -128,10 +218,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button
                 variant="ghost"
                 className="flex items-center w-full text-left text-gray-600 hover:text-gray-900"
-                onClick={() => {
-                  // TODO: Implementar logout
-                  console.log('Logout')
-                }}
+                onClick={handleLogout}
               >
                 <LogOut className="mr-3 h-5 w-5" />
                 Cerrar Sesión
@@ -144,7 +231,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar móvil */}
       {sidebarOpen && (
         <div className="fixed inset-0 flex z-40 md:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+          <button 
+            className="fixed inset-0 bg-gray-600 bg-opacity-75 border-0 cursor-pointer" 
+            onClick={handleOverlayClick}
+            onKeyDown={handleOverlayKeyDown}
+            aria-label="Cerrar sidebar"
+          />
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <Button
@@ -159,7 +251,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-4">
                 <h1 className="text-xl font-bold text-gray-900">
-                  {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
+                  {tenantData?.name || tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
                 </h1>
               </div>
               <nav className="mt-5 flex-1 px-2 space-y-1">
@@ -212,10 +304,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button
                 variant="ghost"
                 className="flex items-center w-full text-left text-gray-600 hover:text-gray-900"
-                onClick={() => {
-                  // TODO: Implementar logout
-                  console.log('Logout')
-                }}
+                onClick={handleLogout}
               >
                 <LogOut className="mr-3 h-5 w-5" />
                 Cerrar Sesión
@@ -239,7 +328,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <Menu className="h-6 w-6" />
             </Button>
             <h1 className="text-lg font-semibold text-gray-900">
-              {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
+              {tenantData?.name || tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
             </h1>
             <div className="w-10" /> {/* Spacer */}
           </div>

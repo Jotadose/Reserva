@@ -2,87 +2,104 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// Patterns para matching de rutas
+const TENANT_ROUTE_REGEX = /^\/([^/]+)\/(dashboard|bookings|services|providers|settings)/
+const TENANT_EXTRACT_REGEX = /^\/([^/]+)\/(dashboard|bookings|services|providers|settings)/
+
+function isPublicRoute(pathname: string): boolean {
+  const publicRoutes = [
+    '/', '/login', '/register', '/pricing', 
+    '/demo', '/features', '/test-colors', '/api'
+  ]
+  return publicRoutes.some(route => pathname === route || pathname.startsWith(route))
+}
+
+function isProtectedRoute(pathname: string): boolean {
+  const protectedRoutes = ['/onboarding']
+  return protectedRoutes.some(route => pathname.startsWith(route)) || 
+         TENANT_ROUTE_REGEX.test(pathname)
+}
+
+function createSupabaseClient(request: NextRequest, response: NextResponse) {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          request.cookies.set({ name, value, ...options })
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: any) {
+          request.cookies.set({ name, value: '', ...options })
+          response.cookies.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+}
+
+async function validateTenantAccess(
+  pathname: string, 
+  supabase: any, 
+  userId: string, 
+  request: NextRequest
+): Promise<NextResponse | null> {
+  const tenantMatch = TENANT_EXTRACT_REGEX.exec(pathname)
+  if (!tenantMatch) return null
+
+  const tenantSlug = tenantMatch[1]
+  
+  // Verificar que el tenant existe y está activo
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id, owner_id')
+    .eq('slug', tenantSlug)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!tenant) {
+    return NextResponse.redirect(new URL('/404', request.url))
+  }
+
+  // Verificar que el usuario es propietario del tenant
+  if (tenant.owner_id !== userId) {
+    const { data: userTenant } = await supabase
+      .from('tenants')
+      .select('slug')
+      .eq('owner_id', userId)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    const redirectUrl = userTenant 
+      ? `/${userTenant.slug}/dashboard` 
+      : '/onboarding'
+    
+    return NextResponse.redirect(new URL(redirectUrl, request.url))
+  }
+
+  return null
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
   const pathname = request.nextUrl.pathname
 
-  // Rutas públicas que no requieren autenticación
-  const publicRoutes = [
-    '/', 
-    '/login', 
-    '/register', 
-    '/pricing', 
-    '/demo', 
-    '/features',
-    '/test-colors',
-    '/api'
-  ]
-
-  // Rutas que requieren autenticación
-  const protectedRoutes = ['/onboarding']
-
-  // Permitir todas las rutas públicas
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route))) {
+  // Permitir rutas públicas
+  if (isPublicRoute(pathname)) {
     return response
   }
 
-  // Verificar autenticación para rutas protegidas y rutas de tenant
-  const needsAuth = protectedRoutes.some(route => pathname.startsWith(route)) || 
-                   pathname.match(/^\/[^\/]+\/(dashboard|bookings|services|providers|settings)/);
-
-  if (needsAuth) {
+  // Verificar autenticación para rutas protegidas
+  if (isProtectedRoute(pathname)) {
     try {
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return request.cookies.get(name)?.value
-            },
-            set(name: string, value: string, options: any) {
-              request.cookies.set({
-                name,
-                value,
-                ...options,
-              })
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              })
-              response.cookies.set({
-                name,
-                value,
-                ...options,
-              })
-            },
-            remove(name: string, options: any) {
-              request.cookies.set({
-                name,
-                value: '',
-                ...options,
-              })
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              })
-              response.cookies.set({
-                name,
-                value: '',
-                ...options,
-              })
-            },
-          },
-        }
-      )
-
+      const supabase = createSupabaseClient(request, response)
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
@@ -91,6 +108,19 @@ export async function middleware(request: NextRequest) {
         loginUrl.searchParams.set('callbackUrl', pathname)
         return NextResponse.redirect(loginUrl)
       }
+
+      // Validar acceso al tenant si es ruta de dashboard
+      const tenantValidation = await validateTenantAccess(
+        pathname, 
+        supabase, 
+        session.user.id, 
+        request
+      )
+      
+      if (tenantValidation) {
+        return tenantValidation
+      }
+
     } catch (error) {
       console.error('Auth middleware error:', error)
       const loginUrl = new URL('/login', request.url)
