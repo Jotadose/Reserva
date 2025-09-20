@@ -1,21 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Scissors, 
-  MapPin, 
   Clock, 
   DollarSign, 
-  Users, 
   CheckCircle, 
   ArrowRight, 
   ArrowLeft,
@@ -73,8 +72,44 @@ const CATEGORIES = [
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  // Verificar autenticación y si ya tiene tenant al cargar
+  useEffect(() => {
+    const checkAuthAndTenant = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          router.push('/login?message=Debes iniciar sesión para acceder al onboarding')
+          return
+        }
+
+        // Verificar si el usuario ya tiene un tenant
+        const { data: existingTenant } = await supabase
+          .from('tenants')
+          .select('slug')
+          .eq('owner_id', session.user.id)
+          .eq('is_active', true)
+          .maybeSingle()
+
+        if (existingTenant) {
+          router.push(`/${existingTenant.slug}/dashboard`)
+          return
+        }
+
+        setIsCheckingAuth(false)
+      } catch (error) {
+        console.error('Error checking auth and tenant:', error)
+        setError('Error al verificar la autenticación')
+        setIsCheckingAuth(false)
+      }
+    }
+
+    checkAuthAndTenant()
+  }, [router])
 
   // Form data
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
@@ -154,16 +189,100 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // TODO: Implement API call to create business
-      console.log('Creating business:', { businessInfo, services, businessHours })
+      // Verificar autenticación
+      const { data: { session } } = await supabase.auth.getSession()
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      if (!session) {
+        setError('Debes estar autenticado para crear una barbería')
+        setIsLoading(false)
+        return
+      }
+
+      // Verificar que el slug no esté en uso
+      const { data: existingTenant } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('slug', businessInfo.slug)
+        .maybeSingle()
+
+      if (existingTenant) {
+        setError('El nombre de URL ya está en uso. Por favor, elige otro.')
+        setIsLoading(false)
+        return
+      }
+
+      // Crear el tenant
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          name: businessInfo.name,
+          slug: businessInfo.slug,
+          description: businessInfo.description || null,
+          category: businessInfo.category,
+          address: businessInfo.address || null,
+          contact_phone: businessInfo.phone,
+          contact_email: businessInfo.email || null,
+          website: businessInfo.website || null,
+          working_hours: businessHours,
+          owner_id: session.user.id,
+          is_active: true
+        })
+        .select()
+        .single()
+
+      if (tenantError) {
+        console.error('Error creating tenant:', tenantError)
+        setError('Error al crear la barbería. Por favor, inténtalo de nuevo.')
+        setIsLoading(false)
+        return
+      }
+
+      // Crear los servicios
+      if (services && services.length > 0) {
+        const servicesData = services
+          .filter(service => service.name && service.price > 0)
+          .map(service => ({
+            tenant_id: tenant.id,
+            name: service.name,
+            description: service.description || null,
+            duration_minutes: service.duration || 30,
+            price: service.price,
+            is_active: true
+          }))
+
+        if (servicesData.length > 0) {
+          const { error: servicesError } = await supabase
+            .from('services')
+            .insert(servicesData)
+
+          if (servicesError) {
+            console.error('Error creating services:', servicesError)
+            // Continuar aunque hay error en servicios
+          }
+        }
+      }
+
+      // Crear el proveedor principal (el dueño)
+      const { error: providerError } = await supabase
+        .from('providers')
+        .insert({
+          tenant_id: tenant.id,
+          user_id: session.user.id,
+          role: 'owner',
+          is_active: true
+        })
+
+      if (providerError) {
+        console.error('Error creating provider:', providerError)
+        // Continuar aunque hay error en provider
+      }
+
+      // Redirigir al dashboard
+      router.push(`/${tenant.slug}/dashboard`)
       
-      // Redirect to dashboard
-      router.push(`/${businessInfo.slug}/dashboard`)
-    } catch (error) {
-      setError('Error al crear la barbería. Por favor, inténtalo de nuevo.')
+    } catch (error: any) {
+      console.error('Error creating tenant:', error)
+      setError('Error inesperado. Por favor, inténtalo de nuevo.')
     } finally {
       setIsLoading(false)
     }
@@ -406,13 +525,15 @@ export default function OnboardingPage() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <input
-                          type="checkbox"
-                          checked={businessHours[day.key].isOpen}
-                          onChange={(e) => updateBusinessHours(day.key, 'isOpen', e.target.checked)}
-                          className="w-4 h-4 text-blue-600"
-                        />
-                        <Label className="font-medium">{day.label}</Label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={businessHours[day.key].isOpen}
+                            onChange={(e) => updateBusinessHours(day.key, 'isOpen', e.target.checked)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <span className="font-medium">{day.label}</span>
+                        </label>
                       </div>
 
                       {businessHours[day.key].isOpen && (
@@ -531,90 +652,107 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {[1, 2, 3, 4].map(step => (
-              <div key={step} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {step < currentStep ? <CheckCircle className="w-6 h-6" /> : step}
-                </div>
-                {step < 4 && (
-                  <div className={`w-16 h-1 mx-2 ${
-                    step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-                  }`} />
-                )}
+        {/* Loading state mientras verifica autenticación */}
+        {isCheckingAuth ? (
+          <Card className="shadow-xl border-0">
+            <CardContent className="p-8 text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-gray-600">Verificando autenticación...</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Progress Bar */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                {[1, 2, 3, 4].map(step => (
+                  <div key={step} className="flex items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      step <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
+                    }`}>
+                      {step < currentStep ? <CheckCircle className="w-6 h-6" /> : step}
+                    </div>
+                    {step < 4 && (
+                      <div className={`w-16 h-1 mx-2 ${
+                        step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                      }`} />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Paso {currentStep} de 4: {
-                currentStep === 1 ? 'Información Básica' :
-                currentStep === 2 ? 'Servicios' :
-                currentStep === 3 ? 'Horarios' :
-                'Confirmación'
-              }
-            </p>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <Card className="shadow-xl border-0">
-          <CardContent className="p-8">
-            {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {renderStep()}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
-                disabled={currentStep === 1}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Anterior
-              </Button>
-
-              {currentStep < 4 ? (
-                <Button
-                  onClick={() => setCurrentStep(prev => prev + 1)}
-                  disabled={!canProceed()}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Siguiente
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading || !canProceed()}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      Crear Mi Barbería
-                      <CheckCircle className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-              )}
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Paso {currentStep} de 4: {
+                    (() => {
+                      switch (currentStep) {
+                        case 1: return 'Información Básica'
+                        case 2: return 'Servicios'
+                        case 3: return 'Horarios'
+                        case 4: return 'Confirmación'
+                        default: return ''
+                      }
+                    })()
+                  }
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Main Content */}
+            <Card className="shadow-xl border-0">
+              <CardContent className="p-8">
+                {error && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                {renderStep()}
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between mt-8 pt-6 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+                    disabled={currentStep === 1}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Anterior
+                  </Button>
+
+                  {currentStep < 4 ? (
+                    <Button
+                      onClick={() => setCurrentStep(prev => prev + 1)}
+                      disabled={!canProceed()}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isLoading || !canProceed()}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Creando...
+                        </>
+                      ) : (
+                        <>
+                          Crear Mi Barbería
+                          <CheckCircle className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   )
