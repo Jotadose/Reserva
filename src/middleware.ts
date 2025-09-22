@@ -58,7 +58,7 @@ async function validateTenantAccess(
     .from('tenants')
     .select('id, owner_id')
     .eq('slug', tenantSlug)
-    .eq('is_active', true)
+    .eq('subscription_status', 'active')
     .maybeSingle()
 
   if (!tenant) {
@@ -71,7 +71,7 @@ async function validateTenantAccess(
       .from('tenants')
       .select('slug')
       .eq('owner_id', userId)
-      .eq('is_active', true)
+      .eq('subscription_status', 'active')
       .maybeSingle()
 
     const redirectUrl = userTenant 

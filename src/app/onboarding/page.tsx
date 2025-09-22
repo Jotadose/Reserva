@@ -92,7 +92,7 @@ export default function OnboardingPage() {
           .from('tenants')
           .select('slug')
           .eq('owner_id', session.user.id)
-          .eq('is_active', true)
+          .eq('subscription_status', 'active')
           .maybeSingle()
 
         if (existingTenant) {
@@ -225,7 +225,7 @@ export default function OnboardingPage() {
           website: businessInfo.website || null,
           working_hours: businessHours,
           owner_id: session.user.id,
-          is_active: true
+          subscription_status: 'active'
         })
         .select()
         .single()

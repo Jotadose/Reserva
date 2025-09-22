@@ -31,8 +31,8 @@ export function useSupabaseTest() {
       try {
         const { data, error } = await supabase
           .from('tenants')
-          .select('id, slug, name, status')
-          .eq('status', 'active')
+          .select('id, slug, name, subscription_status')
+          .eq('subscription_status', 'active')
           .limit(5)
 
         results.tenantRLS = { 

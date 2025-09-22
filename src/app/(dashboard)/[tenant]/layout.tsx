@@ -82,8 +82,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           .from('tenants')
           .select('id, name, owner_id')
           .eq('slug', tenantSlug)
-          .eq('is_active', true)
-          .maybeSingle()
+          .eq('subscription_status', 'active')
+          .single()
 
         if (error || !tenant) {
           console.error('Tenant not found:', error)
@@ -97,7 +97,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             .from('tenants')
             .select('slug')
             .eq('owner_id', user.id)
-            .eq('is_active', true)
+            .eq('subscription_status', 'active')
             .maybeSingle()
 
           if (userTenant) {

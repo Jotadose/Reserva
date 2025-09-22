@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Eye, EyeOff, Scissors } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Scissors, Settings } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { isSupabaseConfigured } from '@/lib/supabase'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -17,11 +18,16 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [supabaseConfigured, setSupabaseConfigured] = useState(true)
   
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn } = useAuth()
   const tenantSlug = searchParams.get('tenant')
+
+  useEffect(() => {
+    setSupabaseConfigured(isSupabaseConfigured())
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,7 +82,23 @@ function LoginForm() {
                   : 'Accede a tu dashboard de barbería'
                 }
               </CardDescription>
-            </CardHeader>          <form onSubmit={handleSubmit}>
+            </CardHeader>
+            
+            {!supabaseConfigured && (
+              <CardContent className="pb-0">
+                <Alert className="bg-yellow-50 border-yellow-200">
+                  <Settings className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">
+                    <strong>Supabase no configurado:</strong> Para usar el login real, configura primero tu instancia de Supabase.{' '}
+                    <Link href="/setup" className="text-yellow-700 hover:text-yellow-900 underline font-medium">
+                      Ir a configuración
+                    </Link>
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            )}
+            
+            <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
                 <Alert variant="destructive">

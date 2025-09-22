@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { isSupabaseConfigured } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -51,6 +52,12 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Si Supabase no está configurado, simular login exitoso
+      if (!isSupabaseConfigured()) {
+        console.warn('Supabase not configured, simulating login')
+        return { tenant: 'demo-tenant' }
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -67,7 +74,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
           .from('tenants')
           .select('slug')
           .eq('owner_id', session.user.id)
-          .eq('is_active', true)
+          .eq('subscription_status', 'active')
           .maybeSingle()
 
         // Retornar información de redirección
@@ -83,6 +90,12 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
   const signUp = async (email: string, password: string, metadata?: object) => {
     try {
+      // Si Supabase no está configurado, simular signup exitoso
+      if (!isSupabaseConfigured()) {
+        console.warn('Supabase not configured, simulating signup')
+        return {}
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,

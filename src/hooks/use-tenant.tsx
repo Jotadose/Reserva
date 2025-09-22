@@ -76,7 +76,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         .from('tenants')
         .select('*')
         .eq('slug', slug)
-        .eq('status', 'active')
+        .eq('subscription_status', 'active')
         .single()
 
       if (supabaseError) {

@@ -1,20 +1,32 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// Verificar si Supabase está configurado
+export const isSupabaseConfigured = (): boolean => {
+  return !!(supabaseUrl && 
+         supabaseAnonKey && 
+         supabaseUrl !== 'https://your-project.supabase.co' &&
+         supabaseAnonKey !== 'your-anon-key')
+}
 
 // Cliente para uso en el frontend (con valores por defecto para desarrollo)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-})
+export const supabase = createClient(
+  supabaseUrl || 'https://demo.supabase.co', 
+  supabaseAnonKey || 'demo-key', 
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+  }
+)
 
 // Cliente para uso en el servidor (con service role key)
 export const supabaseAdmin = createClient(
-  supabaseUrl,
+  supabaseUrl || 'https://demo.supabase.co',
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'demo-service-key',
   {
     auth: {
@@ -425,9 +437,5 @@ export const auditAPI = {
       .order('created_at', { ascending: false })
 }
 
-// Función para verificar si Supabase está configurado correctamente
-export function isSupabaseConfigured(): boolean {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && 
-           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-           process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://demo.supabase.co')
-}
+// Función para verificar si Supabase está configurado correctamente  
+// (función actualizada en la parte superior del archivo)
