@@ -113,9 +113,9 @@ export default function HomePage() {
                 Iniciar Sesión
               </Button>
             </Link>
-            <Link href="/register">
+            <Link href="/pricing">
               <Button className="bg-blue-600 hover:bg-blue-700">
-                Crear Cuenta
+                Ver Planes
               </Button>
             </Link>
           </div>
@@ -141,9 +141,9 @@ export default function HomePage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/register">
+            <Link href="/pricing">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3">
-                Crear Mi Barbería Gratis
+                Ver Planes y Crear Barbería
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
@@ -278,7 +278,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register" className="block">
+                  <Link href="/pricing" className="block">
                     <Button 
                       className={`w-full mt-6 ${plan.highlighted 
                         ? 'bg-blue-600 hover:bg-blue-700' 
@@ -286,7 +286,7 @@ export default function HomePage() {
                       }`}
                       size="lg"
                     >
-                      Empezar Ahora
+                      {plan.name === 'Gratis' ? 'Empezar Gratis' : 'Seleccionar Plan'}
                     </Button>
                   </Link>
                 </CardContent>
@@ -305,9 +305,9 @@ export default function HomePage() {
           <p className="text-xl text-blue-100 mb-8">
             Únete a más de 100 barberos que ya confían en Agendex para gestionar su negocio
           </p>
-          <Link href="/register">
+          <Link href="/pricing">
             <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3">
-              Crear Mi Cuenta Gratis
+              Ver Planes y Crear Cuenta
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>

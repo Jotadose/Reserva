@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Clock, User } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Clock, User, CheckCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatPrice, formatDuration } from '@/lib/utils'
+import { bookingsAPI, availabilityAPI } from '@/lib/supabase'
 
 interface Tenant {
   id: string
@@ -66,18 +67,18 @@ interface BookingForm {
   notes: string
 }
 
-const AVAILABLE_TIMES = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-  '18:00', '18:30', '19:00'
-]
+interface AvailableSlot {
+  time: string
+  available: boolean
+}
 
 export function BookingWidget({ tenant, services, providers, compact = false }: BookingWidgetProps) {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
   
   const [form, setForm] = useState<BookingForm>({
     serviceId: '',
@@ -92,6 +93,83 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
 
   const selectedService = services.find(s => s.id === form.serviceId)
   const selectedProvider = providers.find(p => p.id === form.providerId)
+
+  // Cargar horarios disponibles cuando se selecciona fecha y proveedor
+  useEffect(() => {
+    if (form.date && form.providerId) {
+      loadAvailableSlots()
+    }
+  }, [form.date, form.providerId])
+
+  const loadAvailableSlots = async () => {
+    if (!form.date || !form.providerId) return
+
+    setLoadingSlots(true)
+    try {
+      // Obtener bloques de disponibilidad del proveedor para la fecha seleccionada
+      const startDate = `${form.date} 00:00:00`
+      const endDate = `${form.date} 23:59:59`
+      
+      const { data: availabilityBlocks } = await availabilityAPI.getByProvider(
+        tenant.id, 
+        form.providerId, 
+        startDate, 
+        endDate
+      )
+
+      // Obtener reservas existentes para la fecha
+      const { data: existingBookings } = await bookingsAPI.getAll(tenant.id, {
+        providerId: form.providerId,
+        date: form.date
+      })
+
+      // Generar slots disponibles (cada 30 minutos de 9:00 a 19:00)
+      const slots: AvailableSlot[] = []
+      const startHour = 9
+      const endHour = 19
+      
+      for (let hour = startHour; hour < endHour; hour++) {
+        for (let minutes of [0, 30]) {
+          const timeString = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+          
+          // Verificar si está en horario de trabajo
+          let isWorkingHour = true // Por defecto asumimos que sí trabaja
+          
+          // Verificar disponibilidad específica del proveedor
+          let isAvailable = true
+          if (availabilityBlocks && availabilityBlocks.length > 0) {
+            // Si hay bloques de disponibilidad, verificar si este horario está permitido
+            const slotDateTime = new Date(`${form.date} ${timeString}:00`)
+            isAvailable = availabilityBlocks.some(block => {
+              const blockStart = new Date(block.start_datetime)
+              const blockEnd = new Date(block.end_datetime)
+              return block.block_type === 'available' && 
+                     slotDateTime >= blockStart && 
+                     slotDateTime < blockEnd
+            })
+          }
+          
+          // Verificar si ya hay una reserva en ese horario
+          const hasBooking = existingBookings?.some(booking => 
+            booking.scheduled_time === timeString && 
+            booking.status !== 'cancelled'
+          )
+          
+          slots.push({
+            time: timeString,
+            available: isWorkingHour && isAvailable && !hasBooking
+          })
+        }
+      }
+      
+      setAvailableSlots(slots)
+    } catch (error) {
+      console.error('Error loading available slots:', error)
+      setError('Error al cargar horarios disponibles')
+    } finally {
+      setLoadingSlots(false)
+    }
+  }
 
   const handleInputChange = (field: keyof BookingForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -134,20 +212,45 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
     setError('')
 
     try {
-      // Aquí iría la lógica para crear la reserva
-      // Por ahora simulamos el proceso
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Crear la reserva usando la API de Supabase
+      const bookingData = {
+        service_id: form.serviceId,
+        provider_id: form.providerId,
+        scheduled_date: form.date,
+        scheduled_time: form.time,
+        client_name: form.clientName,
+        client_phone: form.clientPhone,
+        client_email: form.clientEmail,
+        notes: form.notes || null,
+        status: 'confirmed',
+        total_amount: selectedService?.price || 0,
+        duration_minutes: selectedService?.duration_minutes || 30
+      }
+
+      const { error: bookingError } = await bookingsAPI.create(tenant.id, bookingData)
       
+      if (bookingError) {
+        throw new Error(bookingError.message || 'Error al crear la reserva')
+      }
+
+      // Reserva creada exitosamente
       setSuccess(true)
       setStep(4)
-    } catch (_) {
-      setError('Error al crear la reserva. Por favor intenta nuevamente.')
+    } catch (error: any) {
+      console.error('Error creating booking:', error)
+      setError(error.message || 'Error al crear la reserva. Por favor intenta nuevamente.')
     } finally {
       setIsLoading(false)
     }
   }
 
 
+
+  const getStepDescription = (currentStep: number): string => {
+    if (currentStep === 1) return 'Selecciona servicio'
+    if (currentStep === 2) return 'Elige fecha y hora'
+    return 'Datos de contacto'
+  }
 
   if (success) {
     return (
@@ -201,7 +304,7 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
       <CardHeader>
         <CardTitle>Reservar Cita</CardTitle>
         <CardDescription>
-          Paso {step} de 3 - {step === 1 ? 'Selecciona servicio' : step === 2 ? 'Elige fecha y hora' : 'Datos de contacto'}
+          Paso {step} de 3 - {getStepDescription(step)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -275,21 +378,33 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
 
             <div>
               <Label htmlFor="time">Hora *</Label>
-              <Select value={form.time} onValueChange={(value) => handleInputChange('time', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una hora" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AVAILABLE_TIMES.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        {time}
-                      </div>
-                    </SelectItem>
+              {loadingSlots ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-sm text-gray-600">Cargando horarios...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {availableSlots.map((slot) => (
+                    <Button
+                      key={slot.time}
+                      type="button"
+                      variant={form.time === slot.time ? "default" : "outline"}
+                      disabled={!slot.available}
+                      onClick={() => handleInputChange('time', slot.time)}
+                      className={`text-sm ${!slot.available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Clock className="w-3 h-3 mr-1" />
+                      {slot.time}
+                    </Button>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              {availableSlots.length === 0 && !loadingSlots && (
+                <p className="text-sm text-gray-500 mt-2">
+                  No hay horarios disponibles para esta fecha. Selecciona otra fecha.
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-2">

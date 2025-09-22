@@ -4,6 +4,8 @@ import { BookingWidget } from '@/components/booking/booking-widget'
 import { TenantHeader } from '@/components/tenant/tenant-header'
 import { TenantServices } from '@/components/tenant/tenant-services'
 import { TenantInfo } from '@/components/tenant/tenant-info'
+import { TenantPortfolio } from '@/components/tenant/tenant-portfolio'
+import { TenantSchedule } from '@/components/tenant/tenant-schedule'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -299,6 +301,12 @@ export default async function TenantPage({ params }: TenantPageProps) {
           )}
         </div>
       </section>
+
+      {/* Portfolio Section */}
+      <TenantPortfolio tenantSlug={tenant.slug} />
+
+      {/* Schedule Section */}
+      <TenantSchedule workingHours={tenant.working_hours} />
 
       {/* Team Section */}
       {providers.length > 0 && (
