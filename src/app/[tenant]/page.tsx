@@ -485,24 +485,7 @@ export default function TenantPage({ params }: TenantPageProps) {
       </footer>
     </div>
   )
-}
-              </div>
-            </div>
-            
-            <div className="hidden md:flex items-center space-x-3">
-              {tenant.whatsapp && (
-                <Button 
-                  size="sm" 
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => window.open('https://wa.me/' + tenant.whatsapp, '_blank')}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  WhatsApp
-                </Button>
-              )}
-              {tenant.contact_phone && (
-                <Button 
-                  variant="outline" 
+} 
                   size="sm" 
                   className="border-gray-600 text-gray-300 hover:bg-gray-800"
                   onClick={() => window.open('tel:' + tenant.contact_phone, '_blank')}
