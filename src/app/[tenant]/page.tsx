@@ -24,7 +24,7 @@ interface Tenant {
   website: string | null
   logo_url: string | null
   banner_url: string | null
-  business_hours: any
+  business_hours: Record<string, { open?: string; close?: string; openTime?: string; closeTime?: string; closed?: boolean; isOpen?: boolean }>
   settings: any
   status: string
   created_at: string
@@ -48,6 +48,10 @@ interface Provider {
   role: string
   status: string
 }
+
+const STARS = ['s1','s2','s3','s4','s5'] as const
+const PORTFOLIO_PLACEHOLDERS = ['pf1','pf2','pf3','pf4','pf5','pf6'] as const
+type WorkingHour = { open?: string; close?: string; openTime?: string; closeTime?: string; closed?: boolean; isOpen?: boolean }
 
 async function getTenantData(slug: string) {
   const { data: tenant } = await supabase
@@ -80,7 +84,7 @@ async function getTenantData(slug: string) {
   }
 }
 
-export default async function TenantPage({ params }: TenantPageProps) {
+export default async function TenantPage({ params }: Readonly<TenantPageProps>) {
   const tenantSlug = await params.then(p => p.tenant)
   const { tenant, services, providers } = await getTenantData(tenantSlug)
 
@@ -103,25 +107,19 @@ export default async function TenantPage({ params }: TenantPageProps) {
             </h1>
             <div className="flex items-center space-x-3">
               {tenant.whatsapp && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  onClick={() => window.open('https://wa.me/' + tenant.whatsapp, '_blank')}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  WhatsApp
+                <Button asChild variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                  <a href={`https://wa.me/${tenant.whatsapp}`} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    WhatsApp
+                  </a>
                 </Button>
               )}
               {tenant.contact_phone && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  onClick={() => window.open('tel:' + tenant.contact_phone, '_blank')}
-                >
-                  <Phone className="w-4 h-4 mr-2" />
-                  Llamar
+                <Button asChild variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-800">
+                  <a href={`tel:${tenant.contact_phone}`}>
+                    <Phone className="w-4 h-4 mr-2" />
+                    Llamar
+                  </a>
                 </Button>
               )}
             </div>
@@ -133,8 +131,8 @@ export default async function TenantPage({ params }: TenantPageProps) {
             <div className="text-center lg:text-left space-y-8">
               <div className="inline-flex items-center bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-medium border border-orange-500/30">
                 <div className="flex items-center mr-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <StarIcon key={i} className="w-3 h-3 fill-current text-orange-400" />
+                  {STARS.map((id) => (
+                    <StarIcon key={id} className="w-3 h-3 fill-current text-orange-400" />
                   ))}
                 </div>
                 Barbería 5 Estrellas
@@ -156,20 +154,17 @@ export default async function TenantPage({ params }: TenantPageProps) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-3 text-lg shadow-xl transform hover:scale-105 transition-all duration-200"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Reservar Ahora
+                <Button asChild size="lg" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-3 text-lg shadow-xl transform hover:scale-105 transition-all duration-200">
+                  <a href="#booking">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Reservar Ahora
+                  </a>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-orange-400 hover:text-orange-400 px-8 py-3 text-lg transition-all duration-200"
-                >
-                  Ver Servicios
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                <Button asChild variant="outline" size="lg" className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-orange-400 hover:text-orange-400 px-8 py-3 text-lg transition-all duration-200">
+                  <a href="#services">
+                    Ver Servicios
+                    <ChevronRight className="w-5 h-5 ml-2" />
+                  </a>
                 </Button>
               </div>
 
@@ -189,7 +184,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
               </div>
             </div>
 
-            <div className="flex justify-center lg:justify-end">
+            <div className="flex justify-center lg:justify-end" id="booking">
               <div className="w-full max-w-md">
                 <BookingWidget
                   tenant={tenant}
@@ -244,13 +239,51 @@ export default async function TenantPage({ params }: TenantPageProps) {
                       <Clock className="w-4 h-4 mr-1" />
                       {service.duration} min
                     </div>
-                    <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white">
-                      Reservar
+                    <Button asChild size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white">
+                      <a href="#booking">Reservar</a>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PORTFOLIO */}
+      <section id="portfolio" className="py-20 px-6 bg-gradient-to-br from-slate-900 to-gray-900">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">Portfolio</h2>
+            <p className="text-gray-400">Algunos de nuestros últimos trabajos</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {PORTFOLIO_PLACEHOLDERS.map((id) => (
+              <div key={id} className="aspect-square rounded-xl bg-gradient-to-br from-gray-800/50 to-slate-900/50 border border-gray-700" />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HORARIO */}
+      <section id="horario" className="py-20 px-6 bg-gradient-to-br from-gray-900 to-slate-900">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold text-white">Horario</h2>
+            <p className="text-gray-400">Días y horas de atención</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-black/20 border border-gray-800 rounded-xl p-6">
+            {Object.entries(tenant.business_hours || {}).map(([day, info]) => {
+              const wh = info as WorkingHour
+              return (
+              <div key={day} className="flex items-center justify-between text-gray-300">
+                <span className="capitalize">{day}</span>
+                <span className="text-gray-400">
+                  {wh?.isOpen === false || wh?.closed ? 'Cerrado' : `${wh?.openTime ?? wh?.open} - ${wh?.closeTime ?? wh?.close}`}
+                </span>
+              </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -268,23 +301,17 @@ export default async function TenantPage({ params }: TenantPageProps) {
               </p>
               <div className="flex space-x-4">
                 {tenant.instagram && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-600 text-gray-400 hover:text-orange-400 hover:border-orange-400"
-                    onClick={() => window.open('https://instagram.com/' + tenant.instagram?.replace('@', ''), '_blank')}
-                  >
-                    Instagram
+                  <Button asChild variant="outline" size="sm" className="border-gray-600 text-gray-400 hover:text-orange-400 hover:border-orange-400">
+                    <a href={`https://instagram.com/${tenant.instagram?.replace('@', '')}`} target="_blank" rel="noopener noreferrer">
+                      Instagram
+                    </a>
                   </Button>
                 )}
                 {tenant.facebook && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-600 text-gray-400 hover:text-orange-400 hover:border-orange-400"
-                    onClick={() => window.open('https://facebook.com/' + tenant.facebook, '_blank')}
-                  >
-                    Facebook
+                  <Button asChild variant="outline" size="sm" className="border-gray-600 text-gray-400 hover:text-orange-400 hover:border-orange-400">
+                    <a href={`https://facebook.com/${tenant.facebook}`} target="_blank" rel="noopener noreferrer">
+                      Facebook
+                    </a>
                   </Button>
                 )}
               </div>
@@ -335,7 +362,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
   )
 }
 
-export async function generateMetadata({ params }: TenantPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Readonly<TenantPageProps>): Promise<Metadata> {
   const tenantSlug = await params.then(p => p.tenant)
   
   const { data: tenant } = await supabase

@@ -6,120 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { 
-  Check, 
-  Scissors, 
-  Star, 
-  Zap, 
-  Shield, 
-  Smartphone,
-  Calendar,
-  BarChart3,
-  MessageSquare,
-  Mail,
-  Clock,
-  Users
-} from 'lucide-react'
-
-interface Plan {
-  id: string
-  name: string
-  price: number
-  period: 'month' | 'year'
-  currency: 'CLP' | 'USD'
-  description: string
-  features: string[]
-  limitations?: string[]
-  popular?: boolean
-  recommended?: boolean
-  color: string
-  icon: React.ComponentType<any>
-}
-
-const plans: Plan[] = [
-  {
-    id: 'solo',
-    name: 'Solo',
-    price: 19000,
-    period: 'month',
-    currency: 'CLP',
-    description: 'Para un barbero independiente que quiere dejar de confirmar manualmente.',
-    features: [
-      '1 barbero',
-      '50 mensajes WhatsApp',
-      'Nacional',
-      'Agenda web + móvil',
-      'Recordatorios básicos (1 etapa)',
-      'Páginas integradas',
-      'Reportes básicos',
-      'Soporte email'
-    ],
-    color: 'from-gray-100 to-gray-200',
-    icon: Scissors
-  },
-  {
-    id: 'crecimiento',
-    name: 'Crecimiento',
-    price: 39000,
-    period: 'month',
-    currency: 'CLP',
-    description: 'Activa reservas web y optimiza la agenda con automatización inteligente.',
-    features: [
-      'Hasta 3 barberos',
-      '100 mensajes incluidos',
-      'Nacional',
-      'Recordatorios inteligentes multi-etapa',
-      'Mensajes post-servicio (retención)',
-      'Reportes de recurrencia',
-      'Pagos integrados',
-      'Soporte prioritario (WhatsApp)'
-    ],
-    popular: true,
-    recommended: true,
-    color: 'from-blue-500 to-blue-600',
-    icon: BarChart3
-  },
-  {
-    id: 'pro-multi',
-    name: 'Pro Multi',
-    price: 69000,
-    period: 'month',
-    currency: 'CLP',
-    description: 'Escala y sucursales con control y campañas de reactivación.',
-    features: [
-      'Hasta 8 barberos',
-      '200 mensajes',
-      'Nacional',
-      'Roles y permisos avanzados',
-      'Campañas de reactivación',
-      'Reportes avanzados (retención, gaps)',
-      'API Lite',
-      'Onboarding guiado'
-    ],
-    color: 'from-purple-500 to-purple-600',
-    icon: Users
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 120000,
-    period: 'month',
-    currency: 'CLP',
-    description: 'Para cadenas y franquicias que requieren marca propia y soporte dedicado.',
-    features: [
-      'Barberos ilimitados',
-      'Mensajes volumen flexible',
-      'Sucursales limitadas',
-      'White label + dominio propio',
-      'API completa + integraciones',
-      'Soporte dedicado con SLA',
-      'Capacitación equipos',
-      'Consultoría de optimización'
-    ],
-    color: 'from-emerald-500 to-emerald-600',
-    icon: Shield
-  }
-]
+import { Check, Scissors, Star, Zap, Shield, Smartphone, Calendar, BarChart3, MessageSquare, Mail, Clock, Users } from 'lucide-react'
+import { plans as PLAN_DEFS, formatCLP } from '@/lib/plans'
 
 const addOns = [
   {
@@ -173,15 +61,11 @@ const addOns = [
   }
 ]
 
-const formatPrice = (price: number, currency: string = 'CLP') => {
-  if (currency === 'CLP') {
-    return `$${price.toLocaleString()}`
-  }
-  return `$${price}`
-}
+const ICONS = { Scissors, BarChart3, Users, Shield }
+const formatPrice = (price: number | 'custom') => (price === 'custom' ? 'Custom' : formatCLP(price))
 
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<string>('crecimiento')
+  const [selectedPlan, setSelectedPlan] = useState<string>('basic')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -250,10 +134,10 @@ export default function PricingPage() {
           </Alert>
         )}
 
-        {/* Planes */}
+        {/* Planes (centralizados) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {plans.map((plan) => {
-            const Icon = plan.icon
+          {PLAN_DEFS.map((plan) => {
+            const Icon = plan.icon ? ICONS[plan.icon as keyof typeof ICONS] : Scissors
             const isSelected = selectedPlan === plan.id
             
             return (
@@ -272,25 +156,24 @@ export default function PricingPage() {
                   </div>
                 )}
                 
-                {plan.popular && (
+                {plan.highlighted && (
                   <div className="absolute top-4 right-4">
                     <Badge className="bg-yellow-400 text-yellow-900">
-                      <Star className="w-3 h-3 mr-1" />
-                      Ideal para barberías en expansión
+                      <Star className="w-3 h-3 mr-1" /> Más popular
                     </Badge>
                   </div>
                 )}
 
                 <CardHeader className="text-center">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${plan.color} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                  <div className={`w-16 h-16 bg-gradient-to-br ${plan.color ?? 'from-gray-800 to-gray-700'} rounded-xl flex items-center justify-center mx-auto mb-4`}>
                     <Icon className="w-8 h-8 text-white" />
                   </div>
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   <div className="text-3xl font-bold text-gray-900">
                     {formatPrice(plan.price)}{' '}
-                    <span className="text-sm font-normal text-gray-500">
-                      {plan.currency}/{plan.period === 'month' ? 'mes' : 'año'}
-                    </span>
+                    {plan.price !== 'custom' && (
+                      <span className="text-sm font-normal text-gray-500">/mes</span>
+                    )}
                   </div>
                   <CardDescription className="text-sm mt-2">
                     {plan.description}
@@ -299,8 +182,8 @@ export default function PricingPage() {
 
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center text-sm">
+                    {plan.features.map((feature) => (
+                      <div key={`${plan.id}-${feature}`} className="flex items-center text-sm">
                         <Check className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
                         <span>{feature}</span>
                       </div>
@@ -310,22 +193,21 @@ export default function PricingPage() {
                   <Button 
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (!plan.enabled) return
                       handlePlanSelect(plan.id)
                     }}
-                    className={`w-full ${
-                      plan.recommended 
-                        ? 'bg-blue-600 hover:bg-blue-700' 
-                        : 'bg-gray-900 hover:bg-gray-800'
-                    }`}
-                    disabled={isLoading && selectedPlan === plan.id}
+                    className={`w-full ${plan.enabled ? (plan.recommended ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800') : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                    disabled={(isLoading && selectedPlan === plan.id) || !plan.enabled}
                   >
-                    {isLoading && selectedPlan === plan.id ? (
+                    {!plan.enabled ? (
+                      'Próximamente'
+                    ) : isLoading && selectedPlan === plan.id ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                         Procesando...
                       </>
                     ) : (
-                      plan.id === 'solo' ? 'Empezar gratis' : 'Escalar ahora'
+                      plan.id === 'basic' ? 'Empezar' : 'Escalar ahora'
                     )}
                   </Button>
                 </CardContent>
@@ -352,7 +234,7 @@ export default function PricingPage() {
                   <h4 className="font-semibold text-gray-900 mb-1">{addon.name}</h4>
                   <p className="text-sm text-gray-600 mb-3">{addon.description}</p>
                   <div className="text-lg font-bold text-blue-600">
-                    {formatPrice(addon.price, addon.currency)}
+                    {formatPrice(addon.price)}
                   </div>
                 </CardContent>
               </Card>

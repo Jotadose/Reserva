@@ -71,6 +71,11 @@ const CATEGORIES = [
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
+  const [selectedPlan, setSelectedPlan] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'basic'
+    const p = new URLSearchParams(window.location.search).get('plan')
+    return p || 'basic'
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [error, setError] = useState('')
@@ -189,100 +194,67 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      // Verificar autenticación
       const { data: { session } } = await supabase.auth.getSession()
-      
       if (!session) {
         setError('Debes estar autenticado para crear una barbería')
         setIsLoading(false)
         return
       }
 
-      // Verificar que el slug no esté en uso
-      const { data: existingTenant } = await supabase
+      // Validar slug libre (rápido)
+      const { data: existing } = await supabase
         .from('tenants')
         .select('id')
         .eq('slug', businessInfo.slug)
         .maybeSingle()
-
-      if (existingTenant) {
+      if (existing) {
         setError('El nombre de URL ya está en uso. Por favor, elige otro.')
         setIsLoading(false)
         return
       }
 
-      // Crear el tenant
-      const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
-          name: businessInfo.name,
-          slug: businessInfo.slug,
-          description: businessInfo.description || null,
-          category: businessInfo.category,
-          address: businessInfo.address || null,
-          contact_phone: businessInfo.phone,
-          contact_email: businessInfo.email || null,
-          website: businessInfo.website || null,
-          working_hours: businessHours,
-          owner_id: session.user.id,
-          subscription_status: 'active'
+      // Enviar al endpoint con service role
+      const res = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          tenant: {
+            name: businessInfo.name,
+            slug: businessInfo.slug,
+            description: businessInfo.description || null,
+            category: businessInfo.category,
+            address: businessInfo.address || null,
+            contact_phone: businessInfo.phone,
+            contact_email: businessInfo.email || null,
+            website: businessInfo.website || null,
+            working_hours: businessHours,
+            subscription_status: 'active'
+          },
+          plan: selectedPlan,
+          services: services.map(s => ({
+            name: s.name,
+            description: s.description,
+            duration: s.duration,
+            price: s.price,
+          })),
+          provider: { role: 'owner' }
         })
-        .select()
-        .single()
+      })
 
-      if (tenantError) {
-        console.error('Error creating tenant:', tenantError)
-        setError('Error al crear la barbería. Por favor, inténtalo de nuevo.')
-        setIsLoading(false)
-        return
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.details || err?.error || 'Error creando el tenant')
       }
 
-      // Crear los servicios
-      if (services && services.length > 0) {
-        const servicesData = services
-          .filter(service => service.name && service.price > 0)
-          .map(service => ({
-            tenant_id: tenant.id,
-            name: service.name,
-            description: service.description || null,
-            duration_minutes: service.duration || 30,
-            price: service.price,
-            is_active: true
-          }))
-
-        if (servicesData.length > 0) {
-          const { error: servicesError } = await supabase
-            .from('services')
-            .insert(servicesData)
-
-          if (servicesError) {
-            console.error('Error creating services:', servicesError)
-            // Continuar aunque hay error en servicios
-          }
-        }
-      }
-
-      // Crear el proveedor principal (el dueño)
-      const { error: providerError } = await supabase
-        .from('providers')
-        .insert({
-          tenant_id: tenant.id,
-          user_id: session.user.id,
-          role: 'owner',
-          is_active: true
-        })
-
-      if (providerError) {
-        console.error('Error creating provider:', providerError)
-        // Continuar aunque hay error en provider
-      }
-
-      // Redirigir al dashboard
-      router.push(`/${tenant.slug}/dashboard`)
-      
-    } catch (error: any) {
-      console.error('Error creating tenant:', error)
-      setError('Error inesperado. Por favor, inténtalo de nuevo.')
+      const json = await res.json()
+      const created = json.tenant
+    // Establecer tenant_id en el JWT para RLS
+    await supabase.auth.updateUser({ data: { tenant_id: created.id } })
+      router.push(`/${created.slug}/dashboard`)
+    } catch (e: any) {
+      console.error('Error creating tenant:', e)
+      setError(e?.message || 'Error inesperado. Por favor, inténtalo de nuevo.')
     } finally {
       setIsLoading(false)
     }
