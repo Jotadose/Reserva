@@ -1,9 +1,9 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Tenant } from '@/types/tenant'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
 
 interface TenantContextType {
   tenant: Tenant | null
@@ -72,15 +72,19 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Intentar obtener el tenant de Supabase
+      const supabase = getSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('tenants')
         .select('*')
         .eq('slug', slug)
-        .eq('subscription_status', 'active')
-        .single()
+        .maybeSingle()
 
       if (supabaseError) {
-        // Si no se encuentra el tenant, crear uno mock para desarrollo
+        console.warn('Error fetching tenant from database:', supabaseError.message)
+        console.warn('Using mock data for development')
+      }
+      
+      if (!data) {
         console.warn('Tenant not found in database, using mock data for development')
         const mockTenant: Tenant = {
           id: 'demo-tenant-id',
@@ -118,10 +122,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           updated_at: new Date().toISOString()
         }
         setTenant(mockTenant)
-        return
+      } else {
+        // Tenant encontrado en la base de datos
+        setTenant(data)
       }
-
-      setTenant(data)
     } catch (err) {
       console.warn('Error fetching tenant:', err)
       setError(err instanceof Error ? err.message : 'Error loading tenant')
@@ -157,14 +161,14 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, supabaseConfigured])
 
-  const value = {
+  const value = useMemo(() => ({
     tenant,
     tenantSlug,
     isLoading,
     error,
     refetchTenant,
     isSupabaseConfigured: supabaseConfigured,
-  }
+  }), [tenant, tenantSlug, isLoading, error, refetchTenant, supabaseConfigured])
 
   return (
     <TenantContext.Provider value={value}>

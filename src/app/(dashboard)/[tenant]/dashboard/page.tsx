@@ -55,9 +55,9 @@ export default function DashboardPage() {
   }, [tenantSlug])
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
+    return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: 'COP',
+      currency: 'CLP',
       minimumFractionDigits: 0
     }).format(amount / 100)
   }

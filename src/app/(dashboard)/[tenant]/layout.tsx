@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode
@@ -78,6 +78,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       try {
         // Verificar que el tenant existe y pertenece al usuario
+        const supabase = getSupabaseClient()
         const { data: tenant, error } = await supabase
           .from('tenants')
           .select('id, name, owner_id')

@@ -1,8 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import { isSupabaseConfigured } from '@/lib/supabase'
+import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -16,16 +15,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
+export function SupabaseAuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Crear cliente de Supabase
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // Usar el cliente singleton
+  const supabase = getSupabaseClient()
 
   useEffect(() => {
     // Obtener sesión inicial
@@ -100,7 +96,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         email,
         password,
         options: {
-          data: metadata || {}
+          data: metadata ?? {}
         }
       })
 

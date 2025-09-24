@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 import { Calendar, MapPin, Phone, MessageCircle, Clock, ChevronRight, StarIcon } from 'lucide-react'
 import { BookingWidget } from '@/components/booking/booking-widget'
 
@@ -54,6 +54,7 @@ const PORTFOLIO_PLACEHOLDERS = ['pf1','pf2','pf3','pf4','pf5','pf6'] as const
 type WorkingHour = { open?: string; close?: string; openTime?: string; closeTime?: string; closed?: boolean; isOpen?: boolean }
 
 async function getTenantData(slug: string) {
+  const supabase = getSupabaseClient()
   const { data: tenant } = await supabase
     .from('tenants')
     .select('*')
@@ -365,6 +366,7 @@ export default async function TenantPage({ params }: Readonly<TenantPageProps>) 
 export async function generateMetadata({ params }: Readonly<TenantPageProps>): Promise<Metadata> {
   const tenantSlug = await params.then(p => p.tenant)
   
+  const supabase = getSupabaseClient()
   const { data: tenant } = await supabase
     .from('tenants')
     .select('name, description')
