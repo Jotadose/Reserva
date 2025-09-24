@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -85,6 +85,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     const checkAuthAndTenant = async () => {
       try {
+        const supabase = getSupabaseClient()
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session) {
@@ -190,70 +191,108 @@ export default function OnboardingPage() {
   }
 
   const handleSubmit = async () => {
+    console.log('🚀 Iniciando creación de barbería...')
     setIsLoading(true)
     setError('')
 
     try {
+      const supabase = getSupabaseClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
+        console.error('❌ No hay sesión de usuario')
         setError('Debes estar autenticado para crear una barbería')
         setIsLoading(false)
         return
       }
 
+      console.log('✅ Usuario autenticado:', session.user.email)
+
       // Validar slug libre (rápido)
+      console.log('🔍 Verificando disponibilidad del slug:', businessInfo.slug)
       const { data: existing } = await supabase
         .from('tenants')
         .select('id')
         .eq('slug', businessInfo.slug)
         .maybeSingle()
       if (existing) {
+        console.error('❌ Slug ya existe:', businessInfo.slug)
         setError('El nombre de URL ya está en uso. Por favor, elige otro.')
         setIsLoading(false)
         return
       }
 
+      console.log('✅ Slug disponible')
+
+      // Preparar datos
+      const payload = {
+        userId: session.user.id,
+        tenant: {
+          name: businessInfo.name,
+          slug: businessInfo.slug,
+          description: businessInfo.description || null,
+          category: businessInfo.category,
+          address: businessInfo.address || null,
+          contact_phone: businessInfo.phone,
+          contact_email: businessInfo.email || null,
+          website: businessInfo.website || null,
+          working_hours: businessHours,
+          subscription_status: 'active'
+        },
+        plan: selectedPlan,
+        services: services.map(s => ({
+          name: s.name,
+          description: s.description,
+          duration: s.duration,
+          price: s.price,
+        })),
+        provider: { role: 'owner' }
+      }
+
+      console.log('📦 Payload a enviar:', payload)
+
       // Enviar al endpoint con service role
+      console.log('🌐 Enviando solicitud a /api/onboarding...')
       const res = await fetch('/api/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: session.user.id,
-          tenant: {
-            name: businessInfo.name,
-            slug: businessInfo.slug,
-            description: businessInfo.description || null,
-            category: businessInfo.category,
-            address: businessInfo.address || null,
-            contact_phone: businessInfo.phone,
-            contact_email: businessInfo.email || null,
-            website: businessInfo.website || null,
-            working_hours: businessHours,
-            subscription_status: 'active'
-          },
-          plan: selectedPlan,
-          services: services.map(s => ({
-            name: s.name,
-            description: s.description,
-            duration: s.duration,
-            price: s.price,
-          })),
-          provider: { role: 'owner' }
-        })
+        body: JSON.stringify(payload)
       })
 
+      console.log('📡 Respuesta del servidor:', res.status, res.statusText)
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err?.details || err?.error || 'Error creando el tenant')
+        const errorText = await res.text()
+        console.error('❌ Error del servidor:', errorText)
+        let errorMessage = 'Error creando el tenant'
+        
+        try {
+          const err = JSON.parse(errorText)
+          errorMessage = err?.details || err?.error || errorMessage
+        } catch (parseError) {
+          errorMessage = errorText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const json = await res.json()
+      console.log('✅ Respuesta exitosa:', json)
+      
       const created = json.tenant
-    // Establecer tenant_id en el JWT para RLS
-    await supabase.auth.updateUser({ data: { tenant_id: created.id } })
+      if (!created) {
+        throw new Error('No se recibió información del tenant creado')
+      }
+
+      console.log('🏪 Tenant creado:', created.slug)
+
+      // Establecer tenant_id en el JWT para RLS
+      console.log('🔐 Actualizando JWT con tenant_id...')
+      await supabase.auth.updateUser({ data: { tenant_id: created.id } })
+      
+      console.log('🎉 ¡Barbería creada exitosamente! Redirigiendo...')
       router.push(`/${created.slug}/dashboard`)
     } catch (e: any) {
-      console.error('Error creating tenant:', e)
+      console.error('💥 Error creating tenant:', e)
       setError(e?.message || 'Error inesperado. Por favor, inténtalo de nuevo.')
     } finally {
       setIsLoading(false)
@@ -261,16 +300,33 @@ export default function OnboardingPage() {
   }
 
   const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return businessInfo.name && businessInfo.slug && businessInfo.category && businessInfo.phone
-      case 2:
-        return services.every(service => service.name && service.price > 0)
-      case 3:
-        return true
-      default:
-        return false
-    }
+    const result = (() => {
+      switch (currentStep) {
+        case 1:
+          return businessInfo.name && businessInfo.slug && businessInfo.category && businessInfo.phone
+        case 2:
+          return services.every(service => service.name && service.price > 0)
+        case 3:
+        case 4:
+          return true
+        default:
+          return false
+      }
+    })()
+    
+    console.log('🔍 canProceed check:', {
+      currentStep,
+      result,
+      businessInfo: {
+        name: businessInfo.name,
+        slug: businessInfo.slug,
+        category: businessInfo.category,
+        phone: businessInfo.phone
+      },
+      services: services.map(s => ({ name: s.name, price: s.price }))
+    })
+    
+    return result
   }
 
   const renderStep = () => {
@@ -692,7 +748,7 @@ export default function OnboardingPage() {
                     Anterior
                   </Button>
 
-                  {currentStep < 4 ? (
+                  {currentStep < 3 ? (
                     <Button
                       onClick={() => setCurrentStep(prev => prev + 1)}
                       disabled={!canProceed()}
@@ -703,7 +759,10 @@ export default function OnboardingPage() {
                     </Button>
                   ) : (
                     <Button
-                      onClick={handleSubmit}
+                      onClick={() => {
+                        console.log('🔥 Botón "Crear Mi Barbería" clickeado!')
+                        handleSubmit()
+                      }}
                       disabled={isLoading || !canProceed()}
                       className="bg-green-600 hover:bg-green-700"
                     >
