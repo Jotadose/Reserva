@@ -308,8 +308,15 @@ export default function OnboardingPage() {
         console.warn('No se pudo actualizar tenant_id en JWT inmediatamente:', updErr.message)
       }
 
+      const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession()
+      if (refreshErr) {
+        console.warn('No se pudo refrescar la sesión tras actualizar tenant_id:', refreshErr.message)
+      } else {
+        console.log('🔄 Sesión refrescada, metadata actual:', refreshData.session?.user.user_metadata)
+      }
+
       console.log('🎉 ¡Barbería creada exitosamente! Redirigiendo...')
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 400))
 
       router.push(`/${created.slug}/dashboard`)
     } catch (e: any) {

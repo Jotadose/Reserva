@@ -12,14 +12,19 @@ export const isSupabaseConfigured = (): boolean => {
          supabaseAnonKey !== 'your-anon-key')
 }
 
-// Singleton para el cliente de Supabase del browser
-let _supabaseClient: SupabaseClient | null = null
+type SupabaseClientCache = {
+  __browserClient?: SupabaseClient
+  __serverClient?: SupabaseClient
+}
+
+const globalForSupabase = globalThis as unknown as SupabaseClientCache
 
 export const getSupabaseClient = (): SupabaseClient => {
-  if (!_supabaseClient) {
-    if (typeof window !== 'undefined') {
-      // En el browser, usar createBrowserClient para mejor SSR
-      _supabaseClient = createBrowserClient(
+  const isBrowser = typeof window !== 'undefined'
+
+  if (isBrowser) {
+    if (!globalForSupabase.__browserClient) {
+      globalForSupabase.__browserClient = createBrowserClient(
         supabaseUrl,
         supabaseAnonKey,
         {
@@ -30,21 +35,24 @@ export const getSupabaseClient = (): SupabaseClient => {
           },
         }
       )
-    } else {
-      // En el servidor, usar createClient normal
-      _supabaseClient = createClient(
-        supabaseUrl || 'https://demo.supabase.co', 
-        supabaseAnonKey || 'demo-key', 
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        }
-      )
     }
+    return globalForSupabase.__browserClient
   }
-  return _supabaseClient
+
+  if (!globalForSupabase.__serverClient) {
+    globalForSupabase.__serverClient = createClient(
+      supabaseUrl || 'https://demo.supabase.co',
+      supabaseAnonKey || 'demo-key',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
+  }
+
+  return globalForSupabase.__serverClient
 }
 
 // Cliente para uso en el frontend (singleton)
