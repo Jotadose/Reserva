@@ -152,6 +152,28 @@ export default function OnboardingPage() {
       .trim()
   }
 
+  const generateUniqueSlug = async (baseName: string): Promise<string> => {
+    const supabase = getSupabaseClient()
+    let baseSlug = generateSlug(baseName)
+    let finalSlug = baseSlug
+    let counter = 1
+
+    while (true) {
+      const { data: existing } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('slug', finalSlug)
+        .maybeSingle()
+      
+      if (!existing) {
+        return finalSlug
+      }
+      
+      finalSlug = `${baseSlug}-${counter}`
+      counter++
+    }
+  }
+
   const handleBusinessInfoChange = (field: keyof BusinessInfo, value: string) => {
     setBusinessInfo(prev => {
       const updated = { ...prev, [field]: value }
@@ -207,33 +229,25 @@ export default function OnboardingPage() {
 
       console.log('✅ Usuario autenticado:', session.user.email)
 
-      // Validar slug libre (rápido)
-      console.log('🔍 Verificando disponibilidad del slug:', businessInfo.slug)
-      const { data: existing } = await supabase
-        .from('tenants')
-        .select('id')
-        .eq('slug', businessInfo.slug)
-        .maybeSingle()
-      if (existing) {
-        console.error('❌ Slug ya existe:', businessInfo.slug)
-        setError('El nombre de URL ya está en uso. Por favor, elige otro.')
-        setIsLoading(false)
-        return
-      }
+      // Generar slug único automáticamente
+      console.log('🔍 Generando slug único para:', businessInfo.name)
+      const uniqueSlug = await generateUniqueSlug(businessInfo.name)
+      console.log('✅ Slug único generado:', uniqueSlug)
 
-      console.log('✅ Slug disponible')
+      // Actualizar el businessInfo con el slug único
+      const finalBusinessInfo = { ...businessInfo, slug: uniqueSlug }
 
       // Preparar datos
       const payload = {
         userId: session.user.id,
         tenant: {
-          name: businessInfo.name,
-          slug: businessInfo.slug,
-          description: businessInfo.description || null,
-          category: businessInfo.category,
-          contact_phone: businessInfo.phone,
-          contact_email: businessInfo.email || null,
-          website: businessInfo.website || null,
+          name: finalBusinessInfo.name,
+          slug: finalBusinessInfo.slug,
+          description: finalBusinessInfo.description || null,
+          category: finalBusinessInfo.category,
+          contact_phone: finalBusinessInfo.phone,
+          contact_email: finalBusinessInfo.email || null,
+          website: finalBusinessInfo.website || null,
           working_hours: businessHours,
           subscription_status: 'active'
         },
@@ -289,7 +303,11 @@ export default function OnboardingPage() {
       await supabase.auth.updateUser({ data: { tenant_id: created.id } })
       
       console.log('🎉 ¡Barbería creada exitosamente! Redirigiendo...')
-      router.push(`/${created.slug}/dashboard`)
+      // Esperamos un poco antes de redirigir para que el JWT se actualice
+      setTimeout(() => {
+        // Intentamos primero el dashboard, si no existe irá a la página principal del tenant
+        router.push(`/${created.slug}/dashboard`)
+      }, 1000)
     } catch (e: any) {
       console.error('💥 Error creating tenant:', e)
       setError(e?.message || 'Error inesperado. Por favor, inténtalo de nuevo.')
