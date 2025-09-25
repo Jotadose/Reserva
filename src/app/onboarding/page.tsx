@@ -278,10 +278,22 @@ export default function OnboardingPage() {
         const errorText = await res.text()
         console.error('❌ Error del servidor:', errorText)
         let errorMessage = 'Error creando el tenant'
+        let existingTenant = null
         
         try {
           const err = JSON.parse(errorText)
           errorMessage = err?.details || err?.error || errorMessage
+          existingTenant = err?.existingTenant
+          
+          // Si ya tiene un tenant, redirigir directamente
+          if (existingTenant && res.status === 400) {
+            console.log('🏪 Usuario ya tiene tenant, redirigiendo:', existingTenant.slug)
+            // Cache el tenant existente
+            localStorage.setItem('last_created_tenant', JSON.stringify(existingTenant))
+            localStorage.setItem('cachedTenantSlug', existingTenant.slug)
+            router.push(`/${existingTenant.slug}/dashboard`)
+            return
+          }
         } catch (parseError) {
           errorMessage = errorText || errorMessage
         }

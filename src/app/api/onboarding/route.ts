@@ -16,6 +16,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
     }
 
+    // Verificar si el usuario ya tiene un tenant
+    const { data: existingTenant, error: checkError } = await supabaseAdmin
+      .from('tenants')
+      .select('id, slug, name')
+      .eq('owner_id', userId)
+      .eq('subscription_status', 'active')
+      .maybeSingle()
+
+    if (checkError) {
+      console.warn('Error verificando tenant existente:', checkError)
+    }
+
+    if (existingTenant) {
+      return NextResponse.json({ 
+        error: 'Ya tienes una barbería creada', 
+        details: `Ya tienes la barbería "${existingTenant.name}" (${existingTenant.slug})`,
+        existingTenant 
+      }, { status: 400 })
+    }
+
     // Solo incluir campos que existen en el esquema real de la tabla
     const tenantData = {
       name: tenant.name,

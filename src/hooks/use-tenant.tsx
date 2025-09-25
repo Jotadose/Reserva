@@ -105,12 +105,13 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   const handleTenantResult = useCallback((data: any, error: any, cachedTenant: Tenant | null, slug: string) => {
     if (error) {
-      console.warn('Error fetching tenant from database:', error)
+      console.warn(`Error fetching tenant '${slug}' from database:`, error.message)
       if (cachedTenant) {
+        console.log(`📦 Fallback: Usando tenant cacheado para ${slug}`)
         setError(null)
         setTenant(cachedTenant)
       } else {
-        setError(error.message)
+        setError(`Barbería '${slug}' no encontrada`)
         setTenant(null)
       }
       return
@@ -118,16 +119,18 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     if (!data) {
       if (cachedTenant) {
+        console.log(`📦 Tenant '${slug}' no encontrado en DB, usando cache`)
         setError(null)
         setTenant(cachedTenant)
       } else {
-        console.warn('Tenant not found with slug:', slug)
-        setError('Tenant no encontrado')
+        console.log(`❌ Tenant '${slug}' no encontrado en DB ni en cache`)
+        setError(`Barbería '${slug}' no encontrada`)
         setTenant(null)
       }
       return
     }
 
+    console.log(`✅ Tenant '${slug}' encontrado en DB`)
     setTenant(data)
     setError(null)
   }, [])
@@ -150,6 +153,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
+      console.log(`🔍 Buscando tenant en DB: ${slug}`)
       const supabase = getSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('tenants')
