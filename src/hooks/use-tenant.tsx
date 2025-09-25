@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { Tenant } from '@/types/tenant'
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
+import { getPublicSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
 
 interface TenantContextType {
   tenant: Tenant | null
@@ -154,10 +154,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log(`🔍 Buscando tenant en DB: ${slug}`)
-      const supabase = getSupabaseClient()
+      // Usar cliente público para acceso sin autenticación
+      const supabase = getPublicSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('tenants')
-        .select('*')
+        .select('id, slug, name, subscription_status, subscription_plan, contact_email, contact_phone, slot_duration_minutes, settings, created_at, updated_at')
         .eq('slug', slug)
         .in('subscription_status', ['active', 'trial'])
         .maybeSingle()

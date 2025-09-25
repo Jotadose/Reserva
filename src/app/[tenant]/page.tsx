@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useTenant } from '@/hooks/use-tenant'
-import { getTenantTheme } from '@/lib/theme'
+import { usePublicServices } from '@/hooks/use-public-services'
+
 import Link from 'next/link'
 import {
   Scissors,
@@ -22,87 +23,24 @@ import {
   ChevronDown
 } from 'lucide-react'
 
-// Mock data - En producción estos datos vendrían de la base de datos
-const getMockServices = (tenantId: string) => [
-  {
-    id: '1',
-    tenant_id: tenantId,
-    name: 'Corte Clásico',
-    description: 'Corte tradicional con tijera y máquina, incluye lavado y peinado',
-    duration_minutes: 30,
-    price: 2500,
-    category: 'basico',
-    priority: 'alta',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    tenant_id: tenantId,
-    name: 'Corte + Barba',
-    description: 'Corte completo con arreglo de barba profesional',
-    duration_minutes: 45,
-    price: 3500,
-    category: 'premium',
-    priority: 'alta',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '3',
-    tenant_id: tenantId,
-    name: 'Afeitado Clásico',
-    description: 'Afeitado tradicional con navaja y toallas calientes',
-    duration_minutes: 20,
-    price: 1800,
-    category: 'premium',
-    priority: 'alta',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '4',
-    tenant_id: tenantId,
-    name: 'Lavado y Peinado',
-    description: 'Lavado profundo con productos premium',
-    duration_minutes: 15,
-    price: 1000,
-    category: 'basico',
-    priority: 'media',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '5',
-    tenant_id: tenantId,
-    name: 'Combo Completo',
-    description: 'Corte + Barba + Lavado + Peinado',
-    duration_minutes: 60,
-    price: 4500,
-    category: 'premium',
-    priority: 'media',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '6',
-    tenant_id: tenantId,
-    name: 'Tratamiento Capilar',
-    description: 'Tratamiento nutritivo para el cabello',
-    duration_minutes: 40,
-    price: 3000,
-    category: 'especial',
-    priority: 'baja',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+// Utility functions
+const getCategoryBadge = (category?: string) => {
+  switch(category) {
+    case 'basico': return 'bg-blue-600/20 text-blue-400'
+    case 'premium': return 'bg-purple-600/20 text-purple-400'
+    case 'color': return 'bg-orange-600/20 text-orange-400'
+    default: return 'bg-green-600/20 text-green-400'
   }
-]
+}
+
+const getCategoryLabel = (category?: string) => {
+  switch(category) {
+    case 'basico': return 'Básico'
+    case 'premium': return 'Premium'
+    case 'color': return 'Color'
+    default: return 'Especial'
+  }
+}
 
 const getMockContact = (tenant: any) => ({
   businessName: tenant?.name || 'Mi Barbería',
@@ -124,7 +62,7 @@ const getMockSchedule = () => ({
 
 export default function TenantLandingPage() {
   const { tenant, isLoading, error } = useTenant()
-  const [services, setServices] = useState<any[]>([])
+  const { services } = usePublicServices(tenant?.id || null)
   const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
@@ -132,12 +70,6 @@ export default function TenantLandingPage() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  useEffect(() => {
-    if (tenant) {
-      setServices(getMockServices(tenant.id))
-    }
-  }, [tenant])
 
   if (isLoading) {
     return (
@@ -172,10 +104,9 @@ export default function TenantLandingPage() {
     )
   }
 
-  const theme = getTenantTheme(tenant)
   const contact = getMockContact(tenant)
   const schedule = getMockSchedule()
-  const featuredServices = services.filter(s => s.priority === 'alta').slice(0, 3)
+  const featuredServices = services.slice(0, 3) // Primeros 3 servicios como destacados
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -362,18 +293,12 @@ export default function TenantLandingPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <Scissors className="w-5 h-5 text-purple-400" />
-                    <Badge variant="secondary" className={`text-xs px-2 py-1 rounded ${
-                      service.category === 'basico' ? 'bg-blue-600/20 text-blue-400' :
-                      service.category === 'premium' ? 'bg-purple-600/20 text-purple-400' :
-                      service.category === 'color' ? 'bg-orange-600/20 text-orange-400' :
-                      'bg-green-600/20 text-green-400'
-                    }`}>
-                      {service.category === 'basico' ? 'Básico' :
-                       service.category === 'premium' ? 'Premium' :
-                       service.category === 'color' ? 'Color' : 'Especial'}
+                    <Badge variant="secondary" className={`text-xs px-2 py-1 rounded ${getCategoryBadge(service.category)}`}>
+                      {getCategoryLabel(service.category)}
                     </Badge>
                   </div>
-                  {service.priority === 'alta' && (
+                  {/* Solo mostrar estrella para los primeros 3 servicios */}
+                  {services.indexOf(service) < 3 && (
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                   )}
                 </div>

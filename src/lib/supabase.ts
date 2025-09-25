@@ -55,6 +55,19 @@ export const getSupabaseClient = (): SupabaseClient => {
   return globalForSupabase.__serverClient
 }
 
+// Cliente público para datos que no requieren autenticación (landing pages)
+export const getPublicSupabaseClient = (): SupabaseClient => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+    db: {
+      schema: 'public'
+    }
+  })
+}
+
 // Cliente para uso en el servidor (con service role key)
 let _supabaseAdmin: SupabaseClient | null = null
 
