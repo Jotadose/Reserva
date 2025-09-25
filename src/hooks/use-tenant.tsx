@@ -119,18 +119,18 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     if (!data) {
       if (cachedTenant) {
-        console.log(`📦 Tenant '${slug}' no encontrado en DB, usando cache`)
+        console.log(`📦 Usando cache para: ${slug}`)
         setError(null)
         setTenant(cachedTenant)
       } else {
-        console.log(`❌ Tenant '${slug}' no encontrado en DB ni en cache`)
+        console.warn(`❌ Tenant '${slug}' no encontrado`)
         setError(`Barbería '${slug}' no encontrada`)
         setTenant(null)
       }
       return
     }
 
-    console.log(`✅ Tenant '${slug}' encontrado en DB`)
+    console.log(`✅ Tenant '${slug}' cargado desde BD`)
     setTenant(data)
     setError(null)
   }, [])
@@ -159,7 +159,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         .from('tenants')
         .select('*')
         .eq('slug', slug)
-        .eq('subscription_status', 'active')
+        .in('subscription_status', ['active', 'trial'])
         .maybeSingle()
 
       handleTenantResult(data, supabaseError, cachedTenant, slug)
