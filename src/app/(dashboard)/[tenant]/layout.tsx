@@ -81,33 +81,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         const supabase = getSupabaseClient()
         const { data: tenant, error } = await supabase
           .from('tenants')
-          .select('id, name, owner_id')
+          .select('id, name')
           .eq('slug', tenantSlug)
           .eq('subscription_status', 'active')
-          .single()
+          .maybeSingle()
 
-        if (error || !tenant) {
-          console.error('Tenant not found:', error)
+        if (error) {
+          console.error('Error querying tenant:', error)
           router.push('/404')
           return
         }
 
-        if (tenant.owner_id !== user.id) {
-          // Usuario no es propietario, redirigir a su tenant o onboarding
-          const { data: userTenant } = await supabase
-            .from('tenants')
-            .select('slug')
-            .eq('owner_id', user.id)
-            .eq('subscription_status', 'active')
-            .maybeSingle()
-
-          if (userTenant) {
-            router.push(`/${userTenant.slug}/dashboard`)
-          } else {
-            router.push('/onboarding')
-          }
+        if (!tenant) {
+          console.error('Tenant not found with slug:', tenantSlug)
+          router.push('/404')
           return
         }
+
+        // Por ahora permitimos acceso a cualquier tenant válido
+        // En el futuro implementaremos verificación de permisos con owner_id
 
         setTenantData({ name: tenant.name })
         setIsValidating(false)
