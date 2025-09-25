@@ -231,7 +231,6 @@ export default function OnboardingPage() {
           slug: businessInfo.slug,
           description: businessInfo.description || null,
           category: businessInfo.category,
-          address: businessInfo.address || null,
           contact_phone: businessInfo.phone,
           contact_email: businessInfo.email || null,
           website: businessInfo.website || null,
@@ -300,33 +299,17 @@ export default function OnboardingPage() {
   }
 
   const canProceed = () => {
-    const result = (() => {
-      switch (currentStep) {
-        case 1:
-          return businessInfo.name && businessInfo.slug && businessInfo.category && businessInfo.phone
-        case 2:
-          return services.every(service => service.name && service.price > 0)
-        case 3:
-        case 4:
-          return true
-        default:
-          return false
-      }
-    })()
-    
-    console.log('🔍 canProceed check:', {
-      currentStep,
-      result,
-      businessInfo: {
-        name: businessInfo.name,
-        slug: businessInfo.slug,
-        category: businessInfo.category,
-        phone: businessInfo.phone
-      },
-      services: services.map(s => ({ name: s.name, price: s.price }))
-    })
-    
-    return result
+    switch (currentStep) {
+      case 1:
+        return businessInfo.name && businessInfo.slug && businessInfo.category && businessInfo.phone
+      case 2:
+        return services.every(service => service.name && service.price > 0)
+      case 3:
+      case 4:
+        return true
+      default:
+        return false
+    }
   }
 
   const renderStep = () => {
@@ -358,7 +341,7 @@ export default function OnboardingPage() {
                 <Label htmlFor="slug">URL de tu página *</Label>
                 <div className="flex mt-1">
                   <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                    agendex.studio/
+                    agendexstudio.vercel.app/
                   </span>
                   <Input
                     id="slug"
@@ -427,7 +410,7 @@ export default function OnboardingPage() {
                   id="address"
                   value={businessInfo.address}
                   onChange={(e) => handleBusinessInfoChange('address', e.target.value)}
-                  placeholder="Calle 123 #45-67, Bogotá"
+                  placeholder="Calle 123 #45-67, Chile"
                   className="mt-1"
                 />
               </div>
@@ -614,7 +597,7 @@ export default function OnboardingPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p><strong>Nombre:</strong> {businessInfo.name}</p>
-                  <p><strong>URL:</strong> agendex.studio/{businessInfo.slug}</p>
+                  <p><strong>URL:</strong> agendexstudio.vercel.app/{businessInfo.slug}</p>
                   <p><strong>Categoría:</strong> {businessInfo.category}</p>
                   {businessInfo.description && <p><strong>Descripción:</strong> {businessInfo.description}</p>}
                   <p><strong>Teléfono:</strong> {businessInfo.phone}</p>
