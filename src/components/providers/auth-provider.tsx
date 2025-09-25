@@ -73,6 +73,29 @@ export function SupabaseAuthProvider({ children }: Readonly<{ children: React.Re
       // Verificar si el usuario tiene un tenant después del login exitoso
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
+        // Primero verificar caché local
+        let cachedTenantSlug: string | null = null
+        try {
+          const lastSlug = localStorage.getItem('last_tenant_slug')
+          const cachedTenant = localStorage.getItem('last_created_tenant')
+          
+          if (lastSlug && cachedTenant) {
+            const parsed = JSON.parse(cachedTenant)
+            if (parsed?.slug === lastSlug) {
+              cachedTenantSlug = lastSlug
+              console.log('🔍 Found cached tenant for user:', cachedTenantSlug)
+            }
+          }
+        } catch (cacheErr) {
+          console.warn('Could not read cached tenant:', cacheErr)
+        }
+
+        // Si hay caché, usarlo directamente
+        if (cachedTenantSlug) {
+          return { tenant: cachedTenantSlug }
+        }
+
+        // Si no hay caché, consultar la base de datos
         const { data: tenant } = await supabase
           .from('tenants')
           .select('slug')
