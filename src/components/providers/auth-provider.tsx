@@ -21,30 +21,37 @@ export function SupabaseAuthProvider({ children }: Readonly<{ children: React.Re
   const [loading, setLoading] = useState(true)
 
   // Usar el cliente singleton
-  const supabase = getSupabaseClient()
+  const supabase = useMemo(() => getSupabaseClient(), [])
 
   useEffect(() => {
-    // Obtener sesión inicial
-    const getSession = async () => {
+    let isMounted = true
+
+    const loadSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!isMounted) {
+        return
+      }
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     }
 
-    getSession()
+    loadSession()
 
-    // Escuchar cambios de auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return
       }
-    )
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
 
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const signIn = async (email: string, password: string) => {
     try {

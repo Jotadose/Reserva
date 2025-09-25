@@ -298,16 +298,20 @@ export default function OnboardingPage() {
 
       console.log('🏪 Tenant creado:', created.slug)
 
-      // Establecer tenant_id en el JWT para RLS
+      try {
+        localStorage.setItem('last_tenant_slug', created.slug)
+      } catch {}
+
       console.log('🔐 Actualizando JWT con tenant_id...')
-      await supabase.auth.updateUser({ data: { tenant_id: created.id } })
-      
+      const { error: updErr } = await supabase.auth.updateUser({ data: { tenant_id: created.id } })
+      if (updErr) {
+        console.warn('No se pudo actualizar tenant_id en JWT inmediatamente:', updErr.message)
+      }
+
       console.log('🎉 ¡Barbería creada exitosamente! Redirigiendo...')
-      // Esperamos un poco antes de redirigir para que el JWT se actualice
-      setTimeout(() => {
-        // Intentamos primero el dashboard, si no existe irá a la página principal del tenant
-        router.push(`/${created.slug}/dashboard`)
-      }, 1000)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      router.push(`/${created.slug}/dashboard`)
     } catch (e: any) {
       console.error('💥 Error creating tenant:', e)
       setError(e?.message || 'Error inesperado. Por favor, inténtalo de nuevo.')

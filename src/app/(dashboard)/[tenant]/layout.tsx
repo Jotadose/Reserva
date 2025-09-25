@@ -88,13 +88,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         if (error) {
           console.error('Error querying tenant:', error)
-          router.push('/404')
+          router.push('/onboarding')
           return
         }
 
         if (!tenant) {
           console.error('Tenant not found with slug:', tenantSlug)
-          router.push('/404')
+          router.push('/onboarding')
           return
         }
 
