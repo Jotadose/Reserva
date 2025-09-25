@@ -44,7 +44,7 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen text-white bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900">
       {/* Header */}
-      <header className="border-b border-white/10 bg-black/20 backdrop-blur-md">
+      <header className="border-b border-white/10 glass">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -81,7 +81,7 @@ export default function BookingPage() {
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 p-8">
+          <div className="glass-card p-8">
             <div className="text-center">
               <Calendar className="w-16 h-16 text-purple-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-4">Sistema de Reservas</h3>
