@@ -59,16 +59,31 @@ export const getSupabaseClient = (): SupabaseClient => {
 export const supabase = getSupabaseClient()
 
 // Cliente para uso en el servidor (con service role key)
-export const supabaseAdmin = createClient(
-  supabaseUrl || 'https://demo.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'demo-service-key',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+let _supabaseAdmin: SupabaseClient | null = null
+
+const ensureSupabaseAdmin = (): SupabaseClient => {
+  if (typeof window !== 'undefined') {
+    throw new Error('Supabase admin client is only available on the server')
   }
-)
+  _supabaseAdmin ??= createClient(
+    supabaseUrl || 'https://demo.supabase.co',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'demo-service-key',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+  return _supabaseAdmin
+}
+
+export const getSupabaseAdminClient = ensureSupabaseAdmin
+
+export const supabaseAdmin =
+  typeof window === 'undefined'
+    ? ensureSupabaseAdmin()
+    : (null as unknown as SupabaseClient)
 
 // Función helper para obtener el tenant desde el JWT
 export async function getTenantFromAuth() {

@@ -261,7 +261,8 @@ export default function OnboardingPage() {
         provider: { role: 'owner' }
       }
 
-      console.log('📦 Payload a enviar:', payload)
+  const tenantPayload = payload.tenant
+  console.log('📦 Payload a enviar:', payload)
 
       // Enviar al endpoint con service role
       console.log('🌐 Enviando solicitud a /api/onboarding...')
@@ -300,6 +301,21 @@ export default function OnboardingPage() {
 
       try {
         localStorage.setItem('last_tenant_slug', created.slug)
+        localStorage.setItem('last_created_tenant', JSON.stringify({
+          id: created.id,
+          slug: created.slug,
+          name: created.name,
+          plan: created.subscription_plan ?? payload.plan ?? 'basic',
+          status: created.subscription_status ?? tenantPayload.subscription_status ?? 'active',
+          contact_email: created.contact_email ?? tenantPayload.contact_email ?? undefined,
+          contact_phone: created.contact_phone ?? tenantPayload.contact_phone ?? undefined,
+          slot_duration_minutes: created.slot_duration_minutes ?? 30,
+          settings: created.settings ?? {
+            working_hours: tenantPayload.working_hours,
+          },
+          created_at: created.created_at ?? new Date().toISOString(),
+          updated_at: created.updated_at ?? new Date().toISOString(),
+        }))
       } catch {}
 
       console.log('🔐 Actualizando JWT con tenant_id...')
