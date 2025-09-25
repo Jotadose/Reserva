@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase, isSupabaseConfigured, bookingsAPI, servicesAPI, providersAPI } from '@/lib/supabase'
+import { getSupabaseClient, isSupabaseConfigured, bookingsAPI, servicesAPI, providersAPI } from '@/lib/supabase'
 
 export function useSupabaseTest() {
   const [testResults, setTestResults] = useState<any>({})
@@ -12,6 +12,8 @@ export function useSupabaseTest() {
     const results: any = {}
 
     try {
+      const supabase = getSupabaseClient()
+      
       // Test 1: Verificar configuración
       results.configuration = {
         isConfigured: isSupabaseConfigured(),

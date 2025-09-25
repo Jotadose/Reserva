@@ -300,8 +300,7 @@ export default function OnboardingPage() {
       console.log('🏪 Tenant creado:', created.slug)
 
       try {
-        localStorage.setItem('last_tenant_slug', created.slug)
-        localStorage.setItem('last_created_tenant', JSON.stringify({
+        const cachedTenantData = {
           id: created.id,
           slug: created.slug,
           name: created.name,
@@ -315,8 +314,14 @@ export default function OnboardingPage() {
           },
           created_at: created.created_at ?? new Date().toISOString(),
           updated_at: created.updated_at ?? new Date().toISOString(),
-        }))
-      } catch {}
+        }
+        
+        console.log('💾 Cacheando datos del tenant:', cachedTenantData)
+        localStorage.setItem('last_tenant_slug', created.slug)
+        localStorage.setItem('last_created_tenant', JSON.stringify(cachedTenantData))
+      } catch (cacheErr) {
+        console.warn('⚠️ No se pudieron cachear los datos del tenant:', cacheErr)
+      }
 
       console.log('🔐 Actualizando JWT con tenant_id...')
       const { error: updErr } = await supabase.auth.updateUser({ data: { tenant_id: created.id } })
@@ -332,9 +337,12 @@ export default function OnboardingPage() {
       }
 
       console.log('🎉 ¡Barbería creada exitosamente! Redirigiendo...')
-      await new Promise((resolve) => setTimeout(resolve, 400))
-
-      router.push(`/${created.slug}/dashboard`)
+      
+      // Force a window refresh to clear any cached state and ensure the tenant context picks up the new data
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      
+      // Use replace instead of push to prevent back navigation issues
+      router.replace(`/${created.slug}/dashboard`)
     } catch (e: any) {
       console.error('💥 Error creating tenant:', e)
       setError(e?.message || 'Error inesperado. Por favor, inténtalo de nuevo.')

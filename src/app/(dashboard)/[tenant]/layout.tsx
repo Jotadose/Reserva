@@ -77,6 +77,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       }
 
       try {
+        // Check cached tenant first
+        let cachedTenant = null
+        try {
+          const cached = localStorage.getItem('last_created_tenant')
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            if (parsed?.slug === tenantSlug) {
+              cachedTenant = parsed
+              console.log('🏪 Using cached tenant for layout validation:', parsed.name)
+            }
+          }
+        } catch (cacheErr) {
+          console.warn('Could not read cached tenant:', cacheErr)
+        }
+
+        // If we have cached data, use it and skip the database query for now
+        if (cachedTenant) {
+          setTenantData({ name: cachedTenant.name })
+          setIsValidating(false)
+          return
+        }
+
         // Verificar que el tenant existe y pertenece al usuario
         const supabase = getSupabaseClient()
         const { data: tenant, error } = await supabase
@@ -88,13 +110,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         if (error) {
           console.error('Error querying tenant:', error)
-          router.push('/onboarding')
+          // Don't redirect immediately if we're coming from onboarding
+          if (!cachedTenant) {
+            router.push('/onboarding')
+          }
           return
         }
 
         if (!tenant) {
           console.error('Tenant not found with slug:', tenantSlug)
-          router.push('/onboarding')
+          // Don't redirect immediately if we're coming from onboarding
+          if (!cachedTenant) {
+            router.push('/onboarding')
+          }
           return
         }
 

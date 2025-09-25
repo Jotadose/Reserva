@@ -29,7 +29,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const cached = localStorage.getItem('last_created_tenant')
-      if (!cached) return null
+      if (!cached) {
+        console.log(`🔍 No hay tenant cacheado para slug: ${slug}`)
+        return null
+      }
 
       const parsed = JSON.parse(cached) as Partial<Tenant> & {
         slug?: string
@@ -37,7 +40,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         status?: Tenant['status']
       }
 
-      if (parsed?.slug !== slug) return null
+      if (parsed?.slug !== slug) {
+        console.log(`🔍 Tenant cacheado (${parsed?.slug}) no coincide con slug solicitado: ${slug}`)
+        return null
+      }
 
       const fallbackTenant: Tenant = {
         id: parsed.id ?? 'unknown-tenant-id',
@@ -53,6 +59,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         updated_at: parsed.updated_at ?? new Date().toISOString(),
       }
 
+      console.log(`✅ Tenant cacheado encontrado para ${slug}:`, fallbackTenant)
       return fallbackTenant
     } catch (err) {
       console.warn('No se pudo cargar el tenant cacheado:', err)
@@ -96,15 +103,46 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     updated_at: new Date().toISOString()
   }), [])
 
+  const handleTenantResult = useCallback((data: any, error: any, cachedTenant: Tenant | null, slug: string) => {
+    if (error) {
+      console.warn('Error fetching tenant from database:', error)
+      if (cachedTenant) {
+        setError(null)
+        setTenant(cachedTenant)
+      } else {
+        setError(error.message)
+        setTenant(null)
+      }
+      return
+    }
+
+    if (!data) {
+      if (cachedTenant) {
+        setError(null)
+        setTenant(cachedTenant)
+      } else {
+        console.warn('Tenant not found with slug:', slug)
+        setError('Tenant no encontrado')
+        setTenant(null)
+      }
+      return
+    }
+
+    setTenant(data)
+    setError(null)
+  }, [])
+
   const fetchTenant = useCallback(async (slug: string) => {
-    let cachedTenant: Tenant | null = getCachedTenant(slug)
+    const cachedTenant = getCachedTenant(slug)
 
     try {
       setIsLoading(true)
       setError(null)
 
       if (cachedTenant) {
-        setTenant(prev => prev ?? cachedTenant)
+        console.log(`📦 Usando tenant cacheado para ${slug}:`, cachedTenant.name)
+        setTenant(cachedTenant)
+        setError(null)
       }
 
       if (!supabaseConfigured) {
@@ -120,36 +158,20 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         .eq('subscription_status', 'active')
         .maybeSingle()
 
-      if (supabaseError) {
-        console.warn('Error fetching tenant from database:', supabaseError)
-        setError(supabaseError.message)
-        setTenant(cachedTenant)
-        return
-      }
-
-      if (!data) {
-        console.warn('Tenant not found with slug:', slug)
-        setError(cachedTenant ? null : 'Tenant no encontrado')
-        setTenant(cachedTenant)
-        return
-      }
-
-      setTenant(data)
+      handleTenantResult(data, supabaseError, cachedTenant, slug)
     } catch (err) {
       console.warn('Error fetching tenant:', err)
-      setError(err instanceof Error ? err.message : 'Error loading tenant')
-      if (!cachedTenant) {
-        cachedTenant = getCachedTenant(slug)
+      if (cachedTenant) {
+        setError(null)
         setTenant(cachedTenant)
-      }
-    } finally {
-      cachedTenant ??= getCachedTenant(slug)
-      if (!cachedTenant) {
+      } else {
+        setError(err instanceof Error ? err.message : 'Error loading tenant')
         setTenant(null)
       }
+    } finally {
       setIsLoading(false)
     }
-  }, [buildMockTenant, getCachedTenant, supabaseConfigured])
+  }, [buildMockTenant, getCachedTenant, handleTenantResult, supabaseConfigured])
 
   const refetchTenant = useCallback(async () => {
     if (tenantSlug) {
@@ -166,7 +188,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (potentialTenantSlug && 
         !potentialTenantSlug.startsWith('api') && 
         !potentialTenantSlug.startsWith('_next') &&
-        !['login', 'register', 'pricing'].includes(potentialTenantSlug)) {
+        !['login', 'register', 'pricing', 'onboarding', 'setup', 'demo', 'features'].includes(potentialTenantSlug)) {
       
       setTenantSlug(potentialTenantSlug)
       fetchTenant(potentialTenantSlug)

@@ -55,9 +55,6 @@ export const getSupabaseClient = (): SupabaseClient => {
   return globalForSupabase.__serverClient
 }
 
-// Cliente para uso en el frontend (singleton)
-export const supabase = getSupabaseClient()
-
 // Cliente para uso en el servidor (con service role key)
 let _supabaseAdmin: SupabaseClient | null = null
 
