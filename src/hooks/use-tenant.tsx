@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { Tenant } from '@/types/tenant'
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
