@@ -102,15 +102,15 @@ function ServiceSelectionStep({ onNext, bookingData, setBookingData, tenant }: B
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Scissors className="w-5 h-5 text-purple-400" />
-                {service.is_popular && (
+                {service.is_featured && (
                   <span className="text-xs bg-yellow-600/20 text-yellow-400 px-2 py-1 rounded">
-                    Popular
+                    Destacado
                   </span>
                 )}
               </div>
-              {service.has_discount && (
+              {service.bookings_count && service.bookings_count > 10 && (
                 <span className="text-xs bg-green-600/20 text-green-400 px-2 py-1 rounded">
-                  Descuento
+                  Popular
                 </span>
               )}
             </div>

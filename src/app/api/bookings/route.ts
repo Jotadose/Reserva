@@ -100,7 +100,8 @@ export async function POST(request: NextRequest) {
             tenant_id: tenant_id,
             user_id: tenantWithOwner.owner_id,
             bio: 'Provider automático para plan básico',
-            role: 'owner',
+            specialties: ['General'],
+            commission_rate: 0,
             is_active: true
           })
           .select('id')
