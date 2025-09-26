@@ -93,16 +93,70 @@ export async function POST(request: NextRequest) {
           )
         }
 
+        console.log('🔍 API Bookings: Tenant owner info:', {
+          tenant_id,
+          owner_id: tenantWithOwner.owner_id,
+          subscription_plan: tenantWithOwner.subscription_plan
+        })
+
+        // Primero verificar si el owner ya existe en la tabla users
+        const { data: existingUser, error: userCheckError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('auth_user_id', tenantWithOwner.owner_id)
+          .eq('tenant_id', tenant_id)
+          .single()
+
+        let userIdForProvider = null
+
+        if (userCheckError && userCheckError.code !== 'PGRST116') {
+          // Error diferente a "no encontrado"
+          console.log('❌ API Bookings: Error verificando usuario:', userCheckError)
+          return NextResponse.json(
+            { error: 'Error verificando usuario del tenant' },
+            { status: 500 }
+          )
+        }
+
+        if (existingUser) {
+          // El usuario ya existe en la tabla users
+          userIdForProvider = existingUser.id
+          console.log('✅ API Bookings: Usuario existente encontrado:', userIdForProvider)
+        } else {
+          // Crear el usuario en la tabla users primero
+          const { data: newUser, error: createUserError } = await supabase
+            .from('users')
+            .insert({
+              tenant_id: tenant_id,
+              auth_user_id: tenantWithOwner.owner_id,
+              name: 'Owner', // Nombre por defecto, se puede actualizar después
+              email: 'owner@tenant.com', // Email por defecto
+              role: 'owner'
+            })
+            .select('id')
+            .single()
+
+          if (createUserError || !newUser) {
+            console.log('❌ API Bookings: Error creando usuario:', createUserError)
+            return NextResponse.json(
+              { error: 'No se pudo crear usuario para el provider' },
+              { status: 500 }
+            )
+          }
+
+          userIdForProvider = newUser.id
+          console.log('✅ API Bookings: Usuario creado:', userIdForProvider)
+        }
+
         // Crear provider automático
         const { data: newProvider, error: createProviderError } = await supabase
           .from('providers')
           .insert({
             tenant_id: tenant_id,
-            user_id: tenantWithOwner.owner_id,
+            user_id: userIdForProvider,
             bio: 'Provider automático para plan básico',
             specialties: ['General'],
             commission_rate: 0.00,
-            role: 'owner',
             is_active: true
           })
           .select('id')
@@ -114,11 +168,10 @@ export async function POST(request: NextRequest) {
             data: newProvider,
             insertData: {
               tenant_id: tenant_id,
-              user_id: tenantWithOwner.owner_id,
+              user_id: userIdForProvider,
               bio: 'Provider automático para plan básico',
               specialties: ['General'],
               commission_rate: 0.00,
-              role: 'owner',
               is_active: true
             }
           })
