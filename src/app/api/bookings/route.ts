@@ -76,15 +76,50 @@ export async function POST(request: NextRequest) {
         .limit(1)
 
       if (providersError || !providers || providers.length === 0) {
-        console.log('❌ API Bookings: No se encontraron providers activos:', providersError)
-        return NextResponse.json(
-          { error: 'No hay proveedores disponibles para este tenant' },
-          { status: 404 }
-        )
+        console.log('⚠️ API Bookings: No se encontraron providers activos, creando provider automático...')
+        
+        // Para planes básicos, crear un provider automático asociado al dueño del tenant
+        const { data: tenantWithOwner, error: tenantOwnerError } = await supabase
+          .from('tenants')
+          .select('owner_id, subscription_plan')
+          .eq('id', tenant_id)
+          .single()
+
+        if (tenantOwnerError || !tenantWithOwner || !tenantWithOwner.owner_id) {
+          console.log('❌ API Bookings: Error obteniendo owner del tenant:', tenantOwnerError)
+          return NextResponse.json(
+            { error: 'No se pudo crear provider automático: tenant sin owner' },
+            { status: 500 }
+          )
+        }
+
+        // Crear provider automático
+        const { data: newProvider, error: createProviderError } = await supabase
+          .from('providers')
+          .insert({
+            tenant_id: tenant_id,
+            user_id: tenantWithOwner.owner_id,
+            bio: 'Provider automático para plan básico',
+            role: 'owner',
+            is_active: true
+          })
+          .select('id')
+          .single()
+
+        if (createProviderError || !newProvider) {
+          console.log('❌ API Bookings: Error creando provider automático:', createProviderError)
+          return NextResponse.json(
+            { error: 'No se pudo crear provider automático' },
+            { status: 500 }
+          )
+        }
+
+        finalProviderId = newProvider.id
+        console.log('✅ API Bookings: Provider automático creado:', finalProviderId)
+      } else {
+        finalProviderId = providers[0].id
+        console.log('✅ API Bookings: Provider existente encontrado:', finalProviderId)
       }
-      
-      finalProviderId = providers[0].id
-      console.log('✅ API Bookings: Provider automático encontrado:', finalProviderId)
     }
 
     const { data: service, error: serviceError } = await supabase
