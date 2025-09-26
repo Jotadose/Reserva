@@ -1,5 +1,6 @@
 -- ===================================================
 -- MIGRACIONES PARA DATOS REALES DESDE BD 
+-- (Adaptado para estructura existente con scheduled_date/scheduled_time)
 -- ===================================================
 
 -- Agregar campos adicionales a la tabla services
@@ -14,51 +15,26 @@ CREATE INDEX IF NOT EXISTS idx_services_tenant_featured ON services(tenant_id, i
 CREATE INDEX IF NOT EXISTS idx_services_tenant_active ON services(tenant_id, is_active);
 
 -- ===================================================
--- TABLA BOOKINGS (Reservas)
+-- CAMPOS ADICIONALES PARA BOOKINGS EXISTENTE
+-- (La tabla bookings ya existe, solo agregamos campos faltantes)
 -- ===================================================
-CREATE TABLE IF NOT EXISTS bookings (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
-    client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
-    provider_id UUID REFERENCES providers(id) ON DELETE SET NULL,
-    
-    -- Información de la reserva
-    booking_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    duration_minutes INTEGER NOT NULL,
-    
-    -- Estado y precios
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled', 'no_show')),
-    total_price INTEGER NOT NULL, -- en centavos
-    paid_amount INTEGER DEFAULT 0, -- en centavos
-    payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial', 'refunded')),
-    
-    -- Información adicional
-    notes TEXT,
-    cancellation_reason TEXT,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    review_text TEXT,
-    
-    -- Metadata
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    -- Constraints
-    CONSTRAINT bookings_time_check CHECK (end_time > start_time),
-    CONSTRAINT bookings_price_check CHECK (total_price >= 0),
-    CONSTRAINT bookings_paid_check CHECK (paid_amount >= 0 AND paid_amount <= total_price)
-);
 
--- Índices para bookings
-CREATE INDEX IF NOT EXISTS idx_bookings_tenant ON bookings(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_service ON bookings(service_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings(client_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_provider ON bookings(provider_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);
+-- Agregar campos adicionales a la tabla bookings existente
+ALTER TABLE bookings 
+ADD COLUMN IF NOT EXISTS rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+ADD COLUMN IF NOT EXISTS review_text TEXT,
+ADD COLUMN IF NOT EXISTS notes TEXT,
+ADD COLUMN IF NOT EXISTS cancellation_reason TEXT,
+ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial', 'refunded')),
+ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(10,2) DEFAULT 0;
+
+-- Actualizar constraint de precios si no existe
+ALTER TABLE bookings 
+ADD CONSTRAINT IF NOT EXISTS bookings_paid_check CHECK (paid_amount >= 0 AND paid_amount <= total_price);
+
+-- Índices adicionales para bookings (los que no tienes ya)
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
-CREATE INDEX IF NOT EXISTS idx_bookings_tenant_date ON bookings(tenant_id, booking_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_rating ON bookings(rating) WHERE rating IS NOT NULL;
 
 -- ===================================================
 -- TABLA CLIENTS (Clientes)
@@ -182,7 +158,7 @@ BEGIN
             AND status NOT IN ('cancelled', 'no_show')
         ),
         average_rating = (
-            SELECT COALESCE(AVG(rating), 0.0)
+            SELECT COALESCE(AVG(rating::DECIMAL), 0.0)
             FROM bookings 
             WHERE service_id = COALESCE(NEW.service_id, OLD.service_id)
             AND rating IS NOT NULL
@@ -220,7 +196,7 @@ BEGIN
             AND status = 'completed'
         ),
         last_visit = (
-            SELECT MAX(booking_date)
+            SELECT MAX(scheduled_date)
             FROM bookings 
             WHERE client_id = COALESCE(NEW.client_id, OLD.client_id)
             AND status = 'completed'
@@ -283,9 +259,9 @@ INSERT INTO providers (id, tenant_id, name, email, specialties, is_active) VALUE
 ('provider-1'::uuid, 'demo-tenant-id'::uuid, 'Master Barber', 'barber@agendex.com', ARRAY['cortes', 'barba', 'afeitado'], true)
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
--- Insertar algunas reservas de ejemplo
-INSERT INTO bookings (id, tenant_id, service_id, client_id, provider_id, booking_date, start_time, end_time, duration_minutes, status, total_price, rating) VALUES
-('booking-1'::uuid, 'demo-tenant-id'::uuid, 'service-1'::uuid, 'client-1'::uuid, 'provider-1'::uuid, CURRENT_DATE + INTERVAL '1 day', '10:00', '10:45', 45, 'confirmed', 25000, null),
-('booking-2'::uuid, 'demo-tenant-id'::uuid, 'service-2'::uuid, 'client-2'::uuid, 'provider-1'::uuid, CURRENT_DATE - INTERVAL '1 day', '14:00', '14:30', 30, 'completed', 20000, 5),
-('booking-3'::uuid, 'demo-tenant-id'::uuid, 'service-3'::uuid, 'client-3'::uuid, 'provider-1'::uuid, CURRENT_DATE - INTERVAL '2 days', '16:00', '17:15', 75, 'completed', 40000, 5)
+-- Insertar algunas reservas de ejemplo (adaptado a estructura existente)
+INSERT INTO bookings (id, tenant_id, service_id, client_id, provider_id, scheduled_date, scheduled_time, duration_minutes, status, total_price, rating, client_name, client_email) VALUES
+('booking-1'::uuid, 'demo-tenant-id'::uuid, 'service-1'::uuid, 'client-1'::uuid, 'provider-1'::uuid, CURRENT_DATE + INTERVAL '1 day', '10:00', 45, 'confirmed', 25000, null, 'Juan Pérez', 'juan@email.com'),
+('booking-2'::uuid, 'demo-tenant-id'::uuid, 'service-2'::uuid, 'client-2'::uuid, 'provider-1'::uuid, CURRENT_DATE - INTERVAL '1 day', '14:00', 30, 'completed', 20000, 5, 'Carlos Silva', 'carlos@email.com'),
+('booking-3'::uuid, 'demo-tenant-id'::uuid, 'service-3'::uuid, 'client-3'::uuid, 'provider-1'::uuid, CURRENT_DATE - INTERVAL '2 days', '16:00', 75, 'completed', 40000, 5, 'Luis Martín', 'luis@email.com')
 ON CONFLICT (id) DO NOTHING;

@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Eye, EyeOff, Scissors, Settings } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { GoogleAuthButton } from '@/components/auth/google-auth-button'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -165,6 +166,19 @@ function LoginForm() {
                   'Iniciar Sesión'
                 )}
               </Button>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">O continúa con</span>
+                </div>
+              </div>
+
+              {/* Google Auth Button */}
+              {supabaseConfigured && <GoogleAuthButton />}
               
               <div className="text-center text-sm text-gray-600">
                 ¿No tienes una cuenta?{' '}
