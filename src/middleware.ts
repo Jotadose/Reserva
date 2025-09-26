@@ -9,7 +9,9 @@ const TENANT_EXTRACT_REGEX = /^\/([^/]+)\/(dashboard|bookings|services|providers
 function isPublicRoute(pathname: string): boolean {
   const publicRoutes = [
     '/', '/login', '/register', '/pricing', 
-    '/demo', '/features', '/test-colors', '/api'
+    '/demo', '/features', '/test-colors', '/api',
+    '/auth', // Incluir rutas de autenticación como /auth/callback
+    '/debug' // Página temporal de debug
   ]
   return publicRoutes.some(route => pathname === route || pathname.startsWith(route))
 }

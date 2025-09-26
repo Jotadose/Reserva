@@ -27,12 +27,57 @@ export default function AuthCallbackPage() {
 
         if (data.session) {
           console.log('Authentication successful:', data.session.user)
-          setStatus('success')
-          setMessage('¡Autenticación exitosa! Redirigiendo...')
+          const userEmail = data.session.user.email
           
-          // Redirigir después de un breve delay
+          if (!userEmail) {
+            setStatus('error')
+            setMessage('No se pudo obtener el email del usuario')
+            return
+          }
+
+          // Verificar si el usuario existe en la tabla auth.users y buscar su tenant
+          const { data: tenantData, error: tenantError } = await supabase
+            .from('tenants')
+            .select('slug, owner_id')
+            .eq('owner_id', data.session.user.id)
+            .eq('subscription_status', 'active')
+            .single()
+
+          if (tenantError || !tenantData) {
+            console.log('Usuario no encontrado como owner de ningún tenant:', userEmail)
+            
+            // Intentar buscar por contact_email como alternativa
+            const { data: tenantByEmail, error: emailError } = await supabase
+              .from('tenants')
+              .select('slug')
+              .eq('contact_email', userEmail)
+              .eq('subscription_status', 'active')
+              .single()
+
+            if (emailError || !tenantByEmail) {
+              setStatus('error')
+              setMessage(`El email ${userEmail} no está registrado en ninguna barbería. Contacta al administrador para obtener acceso.`)
+              return
+            }
+            
+            // Si encontramos por email, usar ese tenant
+            console.log('Usuario encontrado por contact_email, redirigiendo a tenant:', tenantByEmail.slug)
+            setStatus('success')
+            setMessage('¡Autenticación exitosa! Redirigiendo a tu dashboard...')
+            
+            setTimeout(() => {
+              router.push(`/${tenantByEmail.slug}/dashboard`)
+            }, 2000)
+            return
+          }
+
+          console.log('Usuario encontrado, redirigiendo a tenant:', tenantData.slug)
+          setStatus('success')
+          setMessage('¡Autenticación exitosa! Redirigiendo a tu dashboard...')
+          
+          // Redirigir al dashboard del tenant correspondiente
           setTimeout(() => {
-            router.push('/dashboard')
+            router.push(`/${tenantData.slug}/dashboard`)
           }, 2000)
         } else {
           setStatus('error')

@@ -17,12 +17,15 @@ ADD COLUMN IF NOT EXISTS review_text TEXT,
 ADD COLUMN IF NOT EXISTS notes TEXT,
 ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;
 
--- 3. Crear índices para optimizar queries
+-- 3. Agregar índice en contact_email de tenants para búsquedas rápidas
+CREATE INDEX IF NOT EXISTS idx_tenants_contact_email ON tenants(contact_email) WHERE contact_email IS NOT NULL;
+
+-- 4. Crear índices adicionales para optimizar queries
 CREATE INDEX IF NOT EXISTS idx_services_tenant_featured ON services(tenant_id, is_featured);
 CREATE INDEX IF NOT EXISTS idx_services_tenant_active ON services(tenant_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_bookings_rating ON bookings(rating) WHERE rating IS NOT NULL;
 
--- 4. Función para actualizar estadísticas de servicios
+-- 5. Función para actualizar estadísticas de servicios
 CREATE OR REPLACE FUNCTION update_service_stats()
 RETURNS TRIGGER AS $$
 BEGIN
