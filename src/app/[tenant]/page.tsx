@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useTenant } from '@/hooks/use-tenant'
 import { usePublicServices } from '@/hooks/use-public-services'
+import { useFeaturedServices } from '@/hooks/use-featured-services'
 
 import Link from 'next/link'
 import {
@@ -63,6 +64,7 @@ const getMockSchedule = () => ({
 export default function TenantLandingPage() {
   const { tenant, isLoading, error } = useTenant()
   const { services } = usePublicServices(tenant?.id || null)
+  const { services: featuredServices } = useFeaturedServices(tenant?.id || null, 3)
   const [scrollY, setScrollY] = useState(0)
 
   useEffect(() => {
@@ -106,7 +108,6 @@ export default function TenantLandingPage() {
 
   const contact = getMockContact(tenant)
   const schedule = getMockSchedule()
-  const featuredServices = services.slice(0, 3) // Primeros 3 servicios como destacados
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {

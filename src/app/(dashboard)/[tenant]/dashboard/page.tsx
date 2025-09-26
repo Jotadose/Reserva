@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React from 'react'
 import { useParams } from 'next/navigation'
 import { Calendar, Users, Scissors, TrendingUp, Clock, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useTenant } from '@/hooks/use-tenant'
+import { useDashboardMetrics } from '@/hooks/use-dashboard-metrics'
 
 interface DashboardStats {
   totalBookings: number
@@ -18,41 +20,30 @@ interface DashboardStats {
 export default function DashboardPage() {
   const params = useParams()
   const tenantSlug = params.tenant as string
-  const [stats, setStats] = useState<DashboardStats>({
-    totalBookings: 0,
-    totalProviders: 0,
-    totalServices: 0,
-    monthlyRevenue: 0,
-    todayBookings: 0,
-    pendingBookings: 0
-  })
-  const [loading, setLoading] = useState(true)
+  const { tenant } = useTenant()
+  const { metrics, isLoading: metricsLoading } = useDashboardMetrics(tenant?.id || null)
 
-  useEffect(() => {
-    // TODO: Implementar carga real de estadísticas desde Supabase
-    const fetchStats = async () => {
-      try {
-        setLoading(true)
-        // Simulación de datos por ahora
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        setStats({
-          totalBookings: 156,
-          totalProviders: 4,
-          totalServices: 8,
-          monthlyRevenue: 2450000, // en centavos
-          todayBookings: 12,
-          pendingBookings: 3
-        })
-      } catch (error) {
-        console.error('Error fetching stats:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Función helper para obtener reservas de hoy
+  const getTodayBookings = (metrics: any) => {
+    if (!metrics?.recentActivity) return 0
+    const today = new Date().toDateString()
+    return metrics.recentActivity.filter((activity: any) => 
+      new Date(activity.date).toDateString() === today && 
+      activity.type === 'booking'
+    ).length
+  }
 
-    fetchStats()
-  }, [tenantSlug])
+  // Calcular estadísticas adicionales
+  const stats: DashboardStats = {
+    totalBookings: metrics?.totalBookings || 0,
+    totalProviders: 4, // TODO: Implementar providers table
+    totalServices: metrics?.popularServices?.length || 0,
+    monthlyRevenue: metrics?.revenueThisMonth || 0,
+    todayBookings: getTodayBookings(metrics),
+    pendingBookings: metrics?.pendingBookings || 0
+  }
+
+  const loading = metricsLoading
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
