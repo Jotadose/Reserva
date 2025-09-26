@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Clock, User, Phone, Mail, MessageCircle, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Mail, MessageCircle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { usePublicServices } from '@/hooks/use-public-services'
+import BookingConfirmation from './booking-confirmation'
 
 // Tipos para el booking flow
 interface BookingData {
@@ -30,6 +31,7 @@ interface BookingStepProps {
   bookingData: BookingData
   setBookingData: (data: Partial<BookingData>) => void
   tenant: any
+  onConfirmed?: () => void
 }
 
 // Paso 1: Selección de Servicio
@@ -387,9 +389,8 @@ function ClientInfoStep({ onNext, onPrev, bookingData, setBookingData }: Booking
 }
 
 // Paso 4: Confirmación
-function ConfirmationStep({ onPrev, bookingData, tenant }: BookingStepProps) {
+function ConfirmationStep({ onPrev, bookingData, tenant, onConfirmed }: BookingStepProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isConfirmed, setIsConfirmed] = useState(false)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -430,9 +431,10 @@ ${bookingData.notes ? `📝 Notas: ${bookingData.notes}` : ''}
 
 ¿Puedes confirmar mi reserva?`
 
-      const whatsappUrl = `https://wa.me/${tenant.contact_phone?.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`
+      const whatsappUrl = `https://wa.me/${tenant.contact_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
       
-      setIsConfirmed(true)
+      // Activar el paso de confirmación final
+      onConfirmed?.()
       
       setTimeout(() => {
         window.open(whatsappUrl, '_blank')
@@ -445,22 +447,7 @@ ${bookingData.notes ? `📝 Notas: ${bookingData.notes}` : ''}
     }
   }
 
-  if (isConfirmed) {
-    return (
-      <div className="text-center space-y-6">
-        <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle className="w-8 h-8 text-white" />
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold text-white mb-2">¡Reserva Enviada!</h3>
-          <p className="text-gray-300">
-            Tu solicitud de reserva ha sido enviada por WhatsApp. 
-            Te confirmaremos la disponibilidad en breve.
-          </p>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <div className="space-y-6">
@@ -557,8 +544,9 @@ interface BookingWizardProps {
   tenant: any
 }
 
-export default function BookingWizard({ tenant }: BookingWizardProps) {
+export default function BookingWizard({ tenant }: Readonly<BookingWizardProps>) {
   const [currentStep, setCurrentStep] = useState(1)
+  const [isConfirmed, setIsConfirmed] = useState(false)
   const [bookingData, setBookingData] = useState<BookingData>({
     serviceId: '',
     serviceName: '',
@@ -578,6 +566,49 @@ export default function BookingWizard({ tenant }: BookingWizardProps) {
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4))
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
+  
+  const handleBookingConfirmed = () => {
+    setIsConfirmed(true)
+  }
+
+  const handleNewBooking = () => {
+    setIsConfirmed(false)
+    setCurrentStep(1)
+    setBookingData({
+      serviceId: '',
+      serviceName: '',
+      servicePrice: 0,
+      serviceDuration: 30,
+      selectedDate: '',
+      selectedTime: '',
+      clientName: '',
+      clientPhone: '',
+      clientEmail: '',
+      notes: ''
+    })
+  }
+
+  // Si la reserva está confirmada, mostrar el componente de confirmación
+  if (isConfirmed) {
+    return (
+      <BookingConfirmation
+        booking={{
+          id: `temp-${Date.now()}`,
+          serviceName: bookingData.serviceName,
+          servicePrice: bookingData.servicePrice,
+          serviceDuration: bookingData.serviceDuration,
+          selectedDate: bookingData.selectedDate,
+          selectedTime: bookingData.selectedTime,
+          clientName: bookingData.clientName,
+          clientPhone: bookingData.clientPhone,
+          clientEmail: bookingData.clientEmail,
+          notes: bookingData.notes,
+        }}
+        tenant={tenant}
+        onNewBooking={handleNewBooking}
+      />
+    )
+  }
 
   if (!tenant) {
     return null // El loading será manejado por el componente padre
@@ -631,6 +662,7 @@ export default function BookingWizard({ tenant }: BookingWizardProps) {
           bookingData={bookingData}
           setBookingData={updateBookingData}
           tenant={tenant}
+          onConfirmed={currentStep === 4 ? handleBookingConfirmed : undefined}
         />
       </Card>
     </div>
