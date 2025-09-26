@@ -567,8 +567,49 @@ export default function BookingWizard({ tenant }: Readonly<BookingWizardProps>) 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4))
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
   
-  const handleBookingConfirmed = () => {
-    setIsConfirmed(true)
+  const handleBookingConfirmed = async () => {
+    try {
+      console.log('🔄 BookingWizard: Iniciando confirmación de reserva...')
+      
+      // Preparar los datos para la API (provider_id será resuelto automáticamente por la API)
+      const bookingAPIData = {
+        tenant_id: tenant?.id,
+        service_id: bookingData.serviceId,
+        // provider_id no es necesario, la API encontrará uno automáticamente
+        scheduled_date: bookingData.selectedDate,
+        scheduled_time: bookingData.selectedTime,
+        client_name: bookingData.clientName,
+        client_phone: bookingData.clientPhone,
+        client_email: bookingData.clientEmail || null,
+        notes: bookingData.notes || null,
+        status: 'confirmed',
+        total_price: bookingData.servicePrice,
+        duration_minutes: bookingData.serviceDuration
+      }
+
+      console.log('📤 BookingWizard: Enviando datos a API:', bookingAPIData)
+
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingAPIData)
+      })
+
+      const result = await response.json()
+      console.log('📨 BookingWizard: Respuesta de API:', result)
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Error al crear la reserva')
+      }
+
+      console.log('✅ BookingWizard: Reserva creada exitosamente')
+      setIsConfirmed(true)
+    } catch (error: any) {
+      console.error('❌ BookingWizard: Error al confirmar reserva:', error)
+      alert('Error al crear la reserva: ' + error.message)
+    }
   }
 
   const handleNewBooking = () => {

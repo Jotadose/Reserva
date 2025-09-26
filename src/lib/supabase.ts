@@ -79,6 +79,11 @@ const ensureSupabaseAdmin = (): SupabaseClient => {
   if (typeof window !== 'undefined') {
     throw new Error('Supabase admin client is only available on the server')
   }
+  
+  console.log('🔧 Supabase Admin: Configurando cliente admin...')
+  console.log('🔧 Supabase URL:', supabaseUrl ? 'Configurada' : 'NO CONFIGURADA')
+  console.log('🔧 Service Role Key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configurada' : 'NO CONFIGURADA')
+  
   _supabaseAdmin ??= createClient(
     supabaseUrl || 'https://demo.supabase.co',
     process.env.SUPABASE_SERVICE_ROLE_KEY || 'demo-service-key',

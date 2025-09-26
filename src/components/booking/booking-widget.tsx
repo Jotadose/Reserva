@@ -226,6 +226,8 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
         duration_minutes: selectedService?.duration_minutes || 30
       }
 
+      console.log('📤 BookingWidget: Enviando datos a API:', bookingData)
+
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -234,13 +236,21 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
         body: JSON.stringify(bookingData)
       })
 
+      console.log('📨 BookingWidget: Respuesta de API:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
       const result = await response.json()
+      console.log('📋 BookingWidget: Resultado parseado:', result)
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Error al crear la reserva')
       }
 
       // Reserva creada exitosamente
+      console.log('✅ BookingWidget: Reserva creada exitosamente')
       setSuccess(true)
       setStep(4)
     } catch (error: any) {
