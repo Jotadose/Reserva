@@ -12,10 +12,10 @@ interface FeaturedService {
   price: number
   category?: string
   is_active: boolean
-  is_featured: boolean
+  is_featured?: boolean
   image_url?: string
-  bookings_count: number
-  average_rating: number
+  bookings_count?: number
+  average_rating?: number
   created_at: string
   updated_at: string
 }
@@ -42,28 +42,14 @@ export function useFeaturedServices(tenantId: string | null, limit: number = 6) 
 
       const supabase = getPublicSupabaseClient()
       
-      // Obtener servicios con estadísticas de reservas
+      // Obtener servicios básicos sin campos opcionales
       const { data: services, error: servicesError } = await supabase
         .from('services')
-        .select(`
-          id,
-          tenant_id,
-          name,
-          description,
-          duration_minutes,
-          price,
-          category,
-          is_active,
-          is_featured,
-          image_url,
-          created_at,
-          updated_at
-        `)
+        .select('id, tenant_id, name, description, duration_minutes, price, is_active, created_at, updated_at')
         .eq('tenant_id', tenantId)
         .eq('is_active', true)
-        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(limit * 2) // Obtener más para procesar
+        .limit(limit)
 
       if (servicesError) {
         console.warn('Error fetching featured services from DB:', servicesError)
@@ -77,59 +63,18 @@ export function useFeaturedServices(tenantId: string | null, limit: number = 6) 
         return
       }
 
-      // Obtener estadísticas de reservas para cada servicio
-      const servicesWithStats = await Promise.all(
-        services.map(async (service) => {
-          try {
-            const { data: bookings, error: bookingsError } = await supabase
-              .from('bookings')
-              .select('id, status, rating')
-              .eq('service_id', service.id)
+      // Convertir servicios básicos a featured services con valores por defecto
+      const featuredServices = services.map(service => ({
+        ...service,
+        category: 'basico',
+        is_featured: true, // Por ahora todos son featured
+        image_url: undefined,
+        bookings_count: 0,
+        average_rating: 0
+      } as FeaturedService))
 
-            if (bookingsError) {
-              console.warn(`Error fetching bookings for service ${service.id}:`, bookingsError)
-            }
-
-            const bookingsCount = bookings?.length || 0
-            const ratings = bookings?.filter(b => b.rating).map(b => b.rating) || []
-            const averageRating = ratings.length > 0 
-              ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
-              : 0
-
-            return {
-              ...service,
-              bookings_count: bookingsCount,
-              average_rating: averageRating
-            } as FeaturedService
-          } catch (err) {
-            console.warn(`Error processing service ${service.id}:`, err)
-            return {
-              ...service,
-              bookings_count: 0,
-              average_rating: 0
-            } as FeaturedService
-          }
-        })
-      )
-
-      // Ordenar por featured primero, luego por popularidad
-      const sortedServices = servicesWithStats
-        .sort((a, b) => {
-          // Primero por is_featured
-          if (a.is_featured && !b.is_featured) return -1
-          if (!a.is_featured && b.is_featured) return 1
-          
-          // Luego por número de reservas
-          if (a.bookings_count !== b.bookings_count) {
-            return b.bookings_count - a.bookings_count
-          }
-          
-          // Finalmente por rating
-          return b.average_rating - a.average_rating
-        })
-        .slice(0, limit)
-
-      setServices(sortedServices)
+      console.log(`✅ Loaded ${featuredServices.length} featured services from DB`)
+      setServices(featuredServices)
       setError(null)
 
     } catch (err) {

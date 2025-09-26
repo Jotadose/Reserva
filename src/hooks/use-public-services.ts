@@ -44,24 +44,10 @@ export function usePublicServices(tenantId: string | null) {
       const supabase = getPublicSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('services')
-        .select(`
-          id, 
-          tenant_id, 
-          name, 
-          description, 
-          duration_minutes, 
-          price, 
-          category, 
-          is_active, 
-          is_featured,
-          image_url,
-          created_at, 
-          updated_at
-        `)
+        .select('id, tenant_id, name, description, duration_minutes, price, is_active, created_at, updated_at')
         .eq('tenant_id', tenantId)
         .eq('is_active', true)
-        .order('is_featured', { ascending: false })
-        .order('name')
+        .order('created_at', { ascending: false })
 
       if (supabaseError) {
         console.warn('Error fetching services from DB, using mock data:', supabaseError)
@@ -75,8 +61,18 @@ export function usePublicServices(tenantId: string | null) {
         return
       }
 
-      console.log(`✅ Loaded ${data.length} services from DB`)
-      setServices(data)
+      // Agregar campos por defecto para compatibilidad
+      const servicesWithDefaults = data.map(service => ({
+        ...service,
+        category: 'basico',
+        is_featured: false,
+        image_url: undefined,
+        bookings_count: 0,
+        average_rating: 0
+      }))
+
+      console.log(`✅ Loaded ${servicesWithDefaults.length} services from DB`)
+      setServices(servicesWithDefaults)
       setError(null)
 
     } catch (err) {

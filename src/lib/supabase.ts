@@ -15,6 +15,7 @@ export const isSupabaseConfigured = (): boolean => {
 type SupabaseClientCache = {
   __browserClient?: SupabaseClient
   __serverClient?: SupabaseClient
+  __publicClient?: SupabaseClient
 }
 
 const globalForSupabase = globalThis as unknown as SupabaseClientCache
@@ -57,15 +58,18 @@ export const getSupabaseClient = (): SupabaseClient => {
 
 // Cliente público para datos que no requieren autenticación (landing pages)
 export const getPublicSupabaseClient = (): SupabaseClient => {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-    db: {
-      schema: 'public'
-    }
-  })
+  if (!globalForSupabase.__publicClient) {
+    globalForSupabase.__publicClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+      db: {
+        schema: 'public'
+      }
+    })
+  }
+  return globalForSupabase.__publicClient
 }
 
 // Cliente para uso en el servidor (con service role key)
