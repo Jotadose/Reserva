@@ -36,8 +36,8 @@ const navigation = [
     icon: Calendar
   },
   {
-    name: 'Proveedores',
-    href: '/providers',
+    name: 'Mi Perfil',
+    href: '/profile',
     icon: User
   },
   {
