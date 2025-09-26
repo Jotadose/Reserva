@@ -37,8 +37,9 @@ export function useDashboardMetrics(tenantId: string | null) {
 
   useEffect(() => {
     if (!tenantId) {
-      setMetrics(getMockMetrics())
+      setMetrics(null)
       setIsLoading(false)
+      setError('No tenant ID provided')
       return
     }
 
@@ -69,8 +70,9 @@ export function useDashboardMetrics(tenantId: string | null) {
         .eq('tenant_id', tenantId)
 
       if (bookingsError) {
-        console.warn('Error fetching bookings metrics:', bookingsError)
-        setMetrics(getMockMetrics())
+        console.error('Error fetching bookings metrics:', bookingsError)
+        setError(bookingsError.message || 'Error loading metrics')
+        setMetrics(null)
         return
       }
 
@@ -113,7 +115,7 @@ export function useDashboardMetrics(tenantId: string | null) {
 
     } catch (err) {
       console.error('Error fetching dashboard metrics:', err)
-      setMetrics(getMockMetrics())
+      setMetrics(null)
       setError(err instanceof Error ? err.message : 'Error loading metrics')
     } finally {
       setIsLoading(false)
@@ -176,39 +178,4 @@ function processMonthlyTrends(bookings: any[] | null): DashboardMetrics['monthly
     }))
     .sort((a, b) => a.month.localeCompare(b.month))
     .slice(-6) // Últimos 6 meses
-}
-
-function getMockMetrics(): DashboardMetrics {
-  return {
-    totalBookings: 1250,
-    totalRevenue: 89500,
-    activeClients: 340,
-    averageRating: 4.8,
-    bookingsThisMonth: 142,
-    revenueThisMonth: 12800,
-    pendingBookings: 18,
-    completedBookings: 1180,
-    cancelledBookings: 52,
-    popularServices: [
-      { name: 'Corte Clásico', bookings: 280, revenue: 14000 },
-      { name: 'Barba Completa', bookings: 220, revenue: 13200 },
-      { name: 'Corte + Barba', bookings: 190, revenue: 17100 },
-      { name: 'Afeitado Tradicional', bookings: 150, revenue: 9000 },
-      { name: 'Tratamiento Capilar', bookings: 120, revenue: 9600 }
-    ],
-    recentActivity: [
-      { type: 'booking', message: 'Corte Clásico - Juan Pérez', date: new Date().toISOString() },
-      { type: 'completion', message: 'Barba Completa - Carlos Silva', date: new Date(Date.now() - 3600000).toISOString() },
-      { type: 'booking', message: 'Corte + Barba - Luis Martín', date: new Date(Date.now() - 7200000).toISOString() },
-      { type: 'cancellation', message: 'Afeitado - Pedro García', date: new Date(Date.now() - 10800000).toISOString() }
-    ],
-    monthlyTrends: [
-      { month: '2025-04', bookings: 95, revenue: 8500 },
-      { month: '2025-05', bookings: 110, revenue: 9800 },
-      { month: '2025-06', bookings: 125, revenue: 11200 },
-      { month: '2025-07', bookings: 135, revenue: 12100 },
-      { month: '2025-08', bookings: 148, revenue: 13400 },
-      { month: '2025-09', bookings: 142, revenue: 12800 }
-    ]
-  }
 }

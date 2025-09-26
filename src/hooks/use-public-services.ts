@@ -27,9 +27,9 @@ export function usePublicServices(tenantId: string | null) {
 
   useEffect(() => {
     if (!tenantId) {
-      // Si no hay tenant, usar servicios mock
-      setServices(getMockServices())
+      setServices([])
       setIsLoading(false)
+      setError('No tenant ID provided')
       return
     }
 
@@ -54,14 +54,16 @@ export function usePublicServices(tenantId: string | null) {
       console.log('🔍 Supabase query result:', { data, error: supabaseError })
 
       if (supabaseError) {
-        console.warn('❌ Error fetching services from DB, using mock data:', supabaseError)
-        setServices(getMockServices())
+        console.error('❌ Error fetching services from DB:', supabaseError)
+        setError(supabaseError.message || 'Error loading services')
+        setServices([])
         return
       }
 
       if (!data || data.length === 0) {
-        console.log('No services found, using mock data')
-        setServices(getMockServices())
+        console.log('⚠️ No services found for this tenant')
+        setServices([])
+        setError('No services available for this tenant')
         return
       }
 
@@ -81,7 +83,7 @@ export function usePublicServices(tenantId: string | null) {
 
     } catch (err) {
       console.error('Error fetching services:', err)
-      setServices(getMockServices())
+      setServices([])
       setError(err instanceof Error ? err.message : 'Error loading services')
     } finally {
       setIsLoading(false)
@@ -89,87 +91,4 @@ export function usePublicServices(tenantId: string | null) {
   }
 
   return { services, isLoading, error, refetch: () => fetchServices(tenantId!) }
-}
-
-function getMockServices(): Service[] {
-  return [
-    {
-      id: 'mock-service-1',
-      tenant_id: 'demo-tenant-id',
-      name: 'Corte Clásico',
-      description: 'Corte tradicional con técnicas modernas. Incluye lavado y peinado.',
-      duration_minutes: 45,
-      price: 25000,
-      category: 'basico',
-      is_active: true,
-      is_featured: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'mock-service-2',
-      tenant_id: 'demo-tenant-id',
-      name: 'Barba Completa',
-      description: 'Arreglo completo de barba con perfilado y hidratación. Incluye aceites especiales.',
-      duration_minutes: 30,
-      price: 20000,
-      category: 'premium',
-      is_active: true,
-      is_featured: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'mock-service-3',
-      tenant_id: 'demo-tenant-id',
-      name: 'Corte + Barba Premium',
-      description: 'Combo completo: corte moderno + arreglo de barba + tratamiento hidratante.',
-      duration_minutes: 75,
-      price: 40000,
-      category: 'premium',
-      is_active: true,
-      is_featured: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'mock-service-4',
-      tenant_id: 'demo-tenant-id',
-      name: 'Afeitado Tradicional',
-      description: 'Afeitado clásico con navaja y toallas calientes. Experiencia tradicional de barbería.',
-      duration_minutes: 40,
-      price: 30000,
-      category: 'premium',
-      is_active: true,
-      is_featured: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'mock-service-5',
-      tenant_id: 'demo-tenant-id',
-      name: 'Tratamiento Capilar',
-      description: 'Tratamiento revitalizante para el cuero cabelludo con productos especializados.',
-      duration_minutes: 60,
-      price: 35000,
-      category: 'color',
-      is_active: true,
-      is_featured: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'mock-service-6',
-      tenant_id: 'demo-tenant-id',
-      name: 'Corte Fade',
-      description: 'Corte moderno con degradado perfecto. Técnica especializada para looks actuales.',
-      duration_minutes: 50,
-      price: 28000,
-      category: 'basico',
-      is_active: true,
-      is_featured: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ]
 }
