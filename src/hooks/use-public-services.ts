@@ -41,6 +41,8 @@ export function usePublicServices(tenantId: string | null) {
       setIsLoading(true)
       setError(null)
 
+      console.log(`🔄 Fetching services for tenant: ${tenantId}`)
+      
       const supabase = getPublicSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('services')
@@ -49,8 +51,10 @@ export function usePublicServices(tenantId: string | null) {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
+      console.log('🔍 Supabase query result:', { data, error: supabaseError })
+
       if (supabaseError) {
-        console.warn('Error fetching services from DB, using mock data:', supabaseError)
+        console.warn('❌ Error fetching services from DB, using mock data:', supabaseError)
         setServices(getMockServices())
         return
       }

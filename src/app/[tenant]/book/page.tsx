@@ -81,7 +81,7 @@ export default function BookingPage() {
           </p>
         </div>
 
-        <BookingWizard />
+        <BookingWizard tenant={tenant} />
       </div>
     </div>
   )

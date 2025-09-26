@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, User, Phone, Mail, MessageCircle, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react'
-import { useTenant } from '@/hooks/use-tenant'
 import { usePublicServices } from '@/hooks/use-public-services'
 
 // Tipos para el booking flow
@@ -35,7 +34,7 @@ interface BookingStepProps {
 
 // Paso 1: Selección de Servicio
 function ServiceSelectionStep({ onNext, bookingData, setBookingData, tenant }: BookingStepProps) {
-  const { services, isLoading } = usePublicServices(tenant?.slug)
+  const { services, isLoading } = usePublicServices(tenant?.id)
 
   const handleServiceSelect = (service: any) => {
     setBookingData({
@@ -554,8 +553,11 @@ ${bookingData.notes ? `📝 Notas: ${bookingData.notes}` : ''}
   )
 }
 
-export default function BookingWizard() {
-  const { tenant, isLoading, error } = useTenant()
+interface BookingWizardProps {
+  tenant: any
+}
+
+export default function BookingWizard({ tenant }: BookingWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [bookingData, setBookingData] = useState<BookingData>({
     serviceId: '',
@@ -577,7 +579,7 @@ export default function BookingWizard() {
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 4))
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1))
 
-  if (isLoading || !tenant) {
+  if (!tenant) {
     return null // El loading será manejado por el componente padre
   }
 
