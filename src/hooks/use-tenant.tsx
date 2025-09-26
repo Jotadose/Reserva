@@ -243,7 +243,13 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const memberships = (membershipsData || []) as TenantMembership[]
+      // Transform the data to match our interface
+      const memberships: TenantMembership[] = (membershipsData || []).map((item: any) => ({
+        tenant_id: item.tenant_id,
+        role: item.role,
+        is_active: item.is_active,
+        tenant: Array.isArray(item.tenant) ? item.tenant[0] : item.tenant
+      }))
       setMemberships(memberships)
       console.log(`✅ Loaded ${memberships.length} memberships for user`)
 
