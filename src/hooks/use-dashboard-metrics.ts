@@ -59,10 +59,12 @@ export function useDashboardMetrics(tenantId: string | null) {
           id,
           status,
           total_price,
-          booking_date,
+          scheduled_date,
           created_at,
-          service:services(name),
-          client:clients(name, email)
+          client_name,
+          client_email,
+          client_phone,
+          service:services(name)
         `)
         .eq('tenant_id', tenantId)
 
@@ -93,7 +95,7 @@ export function useDashboardMetrics(tenantId: string | null) {
       const processedMetrics: DashboardMetrics = {
         totalBookings: bookings?.length || 0,
         totalRevenue: bookings?.reduce((sum, b) => sum + (b.total_price || 0), 0) || 0,
-        activeClients: new Set(bookings?.map(b => (b.client as any)?.email).filter(Boolean)).size,
+        activeClients: new Set(bookings?.map(b => b.client_email).filter(Boolean)).size,
         averageRating: 4.2, // TODO: Implementar sistema de ratings
         bookingsThisMonth: bookings?.filter(b => new Date(b.created_at) >= thisMonth).length || 0,
         revenueThisMonth: bookings?.filter(b => new Date(b.created_at) >= thisMonth)
@@ -143,7 +145,7 @@ function processRecentActivity(bookings: any[] | null): DashboardMetrics['recent
     .map(booking => ({
       type: booking.status === 'completed' ? 'completion' as const : 
             booking.status === 'cancelled' ? 'cancellation' as const : 'booking' as const,
-      message: `${booking.service?.name || 'Servicio'} - ${booking.client?.name || 'Cliente'}`,
+      message: `${booking.service?.name || 'Servicio'} - ${booking.client_name || 'Cliente'}`,
       date: booking.created_at
     }))
 }
