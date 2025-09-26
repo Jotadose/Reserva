@@ -101,16 +101,32 @@ export async function POST(request: NextRequest) {
             user_id: tenantWithOwner.owner_id,
             bio: 'Provider automático para plan básico',
             specialties: ['General'],
-            commission_rate: 0,
+            commission_rate: 0.00,
+            role: 'owner',
             is_active: true
           })
           .select('id')
           .single()
 
         if (createProviderError || !newProvider) {
-          console.log('❌ API Bookings: Error creando provider automático:', createProviderError)
+          console.log('❌ API Bookings: Error creando provider automático:', {
+            error: createProviderError,
+            data: newProvider,
+            insertData: {
+              tenant_id: tenant_id,
+              user_id: tenantWithOwner.owner_id,
+              bio: 'Provider automático para plan básico',
+              specialties: ['General'],
+              commission_rate: 0.00,
+              role: 'owner',
+              is_active: true
+            }
+          })
           return NextResponse.json(
-            { error: 'No se pudo crear provider automático' },
+            { 
+              error: 'No se pudo crear provider automático',
+              details: createProviderError?.message || 'Unknown error'
+            },
             { status: 500 }
           )
         }
