@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { formatPrice, formatDuration } from '@/lib/utils'
-import { bookingsAPI, availabilityAPI } from '@/lib/supabase'
+import { availabilityAPI } from '@/lib/supabase'
 
 interface Tenant {
   id: string
@@ -117,11 +117,9 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
         endDate
       )
 
-      // Obtener reservas existentes para la fecha
-      const { data: existingBookings } = await bookingsAPI.getAll(tenant.id, {
-        providerId: form.providerId,
-        date: form.date
-      })
+      // TODO: Obtener reservas existentes para verificar disponibilidad
+      // Por ahora asumimos que todos los slots están disponibles
+      const existingBookings: any[] = []
 
       // Generar slots disponibles (cada 30 minutos de 9:00 a 19:00)
       const slots: AvailableSlot[] = []
@@ -212,8 +210,9 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
     setError('')
 
     try {
-      // Crear la reserva usando la API de Supabase
+      // Crear la reserva usando la API pública
       const bookingData = {
+        tenant_id: tenant.id,
         service_id: form.serviceId,
         provider_id: form.providerId,
         scheduled_date: form.date,
@@ -223,14 +222,22 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
         client_email: form.clientEmail,
         notes: form.notes || null,
         status: 'confirmed',
-        total_amount: selectedService?.price || 0,
+        total_price: selectedService?.price || 0,
         duration_minutes: selectedService?.duration_minutes || 30
       }
 
-      const { error: bookingError } = await bookingsAPI.create(tenant.id, bookingData)
-      
-      if (bookingError) {
-        throw new Error(bookingError.message || 'Error al crear la reserva')
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Error al crear la reserva')
       }
 
       // Reserva creada exitosamente

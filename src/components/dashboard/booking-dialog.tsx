@@ -47,7 +47,7 @@ interface BookingFormData {
   status: 'pending' | 'confirmed' | 'in_progress' | 'cancelled' | 'completed' | 'no_show'
   payment_status?: string
   payment_method?: string
-  total_amount?: number
+  total_price?: number
   deposit_amount?: number
   notes?: string
   reminder_sent: boolean
@@ -91,7 +91,7 @@ export function BookingDialog({
     status: 'pending',
     payment_status: 'pending',
     payment_method: '',
-    total_amount: 0,
+    total_price: 0,
     deposit_amount: 0,
     notes: '',
     reminder_sent: false,
@@ -160,7 +160,7 @@ export function BookingDialog({
         status: booking.status,
         payment_status: booking.payment_status || 'pending',
         payment_method: booking.payment_method || '',
-        total_amount: booking.total_price || 0,
+        total_price: booking.total_price || 0,
         deposit_amount: booking.deposit_amount || 0,
         notes: booking.notes || '',
         reminder_sent: booking.reminder_sent || false,
@@ -186,7 +186,7 @@ export function BookingDialog({
         status: 'pending',
         payment_status: 'pending',
         payment_method: '',
-        total_amount: 0,
+        total_price: 0,
         deposit_amount: 0,
         notes: '',
         reminder_sent: false,
@@ -203,7 +203,7 @@ export function BookingDialog({
       if (selectedService) {
         setFormData(prev => ({
           ...prev,
-          total_amount: selectedService.price
+          total_price: selectedService.price
         }))
       }
     }
@@ -234,7 +234,7 @@ export function BookingDialog({
         status: formData.status,
         payment_status: formData.payment_status,
         payment_method: formData.payment_method || null,
-        total_amount: formData.total_amount || null,
+        total_price: formData.total_price || null,
         deposit_amount: formData.deposit_amount || null,
         notes: formData.notes || null,
         reminder_sent: formData.reminder_sent,
@@ -437,14 +437,14 @@ export function BookingDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="total_amount">Precio Total (€)</Label>
+              <Label htmlFor="total_price">Precio Total (€)</Label>
               <Input
-                id="total_amount"
+                id="total_price"
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.total_amount}
-                onChange={(e) => handleInputChange('total_amount', parseFloat(e.target.value) || 0)}
+                value={formData.total_price}
+                onChange={(e) => handleInputChange('total_price', parseFloat(e.target.value) || 0)}
               />
             </div>
 

@@ -97,7 +97,6 @@ export interface Booking {
   // Campos adicionales para el componente
   payment_status?: string
   payment_method?: string
-  total_amount?: number
   deposit_amount?: number
   notes?: string
   reminder_sent?: boolean
