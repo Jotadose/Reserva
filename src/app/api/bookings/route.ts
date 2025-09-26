@@ -123,15 +123,15 @@ export async function POST(request: NextRequest) {
           userIdForProvider = existingUser.id
           console.log('✅ API Bookings: Usuario existente encontrado:', userIdForProvider)
         } else {
-          // Crear el usuario en la tabla users primero
+          // Crear el usuario en la tabla users primero (SIN campo role)
           const { data: newUser, error: createUserError } = await supabase
             .from('users')
             .insert({
               tenant_id: tenant_id,
               auth_user_id: tenantWithOwner.owner_id,
               name: 'Owner', // Nombre por defecto, se puede actualizar después
-              email: 'owner@tenant.com', // Email por defecto
-              role: 'owner'
+              email: 'owner@tenant.com' // Email por defecto
+              // NO incluir 'role' - ya no existe esta columna
             })
             .select('id')
             .single()
@@ -146,6 +146,23 @@ export async function POST(request: NextRequest) {
 
           userIdForProvider = newUser.id
           console.log('✅ API Bookings: Usuario creado:', userIdForProvider)
+
+          // Crear membership de owner en tenant_memberships
+          const { error: membershipError } = await supabase
+            .from('tenant_memberships')
+            .insert({
+              tenant_id: tenant_id,
+              user_id: userIdForProvider,
+              role: 'owner',
+              is_active: true
+            })
+
+          if (membershipError) {
+            console.warn('⚠️ API Bookings: Error creando membership (continuando):', membershipError)
+            // Continuamos aunque falle el membership - el trigger debería haberlo creado
+          } else {
+            console.log('✅ API Bookings: Membership de owner creado')
+          }
         }
 
         // Crear provider automático
@@ -225,16 +242,92 @@ export async function POST(request: NextRequest) {
     }
     console.log('✅ API Bookings: Provider encontrado:', provider)
 
-    // Crear la reserva
+    // NUEVA LÓGICA: Crear o encontrar cliente en tabla clients
+    let clientId = null
+    
+    console.log('🔍 API Bookings: Buscando cliente existente por email/teléfono...')
+    
+    // Buscar cliente existente por email o teléfono
+    let existingClient = null
+    if (client_email) {
+      const { data } = await supabase
+        .from('clients')
+        .select('id, name, email, phone')
+        .eq('tenant_id', tenant_id)
+        .eq('email', client_email)
+        .maybeSingle()
+      existingClient = data
+    }
+    
+    if (!existingClient && client_phone) {
+      const { data } = await supabase
+        .from('clients')
+        .select('id, name, email, phone')
+        .eq('tenant_id', tenant_id)
+        .eq('phone', client_phone)
+        .maybeSingle()
+      existingClient = data
+    }
+
+    if (existingClient) {
+      clientId = existingClient.id
+      console.log('✅ API Bookings: Cliente existente encontrado:', clientId)
+      
+      // Actualizar datos del cliente si han cambiado
+      const needsUpdate = 
+        existingClient.name !== client_name ||
+        existingClient.email !== client_email ||
+        existingClient.phone !== client_phone
+      
+      if (needsUpdate) {
+        console.log('🔄 API Bookings: Actualizando datos del cliente...')
+        await supabase
+          .from('clients')
+          .update({
+            name: client_name,
+            email: client_email || null,
+            phone: client_phone,
+          })
+          .eq('id', clientId)
+      }
+    } else {
+      // Crear nuevo cliente
+      console.log('🆕 API Bookings: Creando nuevo cliente...')
+      const { data: newClient, error: clientError } = await supabase
+        .from('clients')
+        .insert({
+          tenant_id,
+          name: client_name,
+          email: client_email || null,
+          phone: client_phone,
+          marketing_consent: false, // Por defecto falso, se puede cambiar después
+          whatsapp_consent: false,  // Por defecto falso, se puede cambiar después
+          client_source: 'guest' // Viene de reserva pública
+        })
+        .select('id')
+        .single()
+
+      if (clientError) {
+        console.warn('⚠️ API Bookings: Error creando cliente (continuando sin client_id):', clientError)
+        // Continuamos sin client_id, usando solo snapshot en booking
+      } else {
+        clientId = newClient.id
+        console.log('✅ API Bookings: Nuevo cliente creado:', clientId)
+      }
+    }
+
+    // Crear la reserva con snapshot de datos del cliente + referencia opcional
     const bookingData = {
       tenant_id,
       service_id,
       provider_id: finalProviderId,
       scheduled_date,
       scheduled_time,
-      client_name,
-      client_phone,
-      client_email: client_email || null,
+      client_name,          // Snapshot - siempre preservado
+      client_phone,         // Snapshot - siempre preservado  
+      client_email: client_email || null, // Snapshot - siempre preservado
+      client_id: clientId,  // Referencia opcional a tabla clients
+      client_source: 'guest', // Origen de la reserva
       notes: notes || null,
       status,
       total_price,
@@ -259,7 +352,8 @@ export async function POST(request: NextRequest) {
     console.log('✅ API Bookings: Reserva creada exitosamente:', booking)
     return NextResponse.json({
       success: true,
-      booking
+      booking,
+      client_id: clientId // Incluir para referencia futura
     })
 
   } catch (error: any) {

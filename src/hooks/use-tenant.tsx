@@ -3,15 +3,36 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { Tenant } from '@/types/tenant'
-import { getPublicSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
+import { getPublicSupabaseClient, getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
+import { useAuth } from '@/components/providers/auth-provider'
+
+interface TenantMembership {
+  tenant_id: string
+  role: 'owner' | 'admin' | 'staff' | 'provider' | 'viewer'
+  is_active: boolean
+  tenant: {
+    id: string
+    slug: string
+    name: string
+  }
+}
 
 interface TenantContextType {
+  // Legacy support for existing code
   tenant: Tenant | null
   tenantSlug: string | null
   isLoading: boolean
   error: string | null
   refetchTenant: () => Promise<void>
   isSupabaseConfigured: boolean
+  
+  // New membership-based properties
+  currentMembership: TenantMembership | null
+  memberships: TenantMembership[]
+  hasRole: (role: string | string[], tenantId?: string) => boolean
+  isAdmin: (tenantId?: string) => boolean
+  canManage: (resource: string, tenantId?: string) => boolean
+  switchTenant: (tenantId: string) => Promise<void>
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined)
@@ -21,8 +42,15 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenantSlug, setTenantSlug] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // New membership state
+  const [currentMembership, setCurrentMembership] = useState<TenantMembership | null>(null)
+  const [memberships, setMemberships] = useState<TenantMembership[]>([])
+  
   const pathname = usePathname()
   const supabaseConfigured = isSupabaseConfigured()
+  const { user, session } = useAuth()
+  const supabase = getSupabaseClient()
 
   const getCachedTenant = useCallback((slug: string): Tenant | null => {
     if (typeof window === 'undefined') return null
@@ -184,6 +212,114 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   }, [tenantSlug, fetchTenant])
 
+  // Load user's tenant memberships
+  const loadMemberships = useCallback(async () => {
+    if (!user || !session || !supabaseConfigured) {
+      setMemberships([])
+      setCurrentMembership(null)
+      return
+    }
+
+    try {
+      console.log('🔍 Loading user memberships...')
+      
+      const { data: membershipsData, error } = await supabase
+        .from('tenant_memberships')
+        .select(`
+          tenant_id,
+          role,
+          is_active,
+          tenant:tenants!tenant_id (
+            id,
+            slug,
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+
+      if (error) {
+        console.error('Error loading memberships:', error)
+        return
+      }
+
+      const memberships = (membershipsData || []) as TenantMembership[]
+      setMemberships(memberships)
+      console.log(`✅ Loaded ${memberships.length} memberships for user`)
+
+      // Set current membership based on current tenant or cache
+      if (tenant && tenantSlug) {
+        const currentMembership = memberships.find(m => m.tenant.slug === tenantSlug)
+        setCurrentMembership(currentMembership || null)
+      } else if (memberships.length > 0) {
+        // Default to first owner role, then admin, then first available
+        const ownerMembership = memberships.find(m => m.role === 'owner')
+        const adminMembership = memberships.find(m => m.role === 'admin')
+        const defaultMembership = ownerMembership || adminMembership || memberships[0]
+        setCurrentMembership(defaultMembership)
+      }
+
+    } catch (error) {
+      console.error('Error loading memberships:', error)
+      setMemberships([])
+      setCurrentMembership(null)
+    }
+  }, [user, session, supabaseConfigured, tenant, tenantSlug, supabase])
+
+  // Permission checking functions
+  const hasRole = useCallback((role: string | string[], tenantId?: string) => {
+    const targetTenantId = tenantId || currentMembership?.tenant_id
+    if (!targetTenantId) return false
+
+    const membership = memberships.find(m => m.tenant_id === targetTenantId)
+    if (!membership || !membership.is_active) return false
+
+    const roles = Array.isArray(role) ? role : [role]
+    return roles.includes(membership.role)
+  }, [currentMembership, memberships])
+
+  const isAdmin = useCallback((tenantId?: string) => {
+    return hasRole(['owner', 'admin'], tenantId)
+  }, [hasRole])
+
+  const canManage = useCallback((resource: string, tenantId?: string) => {
+    const targetTenantId = tenantId || currentMembership?.tenant_id
+    if (!targetTenantId) return false
+
+    const membership = memberships.find(m => m.tenant_id === targetTenantId)
+    if (!membership || !membership.is_active) return false
+
+    // Role hierarchy permissions
+    const permissions = {
+      owner: ['tenants', 'users', 'providers', 'services', 'bookings', 'clients', 'settings', 'billing'],
+      admin: ['providers', 'services', 'bookings', 'clients', 'settings'],
+      staff: ['bookings', 'clients'],
+      provider: ['bookings'], // Only their own bookings
+      viewer: []
+    }
+
+    return permissions[membership.role]?.includes(resource) || false
+  }, [currentMembership, memberships])
+
+  const switchTenant = useCallback(async (tenantId: string) => {
+    const membership = memberships.find(m => m.tenant_id === tenantId)
+    if (membership) {
+      setCurrentMembership(membership)
+      // Also update the main tenant if it matches
+      if (membership.tenant.slug === tenantSlug) {
+        // Tenant is already loaded, just update membership
+      } else {
+        // Load the new tenant
+        await fetchTenant(membership.tenant.slug)
+      }
+    }
+  }, [memberships, tenantSlug, fetchTenant])
+
+  // Load memberships when user changes
+  useEffect(() => {
+    loadMemberships()
+  }, [loadMemberships])
+
   useEffect(() => {
     // Extraer tenant slug de la URL
     const pathSegments = pathname.split('/').filter(Boolean)
@@ -204,14 +340,34 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, supabaseConfigured, fetchTenant])
 
+  // Update current membership when tenant changes
+  useEffect(() => {
+    if (tenant && tenantSlug && memberships.length > 0) {
+      const membership = memberships.find(m => m.tenant.slug === tenantSlug)
+      setCurrentMembership(membership || null)
+    }
+  }, [tenant, tenantSlug, memberships])
+
   const value = useMemo(() => ({
+    // Legacy support
     tenant,
     tenantSlug,
     isLoading,
     error,
     refetchTenant,
     isSupabaseConfigured: supabaseConfigured,
-  }), [tenant, tenantSlug, isLoading, error, refetchTenant, supabaseConfigured])
+    
+    // New membership-based properties
+    currentMembership,
+    memberships,
+    hasRole,
+    isAdmin,
+    canManage,
+    switchTenant,
+  }), [
+    tenant, tenantSlug, isLoading, error, refetchTenant, supabaseConfigured,
+    currentMembership, memberships, hasRole, isAdmin, canManage, switchTenant
+  ])
 
   return (
     <TenantContext.Provider value={value}>
