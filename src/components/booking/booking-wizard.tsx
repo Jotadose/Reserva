@@ -90,47 +90,51 @@ function ServiceSelectionStep({ onNext, bookingData, setBookingData, tenant }: B
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-white mb-6 text-center">Selecciona tu Servicio</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 text-center">Selecciona tu Servicio</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {services.map((service) => (
           <div
             key={service.id}
             onClick={() => handleServiceSelect(service)}
-            className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-6 border border-purple-500/20 hover:border-purple-500/40 cursor-pointer transition-all duration-200 hover:scale-105"
+            className="bg-gradient-to-br from-white/10 to-white/5 rounded-xl p-4 sm:p-6 border border-purple-500/20 hover:border-purple-500/40 cursor-pointer transition-all duration-200 hover:scale-[1.02] sm:hover:scale-105 active:scale-95"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Scissors className="w-5 h-5 text-purple-400" />
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <Scissors className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
                 {service.is_featured && (
-                  <span className="text-xs bg-yellow-600/20 text-yellow-400 px-2 py-1 rounded">
+                  <span className="text-xs bg-yellow-600/20 text-yellow-400 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                     Destacado
                   </span>
                 )}
               </div>
               {service.bookings_count && service.bookings_count > 10 && (
-                <span className="text-xs bg-green-600/20 text-green-400 px-2 py-1 rounded">
+                <span className="text-xs bg-green-600/20 text-green-400 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                   Popular
                 </span>
               )}
             </div>
             
-            <h3 className="text-xl font-bold text-white mb-2">{service.name}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-2">{service.name}</h3>
             {service.description && (
-              <p className="text-gray-300 text-sm mb-4 line-clamp-2">{service.description}</p>
+              <p className="text-gray-300 text-sm mb-3 sm:mb-4 line-clamp-2">{service.description}</p>
             )}
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
                   <DollarSign className="w-4 h-4 text-green-400" />
-                  <span className="text-green-400 font-semibold">{formatPrice(service.price || 0)}</span>
+                  <span className="text-green-400 font-semibold text-sm sm:text-base">{formatPrice(service.price || 0)}</span>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
                 <Clock className="w-4 h-4 text-blue-400" />
-                <span className="text-blue-400 font-medium">{formatDuration(service.duration_minutes || 30)}</span>
+                <span className="text-blue-400 font-medium text-sm sm:text-base">{formatDuration(service.duration_minutes || 30)}</span>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <p className="text-xs text-gray-400 text-center">Toca para seleccionar</p>
               </div>
             </div>
           </div>
@@ -195,48 +199,48 @@ function DateTimeSelectionStep({ onNext, onPrev, bookingData, setBookingData, te
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
         <button
           onClick={onPrev}
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+          className="flex items-center space-x-1.5 sm:space-x-2 text-gray-400 hover:text-white transition-colors p-2 sm:p-0 -ml-2 sm:ml-0"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Volver</span>
+          <span className="text-sm sm:text-base">Volver</span>
         </button>
-        <h2 className="text-2xl font-bold text-white">Selecciona Fecha y Hora</h2>
-        <div></div>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white text-center flex-1">Selecciona Fecha y Hora</h2>
+        <div className="w-16 sm:w-0"></div>
       </div>
       
       {bookingData.serviceName && (
-        <div className="bg-purple-600/10 border border-purple-500/20 rounded-lg p-4 mb-6">
+        <div className="bg-purple-600/10 border border-purple-500/20 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-white font-semibold">{bookingData.serviceName}</h3>
-              <p className="text-gray-300 text-sm">{formatDuration(bookingData.serviceDuration)}</p>
+              <h3 className="text-white font-semibold text-sm sm:text-base">{bookingData.serviceName}</h3>
+              <p className="text-gray-300 text-xs sm:text-sm">{formatDuration(bookingData.serviceDuration)}</p>
             </div>
             <div className="text-right">
-              <p className="text-green-400 font-semibold">{formatPrice(bookingData.servicePrice)}</p>
+              <p className="text-green-400 font-semibold text-sm sm:text-base">{formatPrice(bookingData.servicePrice)}</p>
             </div>
           </div>
         </div>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="space-y-6 sm:space-y-8 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
         {/* Date Selection */}
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Selecciona la Fecha</h3>
-          <div className="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Selecciona la Fecha</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-h-60 sm:max-h-80 overflow-y-auto">
             {getAvailableDates().map((date) => (
               <button
                 key={date.value}
                 onClick={() => setSelectedDate(date.value)}
-                className={`p-3 rounded-lg text-left transition-all duration-200 ${
+                className={`p-2.5 sm:p-3 rounded-lg text-left transition-all duration-200 active:scale-95 ${
                   selectedDate === date.value
                     ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50'
                     : 'bg-white/10 text-gray-300 hover:bg-white/20 border border-transparent'
                 }`}
               >
-                <div className="text-sm font-medium capitalize">
+                <div className="text-xs sm:text-sm font-medium capitalize">
                   {date.label}
                 </div>
               </button>
@@ -246,37 +250,37 @@ function DateTimeSelectionStep({ onNext, onPrev, bookingData, setBookingData, te
         
         {/* Time Selection */}
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Selecciona la Hora</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Selecciona la Hora</h3>
           {selectedDate ? (
-            <div className="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-60 sm:max-h-80 overflow-y-auto">
               {getAvailableTimes().map((time) => (
                 <button
                   key={time}
                   onClick={() => setSelectedTime(time)}
-                  className={`p-3 rounded-lg text-center transition-all duration-200 ${
+                  className={`p-2.5 sm:p-3 rounded-lg text-center transition-all duration-200 active:scale-95 ${
                     selectedTime === time
                       ? 'bg-blue-600/30 text-blue-300 border border-blue-500/50'
                       : 'bg-white/10 text-gray-300 hover:bg-white/20 border border-transparent'
                   }`}
                 >
-                  <div className="font-medium">{time}</div>
+                  <div className="font-medium text-xs sm:text-sm">{time}</div>
                 </button>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
-              <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Primero selecciona una fecha</p>
+            <div className="text-center py-6 sm:py-8 text-gray-400">
+              <Clock className="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm sm:text-base">Primero selecciona una fecha</p>
             </div>
           )}
         </div>
       </div>
       
       {selectedDate && selectedTime && (
-        <div className="mt-8 text-center">
+        <div className="mt-6 sm:mt-8">
           <button
             onClick={handleContinue}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
+            className="w-full sm:w-auto sm:mx-auto sm:block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 sm:px-8 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium active:scale-95"
           >
             Continuar
           </button>
@@ -700,25 +704,25 @@ export default function BookingWizard({ tenant }: Readonly<BookingWizardProps>) 
   const CurrentStepComponent = steps[currentStep - 1].component
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-3 sm:p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <Scissors className="w-8 h-8 text-white" />
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+            <Scissors className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">{tenant?.business_name || tenant?.name}</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">{tenant?.business_name || tenant?.name}</h1>
           {tenant?.instagram && (
             <div className="flex items-center justify-center space-x-2 text-purple-300">
-              <Instagram className="w-4 h-4" />
-              <span>{tenant.instagram}</span>
+              <Instagram className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="text-sm sm:text-base">{tenant.instagram}</span>
             </div>
           )}
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-center mb-6 sm:mb-8 overflow-x-auto pb-2">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-max px-2">
             {[
               { id: 1, label: 'Servicio', icon: Scissors },
               { id: 2, label: 'Fecha y Hora', icon: Calendar },
@@ -731,18 +735,18 @@ export default function BookingWizard({ tenant }: Readonly<BookingWizardProps>) 
               
               return (
                 <React.Fragment key={step.id}>
-                  <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 ${
                     isActive 
                       ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50'
                       : isCompleted
                       ? 'bg-green-600/20 text-green-400'
                       : 'bg-white/10 text-gray-400'
                   }`}>
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{step.label}</span>
+                    <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{step.label}</span>
                   </div>
                   {index < 3 && (
-                    <ArrowRight className="w-4 h-4 text-gray-500" />
+                    <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
                   )}
                 </React.Fragment>
               )
@@ -751,7 +755,7 @@ export default function BookingWizard({ tenant }: Readonly<BookingWizardProps>) 
         </div>
 
         {/* Main Content */}
-        <div className="bg-black/40 backdrop-blur-sm rounded-2xl p-8 border border-purple-500/20">
+        <div className="bg-black/40 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border border-purple-500/20">
           <CurrentStepComponent
             onNext={nextStep}
             onPrev={currentStep > 1 ? prevStep : undefined}

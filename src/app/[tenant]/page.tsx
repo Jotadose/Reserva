@@ -22,7 +22,9 @@ import {
   Award,
   Users,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from 'lucide-react'
 
 // Utility functions
@@ -64,10 +66,11 @@ const getMockSchedule = () => ({
 
 export default function TenantLandingPage() {
   const { tenant, isLoading, error } = useTenant()
-  const { colors, getGradientStyle, getButtonStyle, getTextStyle, logoUrl, coverImageUrl } = useBranding()
+  const { colors, getGradientStyle, getButtonStyle, getTextStyle, getCustomText, logoUrl, coverImageUrl } = useBranding()
   const { services } = usePublicServices(tenant?.id || null)
   const { services: featuredServices } = useFeaturedServices(tenant?.id || null, 3)
   const [scrollY, setScrollY] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
@@ -155,18 +158,66 @@ export default function TenantLandingPage() {
               </div>
             </div>
             
-            <div className="hidden md:flex items-center space-x-6">
-              <a href="#servicios" className="text-gray-300 hover:text-white transition-colors">Servicios</a>
-              <a href="#horarios" className="text-gray-300 hover:text-white transition-colors">Horarios</a>
-              <a href="#contacto" className="text-gray-300 hover:text-white transition-colors">Contacto</a>
-              <Link href={`/${tenant.slug}/book`}>
-                <Button className="text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium" style={getButtonStyle()}>
-                  Reservar Cita
+            <div className="flex items-center space-x-3">
+              {/* Mobile menu button */}
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              
+              {/* Desktop menu */}
+              <div className="hidden md:flex items-center space-x-6">
+                <a href="#servicios" className="text-gray-300 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-body)' }}>Servicios</a>
+                <a href="#horarios" className="text-gray-300 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-body)' }}>Horarios</a>
+                <a href="#contacto" className="text-gray-300 hover:text-white transition-colors" style={{ fontFamily: 'var(--font-body)' }}>Contacto</a>
+                <Link href={`/${tenant.slug}/book`}>
+                  <Button className="typography-button mobile-button text-white transition-all duration-200 font-medium" style={getButtonStyle()}>
+                    {getCustomText('buttonText') || 'Reservar Cita'}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-white/10 bg-black/20 backdrop-blur-md">
+            <div className="px-4 py-3 space-y-3">
+              <a 
+                href="#servicios" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Servicios
+              </a>
+              <a 
+                href="#horarios" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Horarios
+              </a>
+              <a 
+                href="#contacto" 
+                className="block text-gray-300 hover:text-white transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Contacto
+              </a>
+              <Link href={`/${tenant.slug}/book`} className="block mt-3">
+                <Button className="typography-button mobile-button w-full text-white transition-all duration-200 font-medium" style={getButtonStyle()}>
+                  {getCustomText('buttonText') || 'Reservar Cita'}
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -185,20 +236,19 @@ export default function TenantLandingPage() {
             )}
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Bienvenido a <span style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{contact.businessName}</span>
+          <h1 className="typography-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
+            {getCustomText('customTitle') || 'Bienvenido a'} <span className="text-gradient-brand">{contact.businessName}</span>
           </h1>
           
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Experiencia profesional en barbería con técnicas modernas y atención personalizada. 
-            Tu estilo, nuestra pasión.
+          <p className="typography-body text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+            {getCustomText('customSubtitle') || 'Experiencia profesional en barbería con técnicas modernas y atención personalizada. Tu estilo, nuestra pasión.'}
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link href={`/${tenant.slug}/book`}>
-              <Button size="lg" className="text-white px-8 py-4 rounded-lg transition-all duration-200 font-semibold text-lg flex items-center space-x-2" style={getButtonStyle()}>
-                <Calendar className="w-5 h-5" />
-                <span>Reservar Ahora</span>
+          <div className="flex flex-col w-full max-w-sm mx-auto space-y-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center sm:space-y-0 sm:space-x-4">
+            <Link href={`/${tenant.slug}/book`} className="w-full sm:w-auto">
+              <Button size="lg" className="typography-button mobile-button w-full sm:w-auto text-white transition-all duration-200 font-semibold flex items-center justify-center space-x-2" style={getButtonStyle()}>
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{getCustomText('buttonText') || 'Reservar Ahora'}</span>
               </Button>
             </Link>
             
@@ -206,10 +256,10 @@ export default function TenantLandingPage() {
               href={`https://wa.me/${contact.whatsapp.replace(/\s/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="glass-button text-green-400 px-8 py-4 rounded-lg font-semibold text-lg flex items-center space-x-2 border border-green-500/30"
+              className="typography-button mobile-button w-full sm:w-auto glass-button text-green-400 font-semibold flex items-center justify-center space-x-2 border border-green-500/30"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span>WhatsApp</span>
+              <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>{getCustomText('whatsappButtonText') || 'WhatsApp'}</span>
             </a>
           </div>
           
@@ -236,42 +286,42 @@ export default function TenantLandingPage() {
       </section>
 
       {/* Featured Services */}
-      <section id="servicios" className="py-20 px-4">
+      <section id="servicios" className="py-12 sm:py-16 md:py-20 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Servicios Destacados</h2>
-            <p className="text-xl text-gray-300">Los servicios más populares de nuestra barbería</p>
+          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+            <h2 className="typography-heading text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">Servicios Destacados</h2>
+            <p className="typography-body text-base sm:text-lg md:text-xl text-gray-300 px-4">Los servicios más populares de nuestra barbería</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12">
             {featuredServices.map((service) => (
               <div
                 key={service.id}
-                className="glass-card p-8 hover:bg-white/15 transition-all duration-300 hover:scale-105 group"
+                className="glass-card p-4 sm:p-6 md:p-8 hover:bg-white/15 transition-all duration-300 hover:scale-[1.02] sm:hover:scale-105 group"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <Scissors className="w-8 h-8 text-purple-400" />
-                  <Badge className="bg-yellow-600/20 text-yellow-400">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <Scissors className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
+                  <Badge className="bg-yellow-600/20 text-yellow-400 text-xs sm:text-sm">
                     Popular
                   </Badge>
                 </div>
                 
-                <h3 className="text-2xl font-bold text-white mb-4">{service.name}</h3>
-                <p className="text-gray-300 mb-6">{service.description}</p>
+                <h3 className="typography-heading text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4">{service.name}</h3>
+                <p className="typography-body text-sm sm:text-base text-gray-300 mb-4 sm:mb-6">{service.description}</p>
                 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Precio:</span>
-                    <span className="text-green-400 font-bold text-xl">{formatPrice(service.price)}</span>
+                    <span className="typography-body text-gray-400 text-sm sm:text-base">Precio:</span>
+                    <span className="typography-body font-bold text-lg sm:text-xl" style={getTextStyle()}>{formatPrice(service.price)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Duración:</span>
-                    <span className="text-blue-400 font-semibold">{formatDuration(service.duration_minutes)}</span>
+                    <span className="typography-body text-gray-400 text-sm sm:text-base">Duración:</span>
+                    <span className="typography-body font-semibold text-sm sm:text-base text-blue-400">{formatDuration(service.duration_minutes)}</span>
                   </div>
                 </div>
                 
                 <Link href={`/${tenant.slug}/book`}>
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-semibold">
+                  <Button className="typography-button w-full text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg transition-all duration-200 font-semibold text-sm sm:text-base hover:opacity-90" style={getButtonStyle()}>
                     Reservar Este Servicio
                   </Button>
                 </Link>

@@ -56,6 +56,13 @@
   .gradient-bg-dynamic {
     background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
   }
+
+  .text-gradient-brand {
+    background: linear-gradient(to left, var(--brand-primary), var(--brand-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   
   .animate-float {
     animation: float 6s ease-in-out infinite;
@@ -133,5 +140,184 @@ html {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Typography utilities using CSS variables from branding system */
+@layer utilities {
+  .typography-heading {
+    font-family: var(--font-heading, 'Inter, sans-serif');
+    font-size: var(--heading-size, '2rem');
+    line-height: var(--line-height, '1.5');
+  }
+
+  .typography-body {
+    font-family: var(--font-body, 'Inter, sans-serif');
+    font-size: var(--body-size, '1rem');
+    line-height: var(--line-height, '1.5');
+  }
+
+.typography-button {
+  font-family: var(--font-button);
+}
+
+/* Additional mobile-first utilities for enhanced user experience */
+.service-grid {
+  @apply grid grid-cols-1 gap-4;
+  @apply sm:grid-cols-2 sm:gap-6;
+  @apply lg:grid-cols-3;
+}
+
+.datetime-grid {
+  @apply space-y-6;
+  @apply sm:grid sm:grid-cols-2 sm:gap-8 sm:space-y-0;
+  @apply lg:gap-12;
+}
+
+.mobile-nav-toggle {
+  @apply p-2 rounded-lg bg-white/10 border border-white/20;
+  @apply hover:bg-white/20 active:scale-95 transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-white/50;
+}
+
+.mobile-nav-menu {
+  @apply absolute top-full left-0 right-0 mt-2 bg-black/90 backdrop-blur-sm;
+  @apply border border-white/20 rounded-lg p-4 space-y-2;
+}
+
+/* Enhanced mobile touch targets */
+.mobile-touch-large {
+  @apply min-h-[56px] min-w-[56px];
+}
+
+/* Mobile-optimized form inputs */
+.mobile-form-input {
+  @apply px-4 py-4 text-base min-h-[52px] rounded-lg;
+  @apply border-2 focus:border-blue-500 focus:ring-blue-500;
+  @apply transition-all duration-200;
+}  /* Layout configuration */
+  .container-padding {
+    padding: var(--container-padding, '2rem');
+  }
+
+  .brand-border-radius {
+    border-radius: var(--border-radius, '0.75rem');
+  }
+
+  .glass-effect {
+    backdrop-filter: blur(16px);
+    background-color: rgba(255, 255, 255, var(--glass-opacity, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Mobile-first responsive utilities */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Optimized for mobile gestures */
+  .mobile-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mobile-card:active {
+    transform: scale(0.98);
+  }
+
+  /* Enhanced touch targets for mobile */
+  .mobile-button {
+    @apply px-6 py-3 text-sm min-h-[44px] rounded-lg;
+  }
+
+  @screen sm {
+    .mobile-button {
+      @apply px-8 py-4 text-base rounded-xl;
+    }
+  }
+
+  /* Mobile-optimized service grid */
+  .mobile-service-grid {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  @screen sm {
+    .mobile-service-grid {
+      @apply grid-cols-2 gap-6;
+    }
+  }
+
+  @screen lg {
+    .mobile-service-grid {
+      @apply grid-cols-3 gap-8;
+    }
+  }
+
+  /* Booking wizard mobile optimizations */
+  .booking-wizard-container {
+    @apply p-3;
+  }
+
+  @screen sm {
+    .booking-wizard-container {
+      @apply p-4;
+    }
+  }
+
+  .booking-step-card {
+    @apply p-4 rounded-xl;
+  }
+
+  @screen sm {
+    .booking-step-card {
+      @apply p-6 rounded-xl;
+    }
+  }
+
+  @screen md {
+    .booking-step-card {
+      @apply p-8 rounded-2xl;
+    }
+  }
+
+  /* Mobile-first navigation */
+  .mobile-nav {
+    @apply sticky top-0 z-50;
+    backdrop-filter: blur(12px);
+  }
+
+  .mobile-nav-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+
+  .mobile-nav-menu.open {
+    max-height: 500px;
+  }
+
+  /* Progress steps horizontal scroll */
+  .progress-steps-container {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .progress-steps-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Better mobile typography scaling */
+  @screen max-sm {
+    .responsive-text-xl {
+      font-size: 1.125rem;
+    }
+    
+    .responsive-text-2xl {
+      font-size: 1.25rem;
+    }
+    
+    .responsive-text-3xl {
+      font-size: 1.5rem;
+    }
   }
 }
