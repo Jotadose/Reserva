@@ -340,16 +340,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Header móvil */}
         <div className="md:hidden">
-          <div className="flex items-center justify-between bg-white px-4 py-2 border-b">
+          <div className="flex items-center justify-between bg-white px-4 py-3 border-b shadow-sm">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(true)}
-              className="text-gray-500 hover:text-gray-900"
+              className="text-gray-500 hover:text-gray-900 h-10 w-10 p-0"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-gray-900 truncate">
               {tenantData?.name || tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
             </h1>
             <div className="w-10" /> {/* Spacer */}
@@ -357,8 +357,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Contenido */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          {children}
+        <main className="flex-1 relative overflow-y-auto focus:outline-none bg-gray-50">
+          <div className="p-4 md:p-6 lg:p-8">
+            {children}
+          </div>
         </main>
       </div>
 

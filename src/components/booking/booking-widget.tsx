@@ -317,10 +317,10 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Reservar Cita</CardTitle>
-        <CardDescription>
+    <Card className="w-full max-w-lg mx-auto">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl md:text-2xl">Reservar Cita</CardTitle>
+        <CardDescription className="text-sm md:text-base">
           Paso {step} de 3 - {getStepDescription(step)}
         </CardDescription>
       </CardHeader>
@@ -331,21 +331,21 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
           </Alert>
         )}
 
-        {/* Paso 1: Seleccionar servicio y profesional */}
+        {/* Paso 1: Seleccionar servicio y proveedor */}
         {step === 1 && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="service">Servicio *</Label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="service" className="text-sm font-medium">Servicio *</Label>
               <Select value={form.serviceId} onValueChange={(value) => handleInputChange('serviceId', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue placeholder="Selecciona un servicio" />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
-                      <div className="flex justify-between items-center w-full">
-                        <span>{service.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">
+                      <div className="flex flex-col items-start w-full py-1">
+                        <span className="font-medium">{service.name}</span>
+                        <span className="text-xs text-gray-600">
                           {formatPrice(service.price)} • {formatDuration(service.duration_minutes)}
                         </span>
                       </div>
@@ -355,53 +355,55 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
               </Select>
             </div>
 
-            <div>
-              <Label htmlFor="provider">Profesional *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="provider" className="text-sm font-medium">Profesional *</Label>
               <Select value={form.providerId} onValueChange={(value) => handleInputChange('providerId', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-12">
                   <SelectValue placeholder="Selecciona un profesional" />
                 </SelectTrigger>
                 <SelectContent>
                   {providers.map((provider) => (
                     <SelectItem key={provider.id} value={provider.id}>
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2" />
-                        {provider.name} {provider.role === 'owner' && '(Propietario)'}
-                      </div>
+                      {provider.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <Button onClick={nextStep} className="w-full">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-sm">{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button onClick={nextStep} className="w-full h-12 text-base font-medium">
               Continuar
             </Button>
           </div>
-        )}
-
-        {/* Paso 2: Seleccionar fecha y hora */}
+        )}        {/* Paso 2: Seleccionar fecha y hora */}
         {step === 2 && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="date">Fecha *</Label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="date" className="text-sm font-medium">Fecha *</Label>
               <Input
                 type="date"
                 value={form.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
+                className="h-12 text-base"
               />
             </div>
 
-            <div>
-              <Label htmlFor="time">Hora *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="time" className="text-sm font-medium">Hora *</Label>
               {loadingSlots ? (
                 <div className="flex items-center justify-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   <span className="ml-2 text-sm text-gray-600">Cargando horarios...</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
                   {availableSlots.map((slot) => (
                     <Button
                       key={slot.time}
@@ -409,26 +411,28 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
                       variant={form.time === slot.time ? "default" : "outline"}
                       disabled={!slot.available}
                       onClick={() => handleInputChange('time', slot.time)}
-                      className={`text-sm ${!slot.available ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`h-12 text-base font-medium ${!slot.available ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      <Clock className="w-3 h-3 mr-1" />
+                      <Clock className="w-4 h-4 mr-2" />
                       {slot.time}
                     </Button>
                   ))}
                 </div>
               )}
               {availableSlots.length === 0 && !loadingSlots && (
-                <p className="text-sm text-gray-500 mt-2">
-                  No hay horarios disponibles para esta fecha. Selecciona otra fecha.
-                </p>
+                <div className="text-center py-6 text-gray-500">
+                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-base">No hay horarios disponibles para esta fecha.</p>
+                  <p className="text-sm">Selecciona otra fecha.</p>
+                </div>
               )}
             </div>
 
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={prevStep} className="flex-1">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+              <Button variant="outline" onClick={prevStep} className="h-12 text-base font-medium sm:flex-1">
                 Atrás
               </Button>
-              <Button onClick={nextStep} className="flex-1">
+              <Button onClick={nextStep} className="h-12 text-base font-medium sm:flex-1">
                 Continuar
               </Button>
             </div>
@@ -437,67 +441,90 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
 
         {/* Paso 3: Datos del cliente */}
         {step === 3 && (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="clientName">Nombre completo *</Label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="clientName" className="text-sm font-medium">Nombre completo *</Label>
               <Input
                 value={form.clientName}
                 onChange={(e) => handleInputChange('clientName', e.target.value)}
                 placeholder="Tu nombre completo"
+                className="h-12 text-base"
               />
             </div>
 
-            <div>
-              <Label htmlFor="clientPhone">Teléfono *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="clientPhone" className="text-sm font-medium">Teléfono *</Label>
               <Input
                 value={form.clientPhone}
                 onChange={(e) => handleInputChange('clientPhone', e.target.value)}
                 placeholder="+56 9 1234 5678"
+                className="h-12 text-base"
+                type="tel"
               />
             </div>
 
-            <div>
-              <Label htmlFor="clientEmail">Email *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="clientEmail" className="text-sm font-medium">Email *</Label>
               <Input
                 type="email"
                 value={form.clientEmail}
                 onChange={(e) => handleInputChange('clientEmail', e.target.value)}
                 placeholder="tu@email.com"
+                className="h-12 text-base"
               />
             </div>
 
-            <div>
-              <Label htmlFor="notes">Notas adicionales</Label>
+            <div className="space-y-3">
+              <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
               <Textarea
                 value={form.notes}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 placeholder="Alguna preferencia o comentario especial..."
-                rows={3}
+                rows={4}
+                className="text-base resize-none"
               />
             </div>
 
             {/* Resumen */}
             {selectedService && selectedProvider && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Resumen de tu reserva:</h3>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <p><strong>Servicio:</strong> {selectedService.name}</p>
-                  <p><strong>Profesional:</strong> {selectedProvider.name}</p>
-                  <p><strong>Fecha:</strong> {form.date}</p>
-                  <p><strong>Hora:</strong> {form.time}</p>
-                  <p><strong>Duración:</strong> {formatDuration(selectedService.duration_minutes)}</p>
-                  <p><strong>Precio:</strong> {formatPrice(selectedService.price)}</p>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-3 text-base">Resumen de tu reserva:</h3>
+                <div className="space-y-2 text-gray-700">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Servicio:</span>
+                    <span className="text-sm">{selectedService.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Profesional:</span>
+                    <span className="text-sm">{selectedProvider.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Fecha:</span>
+                    <span className="text-sm">{form.date}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Hora:</span>
+                    <span className="text-sm">{form.time}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Duración:</span>
+                    <span className="text-sm">{formatDuration(selectedService.duration_minutes)}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-2 mt-3">
+                    <span className="font-semibold text-lg">Precio:</span>
+                    <span className="font-bold text-lg text-green-600">{formatPrice(selectedService.price)}</span>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="flex space-x-2">
-              <Button variant="outline" onClick={prevStep} className="flex-1">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+              <Button variant="outline" onClick={prevStep} className="h-12 text-base font-medium sm:flex-1">
                 Atrás
               </Button>
               <Button 
                 onClick={handleSubmit} 
-                className="flex-1"
+                className="h-12 text-base font-medium sm:flex-1"
                 disabled={isLoading}
               >
                 {isLoading ? 'Creando reserva...' : 'Confirmar Reserva'}

@@ -107,15 +107,46 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar de navegación */}
-      <div className="w-64 bg-white shadow-sm border-r">
-        <div className="p-6 border-b">
-          <h1 className="text-xl font-semibold text-gray-900">Configuración</h1>
-          <p className="text-sm text-gray-500 mt-1">Gestiona tu workspace</p>
+      {/* Sidebar de navegación - Desktop */}
+      <div className="hidden md:flex md:w-64 bg-white shadow-sm border-r">
+        <div className="flex flex-col w-full">
+          <div className="p-6 border-b">
+            <h1 className="text-xl font-semibold text-gray-900">Configuración</h1>
+            <p className="text-sm text-gray-500 mt-1">Gestiona tu workspace</p>
+          </div>
+          
+          <nav className="mt-6 flex-1">
+            <div className="px-3">
+              {settingsNavigation.map((item) => {
+                const Icon = item.icon
+                const isActive = isActiveRoute(item.href, item.exact)
+                
+                return (
+                  <Link
+                    key={item.name}
+                    href={`/${tenantSlug}${item.href}`}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1',
+                      isActive
+                        ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-700'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </div>
+          </nav>
         </div>
-        
-        <nav className="mt-6">
-          <div className="px-3">
+      </div>
+
+      {/* Navigation móvil - Horizontal scrollable */}
+      <div className="md:hidden w-full bg-white border-b">
+        <div className="p-4">
+          <h1 className="text-lg font-semibold text-gray-900 mb-3">Configuración</h1>
+          <div className="flex gap-2 overflow-x-auto pb-2">
             {settingsNavigation.map((item) => {
               const Icon = item.icon
               const isActive = isActiveRoute(item.href, item.exact)
@@ -125,10 +156,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                   key={item.name}
                   href={`/${tenantSlug}${item.href}`}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1',
+                    'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0',
                     isActive
-                      ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                      : 'text-gray-700 bg-gray-50 hover:bg-gray-100'
                   )}
                 >
                   <Icon className="w-4 h-4" />
@@ -137,13 +168,17 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
               )
             })}
           </div>
-        </nav>
+        </div>
       </div>
 
       {/* Contenido principal */}
-      <div className="flex-1 overflow-auto relative">
+      <div className="flex-1 flex flex-col overflow-hidden md:relative">
         <QuickPreview />
-        {children}
+        <div className="flex-1 overflow-auto">
+          <div className="p-4 md:p-6 lg:p-8">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   )
