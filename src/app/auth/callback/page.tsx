@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
       try {
         const supabase = getSupabaseClient()
         
-        // Obtener los parámetros de la URL
+        // Guardar información de sesión para persistencia
         const { data, error } = await supabase.auth.getSession()
         
         if (error) {
@@ -28,6 +28,7 @@ export default function AuthCallbackPage() {
         if (data.session) {
           console.log('Authentication successful:', data.session.user)
           const userEmail = data.session.user.email
+          const provider = data.session.user.app_metadata?.provider || 'email'
           
           if (!userEmail) {
             setStatus('error')
@@ -35,10 +36,18 @@ export default function AuthCallbackPage() {
             return
           }
 
+          // Guardar información de sesión para persistencia
+          localStorage.setItem('auth_user', JSON.stringify({
+            id: data.session.user.id,
+            email: userEmail,
+            provider: provider,
+            last_sign_in: new Date().toISOString()
+          }))
+
           // Verificar si el usuario existe en la tabla auth.users y buscar su tenant
           const { data: tenantData, error: tenantError } = await supabase
             .from('tenants')
-            .select('slug, owner_id')
+            .select('id, slug, name, owner_id')
             .eq('owner_id', data.session.user.id)
             .eq('subscription_status', 'active')
             .single()
@@ -75,13 +84,26 @@ export default function AuthCallbackPage() {
           setStatus('success')
           setMessage('¡Autenticación exitosa! Redirigiendo a tu dashboard...')
           
+          // Guardar información del tenant para la sesión
+          localStorage.setItem('last_created_tenant', JSON.stringify({
+            id: tenantData.id,
+            slug: tenantData.slug,
+            name: tenantData.name,
+            last_accessed: new Date().toISOString()
+          }))
+          
           // Redirigir al dashboard del tenant correspondiente
           setTimeout(() => {
             router.push(`/${tenantData.slug}/dashboard`)
-          }, 2000)
+          }, 1500)
         } else {
-          setStatus('error')
-          setMessage('No se pudo establecer la sesión')
+          // Usuario no tiene tenant existente, redirigir a onboarding
+          setStatus('success')
+          setMessage('¡Autenticación exitosa! Configurando tu cuenta...')
+          
+          setTimeout(() => {
+            router.push('/onboarding')
+          }, 1500)
         }
       } catch (err) {
         console.error('Unexpected error in auth callback:', err)

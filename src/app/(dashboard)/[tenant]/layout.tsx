@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { getSupabaseClient } from '@/lib/supabase'
+import { SessionManager } from '@/components/auth/session-manager'
 
 interface DashboardLayoutProps {
   readonly children: React.ReactNode
@@ -360,6 +361,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Session Manager */}
+      <SessionManager />
     </div>
   )
 }

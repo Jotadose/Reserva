@@ -73,6 +73,14 @@ export function SupabaseAuthProvider({ children }: Readonly<{ children: React.Re
       // Verificar si el usuario tiene un tenant después del login exitoso
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
+        // Guardar información de sesión para persistencia
+        localStorage.setItem('auth_user', JSON.stringify({
+          id: session.user.id,
+          email: session.user.email,
+          provider: session.user.app_metadata?.provider || 'email',
+          last_sign_in: new Date().toISOString()
+        }))
+
         // Primero verificar caché local
         let cachedTenantSlug: string | null = null
         try {
@@ -122,16 +130,25 @@ export function SupabaseAuthProvider({ children }: Readonly<{ children: React.Re
         return {}
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: metadata ?? {}
+          data: metadata ?? {},
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
       if (error) {
         return { error: error.message }
+      }
+
+      // Si el registro fue exitoso y hay usuario, guardar información temporal
+      if (data.user) {
+        localStorage.setItem('pending_verification', JSON.stringify({
+          email: data.user.email,
+          created_at: new Date().toISOString()
+        }))
       }
 
       return {}
@@ -142,6 +159,10 @@ export function SupabaseAuthProvider({ children }: Readonly<{ children: React.Re
   }
 
   const signOut = async () => {
+    // Limpiar información de sesión local
+    localStorage.removeItem('auth_user')
+    localStorage.removeItem('last_created_tenant')
+    
     await supabase.auth.signOut()
   }
 

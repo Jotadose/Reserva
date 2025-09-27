@@ -7,6 +7,7 @@ import { useTenant } from '@/hooks/use-tenant'
 import { useBranding } from '@/hooks/use-branding'
 import { usePublicServices } from '@/hooks/use-public-services'
 import { useFeaturedServices } from '@/hooks/use-featured-services'
+import { SessionManager } from '@/components/auth/session-manager'
 
 import Link from 'next/link'
 import {
@@ -560,6 +561,9 @@ export default function TenantLandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Session Manager para usuarios autenticados */}
+      <SessionManager />
     </div>
   )
 }

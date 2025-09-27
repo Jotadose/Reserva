@@ -3,6 +3,7 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
+import { QuickPreview } from '@/components/auth/quick-preview'
 import { cn } from '@/lib/utils'
 import { 
   Settings, 
@@ -140,7 +141,8 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
       </div>
 
       {/* Contenido principal */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative">
+        <QuickPreview />
         {children}
       </div>
     </div>

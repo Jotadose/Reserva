@@ -19,21 +19,45 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [supabaseConfigured, setSupabaseConfigured] = useState(true)
+  const [rememberMe, setRememberMe] = useState(true)
   
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn } = useAuth()
   const tenantSlug = searchParams.get('tenant')
+  const message = searchParams.get('message')
+  const callbackUrl = searchParams.get('callbackUrl')
 
   useEffect(() => {
     setSupabaseConfigured(isSupabaseConfigured())
-  }, [])
+    
+    // Mostrar mensaje de URL si existe
+    if (message) {
+      setError(message)
+    }
+
+    // Verificar si hay intento de auth previo
+    const authAttempt = localStorage.getItem('auth_attempt')
+    if (authAttempt) {
+      try {
+        const attempt = JSON.parse(authAttempt)
+        if (attempt.provider === 'google') {
+          setSuccess('Intento de login con Google detectado. Si no fuiste redirigido, intenta nuevamente.')
+        }
+        localStorage.removeItem('auth_attempt')
+      } catch (e) {
+        // Ignorar errores de parsing
+      }
+    }
+  }, [message])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setSuccess('')
 
     try {
       const result = await signIn(email, password)
@@ -43,8 +67,16 @@ function LoginForm() {
         return
       }
       
-      // Redirección inteligente basada en si el usuario tiene tenant
-      if (result.tenant) {
+      setSuccess('¡Login exitoso! Redirigiendo...')
+      
+      // Esperar un momento para mostrar el mensaje de éxito
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Redirección inteligente
+      if (callbackUrl) {
+        // Si hay URL de callback, ir ahí
+        router.push(callbackUrl)
+      } else if (result.tenant) {
         // Usuario tiene tenant, ir a su dashboard
         router.push(`/${result.tenant}/dashboard`)
       } else {
@@ -102,8 +134,20 @@ function LoginForm() {
             <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
+                <Alert className="bg-red-50 border-red-200">
+                  <Settings className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="bg-green-50 border-green-200">
+                  <Settings className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    {success}
+                  </AlertDescription>
                 </Alert>
               )}
               
@@ -117,6 +161,7 @@ function LoginForm() {
                   placeholder="tu@email.com"
                   required
                   disabled={isLoading}
+                  className="h-11"
                 />
               </div>
               
@@ -131,6 +176,7 @@ function LoginForm() {
                     placeholder="••••••••"
                     required
                     disabled={isLoading}
+                    className="h-11 pr-10"
                   />
                   <Button
                     type="button"
@@ -147,6 +193,24 @@ function LoginForm() {
                     )}
                   </Button>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="remember"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                    Recordarme
+                  </Label>
+                </div>
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+                  ¿Olvidaste tu contraseña?
+                </Link>
               </div>
             </CardContent>
             
