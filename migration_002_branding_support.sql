@@ -19,11 +19,22 @@ CREATE POLICY "Tenant members can upload assets" ON storage.objects
 FOR INSERT WITH CHECK (
   bucket_id = 'tenant-assets' 
   AND auth.uid() IS NOT NULL
-  AND (storage.foldername(name))[1] IN (
-    SELECT t.id::text 
-    FROM tenants t 
-    JOIN tenant_memberships tm ON t.id = tm.tenant_id 
-    WHERE tm.user_id = auth.uid()
+  AND (
+    -- Allow if user is owner/admin of the tenant (using tenant_memberships)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      JOIN tenant_memberships tm ON t.id = tm.tenant_id 
+      WHERE tm.user_id = auth.uid() 
+      AND tm.role IN ('owner', 'admin')
+    )
+    OR
+    -- Fallback: allow if user is the owner of the tenant (legacy support)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      WHERE t.owner_id = auth.uid()
+    )
   )
 );
 
@@ -51,12 +62,22 @@ CREATE POLICY "Tenant members can update assets" ON storage.objects
 FOR UPDATE USING (
   bucket_id = 'tenant-assets' 
   AND auth.uid() IS NOT NULL
-  AND (storage.foldername(name))[1] IN (
-    SELECT t.id::text 
-    FROM tenants t 
-    JOIN tenant_memberships tm ON t.id = tm.tenant_id 
-    WHERE tm.user_id = auth.uid() 
-    AND tm.role IN ('owner', 'admin')
+  AND (
+    -- Allow if user is owner/admin of the tenant (using tenant_memberships)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      JOIN tenant_memberships tm ON t.id = tm.tenant_id 
+      WHERE tm.user_id = auth.uid() 
+      AND tm.role IN ('owner', 'admin')
+    )
+    OR
+    -- Fallback: allow if user is the owner of the tenant (legacy support)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      WHERE t.owner_id = auth.uid()
+    )
   )
 );
 
@@ -65,12 +86,22 @@ CREATE POLICY "Tenant members can delete assets" ON storage.objects
 FOR DELETE USING (
   bucket_id = 'tenant-assets' 
   AND auth.uid() IS NOT NULL
-  AND (storage.foldername(name))[1] IN (
-    SELECT t.id::text 
-    FROM tenants t 
-    JOIN tenant_memberships tm ON t.id = tm.tenant_id 
-    WHERE tm.user_id = auth.uid() 
-    AND tm.role IN ('owner', 'admin')
+  AND (
+    -- Allow if user is owner/admin of the tenant (using tenant_memberships)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      JOIN tenant_memberships tm ON t.id = tm.tenant_id 
+      WHERE tm.user_id = auth.uid() 
+      AND tm.role IN ('owner', 'admin')
+    )
+    OR
+    -- Fallback: allow if user is the owner of the tenant (legacy support)
+    (storage.foldername(name))[1] IN (
+      SELECT t.id::text 
+      FROM tenants t 
+      WHERE t.owner_id = auth.uid()
+    )
   )
 );
 
@@ -80,6 +111,7 @@ SET branding = '{
   "primaryColor": "#8B5CF6",
   "secondaryColor": "#EC4899", 
   "buttonColor": "#10B981",
+  "textColor": "#F3F4F6",
   "logoUrl": null,
   "coverImageUrl": null
 }'::jsonb

@@ -15,6 +15,7 @@ interface BrandingSettings {
   primaryColor: string
   secondaryColor: string
   buttonColor: string
+  textColor: string
   logo: File | null
   coverImage: File | null
   logoUrl?: string
@@ -30,6 +31,7 @@ export default function SettingsPage() {
     primaryColor: tenant?.branding?.primaryColor || '#8B5CF6',
     secondaryColor: tenant?.branding?.secondaryColor || '#EC4899',
     buttonColor: tenant?.branding?.buttonColor || '#10B981',
+    textColor: tenant?.branding?.textColor || '#F3F4F6',
     logo: null,
     coverImage: null,
     logoUrl: tenant?.branding?.logoUrl || '',
@@ -100,6 +102,7 @@ export default function SettingsPage() {
             primaryColor: brandingSettings.primaryColor,
             secondaryColor: brandingSettings.secondaryColor,
             buttonColor: brandingSettings.buttonColor,
+            textColor: brandingSettings.textColor,
             logoUrl,
             coverImageUrl
           }
@@ -199,6 +202,14 @@ export default function SettingsPage() {
               value={brandingSettings.buttonColor}
               onChange={(value) => handleColorChange('buttonColor', value)}
               placeholder="#10B981"
+            />
+
+            <ColorPicker
+              id="textColor"
+              label="Color de Texto"
+              value={brandingSettings.textColor}
+              onChange={(value) => handleColorChange('textColor', value)}
+              placeholder="#F3F4F6"
             />
           </CardContent>
         </Card>

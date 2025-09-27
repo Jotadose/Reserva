@@ -49,6 +49,10 @@
     color: var(--brand-secondary);
   }
   
+  .text-brand-text {
+    color: var(--brand-text);
+  }
+  
   .gradient-bg-dynamic {
     background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
   }

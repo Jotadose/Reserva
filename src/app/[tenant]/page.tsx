@@ -64,7 +64,7 @@ const getMockSchedule = () => ({
 
 export default function TenantLandingPage() {
   const { tenant, isLoading, error } = useTenant()
-  const { colors, getGradientStyle, getButtonStyle, logoUrl, coverImageUrl } = useBranding()
+  const { colors, getGradientStyle, getButtonStyle, getTextStyle, logoUrl, coverImageUrl } = useBranding()
   const { services } = usePublicServices(tenant?.id || null)
   const { services: featuredServices } = useFeaturedServices(tenant?.id || null, 3)
   const [scrollY, setScrollY] = useState(0)

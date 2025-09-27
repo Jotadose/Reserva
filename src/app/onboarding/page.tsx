@@ -54,6 +54,7 @@ interface BrandingSettings {
   primaryColor: string
   secondaryColor: string
   buttonColor: string
+  textColor: string
   logo?: File | null
   coverImage?: File | null
   logoPreview?: string
@@ -157,6 +158,7 @@ export default function OnboardingPage() {
     primaryColor: '#3B82F6',
     secondaryColor: '#1E40AF', 
     buttonColor: '#EF4444',
+    textColor: '#F3F4F6',
     logo: null,
     coverImage: null,
     logoPreview: '',
@@ -188,7 +190,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const handleColorChange = (color: string, type: 'primaryColor' | 'secondaryColor' | 'buttonColor') => {
+  const handleColorChange = (color: string, type: 'primaryColor' | 'secondaryColor' | 'buttonColor' | 'textColor') => {
     setBrandingSettings(prev => ({
       ...prev,
       [type]: color
@@ -298,6 +300,7 @@ export default function OnboardingPage() {
               primaryColor: brandingSettings.primaryColor,
               secondaryColor: brandingSettings.secondaryColor,
               buttonColor: brandingSettings.buttonColor,
+              textColor: brandingSettings.textColor,
               // Las imágenes se podrían subir después o en un paso separado
             },
             business: {
@@ -437,7 +440,7 @@ export default function OnboardingPage() {
       case 3:
         return true // Horarios son opcionales
       case 4:
-        return brandingSettings.primaryColor && brandingSettings.secondaryColor && brandingSettings.buttonColor
+        return brandingSettings.primaryColor && brandingSettings.secondaryColor && brandingSettings.buttonColor && brandingSettings.textColor
       case 5:
         return true // Confirmación final
       default:
@@ -792,6 +795,26 @@ export default function OnboardingPage() {
                         />
                       </div>
                       <p className="text-sm text-gray-500">Color para botones de acción</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label htmlFor="textColor" className="text-white">Color de Texto</Label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          id="textColor"
+                          value={brandingSettings.textColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'textColor')}
+                          className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+                        />
+                        <Input
+                          value={brandingSettings.textColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'textColor')}
+                          placeholder="#F3F4F6"
+                          className="flex-1 bg-white/10 border-white/30 text-white placeholder:text-white/50"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-400">Color principal para textos</p>
                     </div>
                   </div>
 

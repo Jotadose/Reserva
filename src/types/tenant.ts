@@ -16,6 +16,7 @@ export interface Tenant {
     primaryColor: string
     secondaryColor: string
     buttonColor: string
+    textColor: string
     logoUrl?: string
     coverImageUrl?: string
   }
