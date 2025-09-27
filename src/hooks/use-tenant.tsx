@@ -26,6 +26,7 @@ interface TenantContextType {
   refetchTenant: () => Promise<void>
   refetch: () => Promise<void> // Alias for convenience
   isSupabaseConfigured: boolean
+  updateTenant: (data: Partial<Tenant>) => Promise<void>
   
   // New membership-based properties
   currentMembership: TenantMembership | null
@@ -324,6 +325,29 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   }, [memberships, tenantSlug, fetchTenant])
 
+  const updateTenant = useCallback(async (data: Partial<Tenant>) => {
+    if (!tenant?.id) {
+      throw new Error('No tenant to update')
+    }
+
+    const supabase = getSupabaseClient()
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
+    const { error } = await supabase
+      .from('tenants')
+      .update(data)
+      .eq('id', tenant.id)
+
+    if (error) {
+      throw error
+    }
+
+    // Refresh tenant data
+    await refetchTenant()
+  }, [tenant?.id, refetchTenant])
+
   // Load memberships when user changes
   useEffect(() => {
     loadMemberships()
@@ -366,6 +390,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     refetchTenant,
     refetch: refetchTenant, // Alias for convenience
     isSupabaseConfigured: supabaseConfigured,
+    updateTenant,
     
     // New membership-based properties
     currentMembership,
@@ -375,7 +400,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     canManage,
     switchTenant,
   }), [
-    tenant, tenantSlug, isLoading, error, refetchTenant, supabaseConfigured,
+    tenant, tenantSlug, isLoading, error, refetchTenant, supabaseConfigured, updateTenant,
     currentMembership, memberships, hasRole, isAdmin, canManage, switchTenant
   ])
 

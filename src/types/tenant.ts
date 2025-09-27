@@ -17,8 +17,14 @@ export interface Tenant {
     secondaryColor: string
     buttonColor: string
     textColor: string
+    textSecondaryColor?: string
+    iconColor?: string
     logoUrl?: string
     coverImageUrl?: string
+    customTitle?: string
+    customSubtitle?: string
+    buttonText?: string
+    whatsappButtonText?: string
   }
   created_at: string
   updated_at: string

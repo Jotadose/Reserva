@@ -8,6 +8,8 @@ interface BrandingColors {
   secondary: string
   button: string
   text: string
+  textSecondary: string
+  icon: string
 }
 
 export function useBranding() {
@@ -17,7 +19,9 @@ export function useBranding() {
     primary: tenant?.branding?.primaryColor || '#8B5CF6',
     secondary: tenant?.branding?.secondaryColor || '#EC4899',
     button: tenant?.branding?.buttonColor || '#10B981',
-    text: tenant?.branding?.textColor || '#F3F4F6'
+    text: tenant?.branding?.textColor || '#F3F4F6',
+    textSecondary: tenant?.branding?.textSecondaryColor || '#D1D5DB',
+    icon: tenant?.branding?.iconColor || '#A78BFA'
   }
 
   // Apply branding colors to CSS custom properties
@@ -28,6 +32,8 @@ export function useBranding() {
       root.style.setProperty('--brand-secondary', colors.secondary)
       root.style.setProperty('--brand-button', colors.button)
       root.style.setProperty('--brand-text', colors.text)
+      root.style.setProperty('--brand-text-secondary', colors.textSecondary)
+      root.style.setProperty('--brand-icon', colors.icon)
       
       // Generate lighter/darker variants
       root.style.setProperty('--brand-primary-light', colors.primary + '20')
@@ -37,7 +43,7 @@ export function useBranding() {
       root.style.setProperty('--brand-text-light', colors.text + '80')
       root.style.setProperty('--brand-text-dark', colors.text + '40')
     }
-  }, [colors.primary, colors.secondary, colors.button, colors.text])
+  }, [colors.primary, colors.secondary, colors.button, colors.text, colors.textSecondary, colors.icon])
 
   const getGradientStyle = () => ({
     background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
@@ -59,6 +65,18 @@ export function useBranding() {
     color: colors.text
   })
 
+  const getTextSecondaryStyle = () => ({
+    color: colors.textSecondary
+  })
+
+  const getIconStyle = () => ({
+    color: colors.icon
+  })
+
+  const getCustomText = (key: 'customTitle' | 'customSubtitle' | 'buttonText' | 'whatsappButtonText') => {
+    return tenant?.branding?.[key] || ''
+  }
+
   const getGradientClass = () => 'bg-brand-gradient'
 
   return {
@@ -68,6 +86,9 @@ export function useBranding() {
     getSecondaryStyle,
     getButtonStyle,
     getTextStyle,
+    getTextSecondaryStyle,
+    getIconStyle,
+    getCustomText,
     getGradientClass,
     logoUrl: tenant?.branding?.logoUrl,
     coverImageUrl: tenant?.branding?.coverImageUrl

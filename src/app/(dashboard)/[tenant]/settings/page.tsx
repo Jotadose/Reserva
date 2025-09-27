@@ -1,358 +1,208 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useParams } from 'next/navigation'
-import { Palette, Image as ImageIcon, Save, Eye } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Settings, Save, Building2, Mail, Clock } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ColorPicker } from '@/components/ui/color-picker'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useTenant } from '@/hooks/use-tenant'
-import { getSupabaseClient } from '@/lib/supabase'
-
-interface BrandingSettings {
-  primaryColor: string
-  secondaryColor: string
-  buttonColor: string
-  textColor: string
-  logo: File | null
-  coverImage: File | null
-  logoUrl?: string
-  coverImageUrl?: string
-}
 
 export default function SettingsPage() {
-  const params = useParams()
-  const tenantSlug = params.tenant as string
-  const { tenant, refetch } = useTenant()
-  
-  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>({
-    primaryColor: tenant?.branding?.primaryColor || '#8B5CF6',
-    secondaryColor: tenant?.branding?.secondaryColor || '#EC4899',
-    buttonColor: tenant?.branding?.buttonColor || '#10B981',
-    textColor: tenant?.branding?.textColor || '#F3F4F6',
-    logo: null,
-    coverImage: null,
-    logoUrl: tenant?.branding?.logoUrl || '',
-    coverImageUrl: tenant?.branding?.coverImageUrl || ''
+  const { tenant, updateTenant } = useTenant()
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success')
+
+  const [generalData, setGeneralData] = useState({
+    name: '',
+    contact_email: '',
+    contact_phone: '',
+    slot_duration_minutes: 30
   })
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [previewMode, setPreviewMode] = useState(false)
-
-  const handleColorChange = (colorType: keyof BrandingSettings, value: string) => {
-    setBrandingSettings(prev => ({
-      ...prev,
-      [colorType]: value
-    }))
-  }
-
-  const handleImageUpload = (imageType: 'logo' | 'coverImage', file: File | null) => {
-    setBrandingSettings(prev => ({
-      ...prev,
-      [imageType]: file
-    }))
-  }
-
-  const uploadImage = async (file: File, path: string): Promise<string> => {
-    const supabase = getSupabaseClient()
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random()}.${fileExt}`
-    const filePath = `${path}/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('tenant-assets')
-      .upload(filePath, file)
-
-    if (uploadError) {
-      throw uploadError
+  useEffect(() => {
+    if (tenant) {
+      setGeneralData({
+        name: tenant.name || '',
+        contact_email: tenant.contact_email || '',
+        contact_phone: tenant.contact_phone || '',
+        slot_duration_minutes: tenant.slot_duration_minutes || 30
+      })
     }
-
-    const { data } = supabase.storage
-      .from('tenant-assets')
-      .getPublicUrl(filePath)
-
-    return data.publicUrl
-  }
+  }, [tenant])
 
   const handleSave = async () => {
-    if (!tenant) return
-    
-    setIsLoading(true)
+    setLoading(true)
+    setMessage('')
+
     try {
-      let logoUrl = brandingSettings.logoUrl
-      let coverImageUrl = brandingSettings.coverImageUrl
-
-      // Upload new images if selected
-      if (brandingSettings.logo) {
-        logoUrl = await uploadImage(brandingSettings.logo, `${tenant.id}/logo`)
-      }
-      
-      if (brandingSettings.coverImage) {
-        coverImageUrl = await uploadImage(brandingSettings.coverImage, `${tenant.id}/cover`)
-      }
-
-      // Update tenant branding in database
-      const supabase = getSupabaseClient()
-      const { error } = await supabase
-        .from('tenants')
-        .update({
-          branding: {
-            primaryColor: brandingSettings.primaryColor,
-            secondaryColor: brandingSettings.secondaryColor,
-            buttonColor: brandingSettings.buttonColor,
-            textColor: brandingSettings.textColor,
-            logoUrl,
-            coverImageUrl
-          }
-        })
-        .eq('id', tenant.id)
-
-      if (error) throw error
-
-      // Refresh tenant data
-      await refetch()
-      
-      // Reset file inputs
-      setBrandingSettings(prev => ({
-        ...prev,
-        logo: null,
-        coverImage: null,
-        logoUrl,
-        coverImageUrl
-      }))
-
-      alert('Configuración guardada exitosamente!')
+      await updateTenant(generalData)
+      setMessage('Configuración general guardada exitosamente')
+      setMessageType('success')
     } catch (error) {
-      console.error('Error saving branding:', error)
-      alert('Error al guardar la configuración')
+      console.error('Error saving general settings:', error)
+      setMessage('Error al guardar la configuración')
+      setMessageType('error')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  if (!tenant) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Cargando configuración...</p>
-        </div>
-      </div>
-    )
+  const handleInputChange = (key: string, value: string | number) => {
+    setGeneralData(prev => ({ ...prev, [key]: value }))
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Configuración de Marca</h1>
-          <p className="text-gray-600">Personaliza la apariencia visual de tu barbería</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => setPreviewMode(!previewMode)}
-            className="flex items-center"
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            {previewMode ? 'Ocultar Vista Previa' : 'Vista Previa'}
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            className="flex items-center"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'Guardando...' : 'Guardar Cambios'}
-          </Button>
-        </div>
+    <div className="p-8 max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Configuración General</h1>
+        <p className="text-gray-600">Gestiona la información básica de tu workspace</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Color Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Palette className="w-5 h-5 mr-2" />
-              Colores de Marca
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ColorPicker
-              id="primaryColor"
-              label="Color Primario"
-              value={brandingSettings.primaryColor}
-              onChange={(value) => handleColorChange('primaryColor', value)}
-              placeholder="#8B5CF6"
-            />
-
-            <ColorPicker
-              id="secondaryColor"
-              label="Color Secundario"
-              value={brandingSettings.secondaryColor}
-              onChange={(value) => handleColorChange('secondaryColor', value)}
-              placeholder="#EC4899"
-            />
-
-            <ColorPicker
-              id="buttonColor"
-              label="Color de Botones"
-              value={brandingSettings.buttonColor}
-              onChange={(value) => handleColorChange('buttonColor', value)}
-              placeholder="#10B981"
-            />
-
-            <ColorPicker
-              id="textColor"
-              label="Color de Texto"
-              value={brandingSettings.textColor}
-              onChange={(value) => handleColorChange('textColor', value)}
-              placeholder="#F3F4F6"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Image Upload */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ImageIcon className="w-5 h-5 mr-2" />
-              Imágenes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="logo">Logo de la Barbería</Label>
-              <div className="mt-1">
-                {brandingSettings.logoUrl && (
-                  <div className="mb-2">
-                    <img 
-                      src={brandingSettings.logoUrl} 
-                      alt="Logo actual" 
-                      className="w-20 h-20 object-cover rounded border"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Logo actual</p>
-                  </div>
-                )}
-                <Input
-                  id="logo"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload('logo', e.target.files?.[0] || null)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="coverImage">Imagen de Portada</Label>
-              <div className="mt-1">
-                {brandingSettings.coverImageUrl && (
-                  <div className="mb-2">
-                    <img 
-                      src={brandingSettings.coverImageUrl} 
-                      alt="Portada actual" 
-                      className="w-full h-24 object-cover rounded border"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Imagen actual</p>
-                  </div>
-                )}
-                <Input
-                  id="coverImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload('coverImage', e.target.files?.[0] || null)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Preview Section */}
-      {previewMode && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Vista Previa del Diseño</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Header Preview */}
-              <div 
-                className="h-32 rounded-lg flex items-center justify-center text-white relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${brandingSettings.primaryColor} 0%, ${brandingSettings.secondaryColor} 100%)`
-                }}
-              >
-                {brandingSettings.coverImageUrl && (
-                  <img 
-                    src={brandingSettings.coverImageUrl} 
-                    alt="Cover" 
-                    className="absolute inset-0 w-full h-full object-cover opacity-20"
-                  />
-                )}
-                <div className="relative z-10 text-center">
-                  {brandingSettings.logoUrl && (
-                    <img 
-                      src={brandingSettings.logoUrl} 
-                      alt="Logo" 
-                      className="w-12 h-12 mx-auto mb-2 rounded"
-                    />
-                  )}
-                  <h2 className="text-xl font-bold">{tenant.name}</h2>
-                </div>
-              </div>
-
-              {/* Button Samples */}
-              <div className="flex space-x-4">
-                <button
-                  className="px-6 py-2 rounded-lg text-white font-medium"
-                  style={{ backgroundColor: brandingSettings.buttonColor }}
-                >
-                  Reservar Ahora
-                </button>
-                <button
-                  className="px-6 py-2 rounded-lg text-white font-medium"
-                  style={{ backgroundColor: brandingSettings.primaryColor }}
-                >
-                  Ver Servicios
-                </button>
-                <button
-                  className="px-6 py-2 rounded-lg text-white font-medium"
-                  style={{ backgroundColor: brandingSettings.secondaryColor }}
-                >
-                  Contacto
-                </button>
-              </div>
-
-              {/* Color Palette Display */}
-              <div className="flex items-center space-x-4 mt-4">
-                <span className="font-medium">Paleta de colores:</span>
-                <div className="flex space-x-2">
-                  <div 
-                    className="w-8 h-8 rounded border-2 border-gray-300"
-                    style={{ backgroundColor: brandingSettings.primaryColor }}
-                    title="Color Primario"
-                  ></div>
-                  <div 
-                    className="w-8 h-8 rounded border-2 border-gray-300"
-                    style={{ backgroundColor: brandingSettings.secondaryColor }}
-                    title="Color Secundario"
-                  ></div>
-                  <div 
-                    className="w-8 h-8 rounded border-2 border-gray-300"
-                    style={{ backgroundColor: brandingSettings.buttonColor }}
-                    title="Color de Botones"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {message && (
+        <Alert className={`mb-6 ${messageType === 'error' ? 'border-red-200' : 'border-green-200'}`}>
+          <AlertDescription className={messageType === 'error' ? 'text-red-800' : 'text-green-800'}>
+            {message}
+          </AlertDescription>
+        </Alert>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Información Básica */}
+        <Card className="p-6">
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              Información Básica
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="px-0 space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-sm font-medium">Nombre del Negocio</Label>
+              <Input
+                id="name"
+                type="text"
+                value={generalData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Nombre de tu negocio"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="slot_duration_minutes" className="text-sm font-medium">
+                Duración de Slots (minutos)
+              </Label>
+              <select
+                id="slot_duration_minutes" 
+                title="Seleccionar duración de slots"
+                value={generalData.slot_duration_minutes}
+                onChange={(e) => handleInputChange('slot_duration_minutes', parseInt(e.target.value))}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={15}>15 minutos</option>
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>60 minutos</option>
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Información de Contacto */}
+        <Card className="p-6">
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-green-600" />
+              Información de Contacto
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="px-0 space-y-4">
+            <div>
+              <Label htmlFor="contact_email" className="text-sm font-medium">Email de Contacto</Label>
+              <Input
+                id="contact_email"
+                type="email"
+                value={generalData.contact_email}
+                onChange={(e) => handleInputChange('contact_email', e.target.value)}
+                placeholder="contacto@ejemplo.com"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contact_phone" className="text-sm font-medium">Teléfono de Contacto</Label>
+              <Input
+                id="contact_phone"
+                type="tel"
+                value={generalData.contact_phone}
+                onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                placeholder="+56 9 1234 5678"
+                className="mt-1"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Información del Plan */}
+        <Card className="p-6 lg:col-span-2">
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-purple-600" />
+              Información del Plan
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="px-0">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-900">
+                    Plan Actual: {tenant?.plan === 'basic' ? 'Básico' : 'Premium'}
+                  </h3>
+                  <p className="text-purple-700 mt-1">
+                    Estado: {tenant?.status === 'active' ? 'Activo' : 'Prueba'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Hasta 100 reservas/mes
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Branding personalizado
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Soporte por email
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-purple-900">$0</p>
+                  <p className="text-purple-700 text-sm">por mes</p>
+                  <Button variant="outline" className="mt-2 text-purple-700 border-purple-300 hover:bg-purple-50">
+                    Ver Planes
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Acciones */}
+      <div className="flex justify-end items-center mt-8 pt-6 border-t">
+        <Button 
+          onClick={handleSave} 
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <Save className="w-4 h-4" />
+          {loading ? 'Guardando...' : 'Guardar Cambios'}
+        </Button>
+      </div>
     </div>
   )
 }
