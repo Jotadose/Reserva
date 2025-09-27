@@ -24,10 +24,12 @@ export function useBranding() {
     icon: tenant?.branding?.iconColor || '#A78BFA'
   }
 
-  // Apply branding colors to CSS custom properties
+  // Apply branding colors and fonts to CSS custom properties
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const root = document.documentElement
+      
+      // Colors
       root.style.setProperty('--brand-primary', colors.primary)
       root.style.setProperty('--brand-secondary', colors.secondary)
       root.style.setProperty('--brand-button', colors.button)
@@ -42,8 +44,52 @@ export function useBranding() {
       root.style.setProperty('--brand-secondary-dark', colors.secondary + '80')
       root.style.setProperty('--brand-text-light', colors.text + '80')
       root.style.setProperty('--brand-text-dark', colors.text + '40')
+
+      // Typography
+      const typography = tenant?.branding?.typography
+      if (typography) {
+        // Font families (would need to be loaded from Google Fonts)
+        const fontMap: Record<string, string> = {
+          'inter': 'Inter, sans-serif',
+          'roboto': 'Roboto, sans-serif',
+          'poppins': 'Poppins, sans-serif',
+          'montserrat': 'Montserrat, sans-serif',
+          'playfair': 'Playfair Display, serif',
+          'lora': 'Lora, serif',
+          'oswald': 'Oswald, sans-serif',
+          'dancing-script': 'Dancing Script, cursive'
+        }
+
+        root.style.setProperty('--font-heading', fontMap[typography.headingFont] || 'Inter, sans-serif')
+        root.style.setProperty('--font-body', fontMap[typography.bodyFont] || 'Inter, sans-serif')
+        root.style.setProperty('--font-button', fontMap[typography.buttonFont] || 'Inter, sans-serif')
+
+        // Font sizes
+        const headingSizes = {
+          small: '1.5rem',
+          medium: '2rem',
+          large: '2.5rem',
+          xlarge: '3rem'
+        }
+        
+        const bodySizes = {
+          small: '0.875rem',
+          medium: '1rem',
+          large: '1.125rem'
+        }
+
+        const lineHeights = {
+          tight: '1.2',
+          normal: '1.5',
+          relaxed: '1.75'
+        }
+
+        root.style.setProperty('--heading-size', headingSizes[typography.headingSize])
+        root.style.setProperty('--body-size', bodySizes[typography.bodySize])
+        root.style.setProperty('--line-height', lineHeights[typography.lineHeight])
+      }
     }
-  }, [colors.primary, colors.secondary, colors.button, colors.text, colors.textSecondary, colors.icon])
+  }, [colors.primary, colors.secondary, colors.button, colors.text, colors.textSecondary, colors.icon, tenant?.branding?.typography])
 
   const getGradientStyle = () => ({
     background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
@@ -79,6 +125,21 @@ export function useBranding() {
 
   const getGradientClass = () => 'bg-brand-gradient'
 
+  const getGalleryImages = () => {
+    return tenant?.branding?.gallery || []
+  }
+
+  const getTypography = () => {
+    return tenant?.branding?.typography || {
+      headingFont: 'inter',
+      bodyFont: 'inter',
+      buttonFont: 'inter',
+      headingSize: 'large',
+      bodySize: 'medium',
+      lineHeight: 'normal'
+    }
+  }
+
   return {
     colors,
     getGradientStyle,
@@ -89,6 +150,8 @@ export function useBranding() {
     getTextSecondaryStyle,
     getIconStyle,
     getCustomText,
+    getGalleryImages,
+    getTypography,
     getGradientClass,
     logoUrl: tenant?.branding?.logoUrl,
     coverImageUrl: tenant?.branding?.coverImageUrl

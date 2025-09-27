@@ -1,20 +1,36 @@
-# Mejoras de UI para Branding - Próximas Funcionalidades
+# Roadmap de Mejoras UI - Sistema de Branding Avanzado
 
-Basado en el progreso actual, estas son las mejoras sugeridas para dar más control visual desde la página de configuración.
+Progreso de implementación de funcionalidades de personalización visual.
 
-## 🎨 **Nuevos Campos de Personalización**
+## 🚀 Fase 1: Colores y Textos Personalizados (Completado)
 
-### **1. Colores Adicionales**
-- ✅ **Color de Texto** (ya implementado)
-- 🆕 **Color de Texto Secundario** (subtítulos, descripciones)
-- 🆕 **Color de Fondo de Cards** (transparencia personalizable)
-- 🆕 **Color de Bordes** (para elementos glass)
-- 🆕 **Color de Íconos** (separado del primario)
+**Estado**: ✅ Implementado
+**Tiempo estimado**: 2-3 horas
+**Prioridad**: Alta
 
-### **2. Tipografía**
-- 🆕 **Fuente Principal** (selector de Google Fonts)
-- 🆕 **Tamaño de Título** (H1 del hero)
-- 🆕 **Peso de Fuente** (normal, medium, bold)
+### Funcionalidades Implementadas:
+- ✅ **Colores adicionales** (textSecondaryColor, iconColor)
+- ✅ **Textos personalizables** (customTitle, customSubtitle, buttonText, whatsappButtonText)  
+- ✅ **Hook extendido** (`use-branding.ts`) con nuevas propiedades
+- ✅ **Interfaz de configuración** completa con vista previa
+- ✅ **Variables CSS automáticas**
+
+---
+
+## � Fase 2: Galería de Imágenes y Fuentes Tipográficas (Completado)
+
+**Estado**: ✅ Implementado
+**Tiempo estimado**: 4-5 horas  
+**Prioridad**: Media
+
+### Funcionalidades Implementadas:
+- ✅ **Galería de Imágenes** con subida múltiple y gestión
+- ✅ **Configuración de Tipografía** con 8 fuentes Google Fonts
+- ✅ **Vista previa en tiempo real** de fuentes y tamaños
+- ✅ **Variables CSS dinámicas** para fuentes
+- ✅ **Configuración avanzada** (tamaños, line-height)
+- ✅ **Navegación por pestañas** en configuración
+- ✅ **TypeScript types** actualizados para gallery y typography
 
 ### **3. Espaciado y Layout**
 - 🆕 **Padding del Container** (más o menos espacioso)

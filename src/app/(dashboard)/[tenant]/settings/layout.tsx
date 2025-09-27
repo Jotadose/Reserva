@@ -12,7 +12,8 @@ import {
   CreditCard, 
   Bell,
   Shield,
-  Globe
+  Globe,
+  Type
 } from 'lucide-react'
 
 interface SettingsLayoutProps {
@@ -36,6 +37,12 @@ const settingsNavigation = [
     name: 'Imágenes',
     href: '/settings/images',
     icon: Image,
+    exact: false
+  },
+  {
+    name: 'Tipografía',
+    href: '/settings/typography',
+    icon: Type,
     exact: false
   },
   {

@@ -25,6 +25,20 @@ export interface Tenant {
     customSubtitle?: string
     buttonText?: string
     whatsappButtonText?: string
+    gallery?: Array<{
+      url: string
+      name: string
+      alt?: string
+      order: number
+    }>
+    typography?: {
+      headingFont: string
+      bodyFont: string
+      buttonFont: string
+      headingSize: 'small' | 'medium' | 'large' | 'xlarge'
+      bodySize: 'small' | 'medium' | 'large'
+      lineHeight: 'tight' | 'normal' | 'relaxed'
+    }
   }
   created_at: string
   updated_at: string
