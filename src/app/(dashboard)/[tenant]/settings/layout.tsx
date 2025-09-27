@@ -13,7 +13,9 @@ import {
   Bell,
   Shield,
   Globe,
-  Type
+  Type,
+  Layout,
+  Wand2
 } from 'lucide-react'
 
 interface SettingsLayoutProps {
@@ -43,6 +45,18 @@ const settingsNavigation = [
     name: 'Tipografía',
     href: '/settings/typography',
     icon: Type,
+    exact: false
+  },
+  {
+    name: 'Presets',
+    href: '/settings/presets',
+    icon: Wand2,
+    exact: false
+  },
+  {
+    name: 'Layout',
+    href: '/settings/layout',
+    icon: Layout,
     exact: false
   },
   {

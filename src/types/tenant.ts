@@ -39,6 +39,23 @@ export interface Tenant {
       bodySize: 'small' | 'medium' | 'large'
       lineHeight: 'tight' | 'normal' | 'relaxed'
     }
+    layout?: {
+      containerPadding: 'compact' | 'normal' | 'spacious'
+      borderRadius: 'none' | 'small' | 'medium' | 'large'
+      glassIntensity: 'subtle' | 'medium' | 'strong'
+      backgroundColor?: string
+      cardColor?: string
+      borderColor?: string
+      logoPosition: 'left' | 'center' | 'right'
+      logoSize: 'small' | 'medium' | 'large'
+      coverImageOpacity: number
+      mobileLayout: 'stack' | 'side-by-side'
+      responsiveBreakpoints: {
+        mobile: number
+        tablet: number
+        desktop: number
+      }
+    }
   }
   created_at: string
   updated_at: string
