@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { useTenant } from '@/hooks/use-tenant'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 
 interface BrandingSettings {
   primaryColor: string
@@ -54,6 +54,7 @@ export default function SettingsPage() {
   }
 
   const uploadImage = async (file: File, path: string): Promise<string> => {
+    const supabase = getSupabaseClient()
     const fileExt = file.name.split('.').pop()
     const fileName = `${Math.random()}.${fileExt}`
     const filePath = `${path}/${fileName}`
@@ -91,6 +92,7 @@ export default function SettingsPage() {
       }
 
       // Update tenant branding in database
+      const supabase = getSupabaseClient()
       const { error } = await supabase
         .from('tenants')
         .update({

@@ -168,6 +168,9 @@ export default function OnboardingPage() {
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()
+  }
 
   // Handle image uploads and previews
   const handleImageUpload = (file: File, type: 'logo' | 'coverImage') => {
@@ -190,9 +193,6 @@ export default function OnboardingPage() {
       ...prev,
       [type]: color
     }))
-  }
-      .replace(/-+/g, '-')
-      .trim()
   }
 
   const generateUniqueSlug = async (baseName: string): Promise<string> => {
