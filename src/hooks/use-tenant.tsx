@@ -295,8 +295,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     const membership = memberships.find(m => m.tenant_id === targetTenantId)
     if (!membership || !membership.is_active) return false
 
-    // Role hierarchy permissions
-    const permissions = {
+    // Role hierarchy permissions with explicit typing
+    const permissions: Record<string, string[]> = {
       owner: ['tenants', 'users', 'providers', 'services', 'bookings', 'clients', 'settings', 'billing'],
       admin: ['providers', 'services', 'bookings', 'clients', 'settings'],
       staff: ['bookings', 'clients'],
@@ -304,7 +304,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       viewer: []
     }
 
-    return permissions[membership.role]?.includes(resource) || false
+    const rolePermissions = permissions[membership.role]
+    return rolePermissions ? rolePermissions.includes(resource) : false
   }, [currentMembership, memberships])
 
   const switchTenant = useCallback(async (tenantId: string) => {
