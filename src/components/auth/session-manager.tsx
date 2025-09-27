@@ -3,27 +3,25 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
-  User, 
   Settings, 
   LogOut, 
   ChevronDown, 
   ChevronUp,
   Home,
   Eye,
-  Edit3,
   ExternalLink
 } from 'lucide-react'
 import { useAuth } from '@/components/providers/auth-provider'
 import { useTenant } from '@/hooks/use-tenant'
 
 interface SessionManagerProps {
-  className?: string
+  readonly className?: string
 }
 
-export function SessionManager({ className }: SessionManagerProps) {
+export function SessionManager({ className }: Readonly<SessionManagerProps>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const { user, signOut } = useAuth()
