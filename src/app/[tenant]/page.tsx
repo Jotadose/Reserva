@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useTenant } from '@/hooks/use-tenant'
+import { useBranding } from '@/hooks/use-branding'
 import { usePublicServices } from '@/hooks/use-public-services'
 import { useFeaturedServices } from '@/hooks/use-featured-services'
 
@@ -63,6 +64,7 @@ const getMockSchedule = () => ({
 
 export default function TenantLandingPage() {
   const { tenant, isLoading, error } = useTenant()
+  const { colors, getGradientStyle, getButtonStyle, logoUrl, coverImageUrl } = useBranding()
   const { services } = usePublicServices(tenant?.id || null)
   const { services: featuredServices } = useFeaturedServices(tenant?.id || null, 3)
   const [scrollY, setScrollY] = useState(0)
@@ -128,20 +130,25 @@ export default function TenantLandingPage() {
   }
 
   return (
-    <div className="min-h-screen gradient-bg">
+    <div className="min-h-screen" style={getGradientStyle()}>
       {/* Navigation */}
-      <nav className={`glass border-b border-purple-500/20 sticky top-0 z-50 transition-all duration-300 ${
+      <nav className={`glass sticky top-0 z-50 transition-all duration-300 ${
         scrollY > 50 ? 'backdrop-blur-md' : 'backdrop-blur-sm'
-      }`}>
+      }`}
+      style={{ borderBottomColor: colors.primary + '33' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-                <Scissors className="w-5 h-5 text-white" />
-              </div>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={getGradientStyle()}>
+                  <Scissors className="w-5 h-5 text-white" />
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-bold text-white">{contact.businessName}</h1>
-                <div className="flex items-center space-x-1 text-xs text-purple-300">
+                <div className="flex items-center space-x-1 text-xs" style={{ color: colors.primary + 'CC' }}>
                   <Instagram className="w-3 h-3" />
                   <span>{contact.instagram}</span>
                 </div>
@@ -153,7 +160,7 @@ export default function TenantLandingPage() {
               <a href="#horarios" className="text-gray-300 hover:text-white transition-colors">Horarios</a>
               <a href="#contacto" className="text-gray-300 hover:text-white transition-colors">Contacto</a>
               <Link href={`/${tenant.slug}/book`}>
-                <Button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium">
+                <Button className="text-white px-6 py-2 rounded-lg transition-all duration-200 font-medium" style={getButtonStyle()}>
                   Reservar Cita
                 </Button>
               </Link>
@@ -164,13 +171,22 @@ export default function TenantLandingPage() {
 
       {/* Hero Section */}
       <section className="relative py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="w-24 h-24 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mx-auto mb-8 flex items-center justify-center animate-float">
-            <Scissors className="w-12 h-12 text-white" />
+        {coverImageUrl && (
+          <div className="absolute inset-0 z-0">
+            <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover opacity-20" />
+          </div>
+        )}
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="w-24 h-24 rounded-full mx-auto mb-8 flex items-center justify-center animate-float" style={getGradientStyle()}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="w-20 h-20 rounded-full object-cover" />
+            ) : (
+              <Scissors className="w-12 h-12 text-white" />
+            )}
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Bienvenido a <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">{contact.businessName}</span>
+            Bienvenido a <span style={{ background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{contact.businessName}</span>
           </h1>
           
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
@@ -180,7 +196,7 @@ export default function TenantLandingPage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Link href={`/${tenant.slug}/book`}>
-              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-semibold text-lg flex items-center space-x-2">
+              <Button size="lg" className="text-white px-8 py-4 rounded-lg transition-all duration-200 font-semibold text-lg flex items-center space-x-2" style={getButtonStyle()}>
                 <Calendar className="w-5 h-5" />
                 <span>Reservar Ahora</span>
               </Button>
