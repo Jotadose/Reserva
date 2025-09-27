@@ -449,6 +449,7 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
                 onChange={(e) => handleInputChange('clientName', e.target.value)}
                 placeholder="Tu nombre completo"
                 className="h-12 text-base"
+                autoComplete="name"
               />
             </div>
 
@@ -460,6 +461,7 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
                 placeholder="+56 9 1234 5678"
                 className="h-12 text-base"
                 type="tel"
+                autoComplete="tel"
               />
             </div>
 
@@ -471,6 +473,7 @@ export function BookingWidget({ tenant, services, providers, compact = false }: 
                 onChange={(e) => handleInputChange('clientEmail', e.target.value)}
                 placeholder="tu@email.com"
                 className="h-12 text-base"
+                autoComplete="email"
               />
             </div>
 

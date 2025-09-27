@@ -162,6 +162,7 @@ function LoginForm() {
                   required
                   disabled={isLoading}
                   className="h-11"
+                  autoComplete="email"
                 />
               </div>
               
@@ -177,6 +178,7 @@ function LoginForm() {
                     required
                     disabled={isLoading}
                     className="h-11 pr-10"
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
@@ -203,6 +205,7 @@ function LoginForm() {
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    title="Recordar mi sesión"
                   />
                   <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                     Recordarme
