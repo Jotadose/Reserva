@@ -50,6 +50,16 @@ interface BusinessHours {
   }
 }
 
+interface BrandingSettings {
+  primaryColor: string
+  secondaryColor: string
+  buttonColor: string
+  logo?: File | null
+  coverImage?: File | null
+  logoPreview?: string
+  coverPreview?: string
+}
+
 const DAYS = [
   { key: 'monday', label: 'Lunes' },
   { key: 'tuesday', label: 'Martes' },
@@ -143,11 +153,44 @@ export default function OnboardingPage() {
     sunday: { isOpen: false, openTime: '09:00', closeTime: '17:00' }
   })
 
+  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>({
+    primaryColor: '#3B82F6',
+    secondaryColor: '#1E40AF', 
+    buttonColor: '#EF4444',
+    logo: null,
+    coverImage: null,
+    logoPreview: '',
+    coverPreview: ''
+  })
+
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
+
+  // Handle image uploads and previews
+  const handleImageUpload = (file: File, type: 'logo' | 'coverImage') => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        setBrandingSettings(prev => ({
+          ...prev,
+          [type]: file,
+          [`${type}Preview`]: result
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleColorChange = (color: string, type: 'primaryColor' | 'secondaryColor' | 'buttonColor') => {
+    setBrandingSettings(prev => ({
+      ...prev,
+      [type]: color
+    }))
+  }
       .replace(/-+/g, '-')
       .trim()
   }
@@ -249,7 +292,28 @@ export default function OnboardingPage() {
           contact_email: finalBusinessInfo.email || null,
           website: finalBusinessInfo.website || null,
           working_hours: businessHours,
-          subscription_status: 'active'
+          subscription_status: 'active',
+          settings: {
+            branding: {
+              primaryColor: brandingSettings.primaryColor,
+              secondaryColor: brandingSettings.secondaryColor,
+              buttonColor: brandingSettings.buttonColor,
+              // Las imágenes se podrían subir después o en un paso separado
+            },
+            business: {
+              name: finalBusinessInfo.name,
+              email: finalBusinessInfo.email,
+              timezone: 'America/Santiago' // Por defecto Chile
+            },
+            features: {
+              onlineBooking: true,
+              paymentProcessing: false,
+              smsNotifications: false,
+              emailNotifications: true,
+              analytics: true,
+              multiLocation: false
+            }
+          }
         },
         plan: selectedPlan,
         services: services.map(s => ({
@@ -258,7 +322,8 @@ export default function OnboardingPage() {
           duration: s.duration,
           price: s.price,
         })),
-        provider: { role: 'owner' }
+        provider: { role: 'owner' },
+        branding: brandingSettings // Para procesar imágenes si es necesario
       }
 
   const tenantPayload = payload.tenant
@@ -370,8 +435,11 @@ export default function OnboardingPage() {
       case 2:
         return services.every(service => service.name && service.price > 0)
       case 3:
+        return true // Horarios son opcionales
       case 4:
-        return true
+        return brandingSettings.primaryColor && brandingSettings.secondaryColor && brandingSettings.buttonColor
+      case 5:
+        return true // Confirmación final
       default:
         return false
     }
@@ -645,6 +713,218 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">Personalización Visual</h2>
+              <p className="text-gray-600 mt-2">Elige los colores y sube imágenes para tu barbería</p>
+            </div>
+
+            <div className="space-y-8">
+              {/* Color Palette Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
+                    Paleta de Colores
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Primary Color */}
+                    <div className="space-y-3">
+                      <Label htmlFor="primaryColor">Color Primario</Label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          id="primaryColor"
+                          value={brandingSettings.primaryColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'primaryColor')}
+                          className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+                        />
+                        <Input
+                          value={brandingSettings.primaryColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'primaryColor')}
+                          placeholder="#3B82F6"
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500">Color principal de tu marca</p>
+                    </div>
+
+                    {/* Secondary Color */}
+                    <div className="space-y-3">
+                      <Label htmlFor="secondaryColor">Color Secundario</Label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          id="secondaryColor"
+                          value={brandingSettings.secondaryColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'secondaryColor')}
+                          className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+                        />
+                        <Input
+                          value={brandingSettings.secondaryColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'secondaryColor')}
+                          placeholder="#1E40AF"
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500">Color complementario</p>
+                    </div>
+
+                    {/* Button Color */}
+                    <div className="space-y-3">
+                      <Label htmlFor="buttonColor">Color de Botones</Label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          id="buttonColor"
+                          value={brandingSettings.buttonColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'buttonColor')}
+                          className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer"
+                        />
+                        <Input
+                          value={brandingSettings.buttonColor}
+                          onChange={(e) => handleColorChange(e.target.value, 'buttonColor')}
+                          placeholder="#EF4444"
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500">Color para botones de acción</p>
+                    </div>
+                  </div>
+
+                  {/* Color Preview */}
+                  <div className="mt-6 p-6 rounded-lg border-2 border-dashed border-gray-300">
+                    <h4 className="text-sm font-medium text-gray-700 mb-4">Vista Previa de Colores</h4>
+                    <div 
+                      className="h-20 rounded-lg flex items-center justify-center text-white font-medium"
+                      style={{
+                        background: `linear-gradient(135deg, ${brandingSettings.primaryColor} 0%, ${brandingSettings.secondaryColor} 100%)`
+                      }}
+                    >
+                      <button
+                        className="px-6 py-2 rounded-lg text-white font-medium transition-transform hover:scale-105"
+                        style={{ backgroundColor: brandingSettings.buttonColor }}
+                      >
+                        Botón de Ejemplo
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Images Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gray-400 rounded"></div>
+                    Imágenes de Marca
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Logo Upload */}
+                    <div className="space-y-3">
+                      <Label>Logo de la Barbería</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                        {brandingSettings.logoPreview ? (
+                          <div className="space-y-3">
+                            <img
+                              src={brandingSettings.logoPreview}
+                              alt="Logo preview"
+                              className="max-h-24 mx-auto rounded"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setBrandingSettings(prev => ({ ...prev, logo: null, logoPreview: '' }))}
+                            >
+                              Cambiar Logo
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'logo')}
+                                className="hidden"
+                                id="logo-upload"
+                              />
+                              <label
+                                htmlFor="logo-upload"
+                                className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                Subir Logo
+                              </label>
+                              <p className="text-sm text-gray-500 mt-1">PNG, JPG hasta 2MB</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Cover Image Upload */}
+                    <div className="space-y-3">
+                      <Label>Imagen de Portada</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                        {brandingSettings.coverPreview ? (
+                          <div className="space-y-3">
+                            <img
+                              src={brandingSettings.coverPreview}
+                              alt="Cover preview"
+                              className="max-h-24 mx-auto rounded"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setBrandingSettings(prev => ({ ...prev, coverImage: null, coverPreview: '' }))}
+                            >
+                              Cambiar Imagen
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">
+                              <Plus className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'coverImage')}
+                                className="hidden"
+                                id="cover-upload"
+                              />
+                              <label
+                                htmlFor="cover-upload"
+                                className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                Subir Imagen de Portada
+                              </label>
+                              <p className="text-sm text-gray-500 mt-1">PNG, JPG hasta 5MB</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -716,6 +996,68 @@ export default function OnboardingPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-pink-500 rounded mr-2"></div>
+                    Personalización Visual
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Color Preview */}
+                  <div className="space-y-3">
+                    <p className="font-medium">Paleta de Colores</p>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: brandingSettings.primaryColor }}
+                        ></div>
+                        <span className="text-sm">Primario</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: brandingSettings.secondaryColor }}
+                        ></div>
+                        <span className="text-sm">Secundario</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: brandingSettings.buttonColor }}
+                        ></div>
+                        <span className="text-sm">Botones</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview with actual colors */}
+                  <div className="mt-4">
+                    <p className="font-medium mb-2">Vista Previa</p>
+                    <div 
+                      className="h-16 rounded-lg flex items-center justify-center text-white text-sm font-medium"
+                      style={{
+                        background: `linear-gradient(135deg, ${brandingSettings.primaryColor} 0%, ${brandingSettings.secondaryColor} 100%)`
+                      }}
+                    >
+                      <button
+                        className="px-4 py-2 rounded text-white text-sm font-medium"
+                        style={{ backgroundColor: brandingSettings.buttonColor }}
+                      >
+                        {businessInfo.name || 'Mi Barbería'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Images */}
+                  <div className="flex justify-between text-sm">
+                    <span>Logo: {brandingSettings.logo ? '✅ Subido' : '⚠️ Sin logo'}</span>
+                    <span>Portada: {brandingSettings.coverImage ? '✅ Subida' : '⚠️ Sin imagen'}</span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )
@@ -741,14 +1083,14 @@ export default function OnboardingPage() {
             {/* Progress Bar */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                {[1, 2, 3, 4].map(step => (
+                {[1, 2, 3, 4, 5].map(step => (
                   <div key={step} className="flex items-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       step <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
                     }`}>
                       {step < currentStep ? <CheckCircle className="w-6 h-6" /> : step}
                     </div>
-                    {step < 4 && (
+                    {step < 5 && (
                       <div className={`w-16 h-1 mx-2 ${
                         step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
                       }`} />
@@ -759,13 +1101,14 @@ export default function OnboardingPage() {
               
               <div className="text-center">
                 <p className="text-sm text-gray-600">
-                  Paso {currentStep} de 4: {
+                  Paso {currentStep} de 5: {
                     (() => {
                       switch (currentStep) {
                         case 1: return 'Información Básica'
                         case 2: return 'Servicios'
                         case 3: return 'Horarios'
-                        case 4: return 'Confirmación'
+                        case 4: return 'Personalización Visual'
+                        case 5: return 'Confirmación'
                         default: return ''
                       }
                     })()
@@ -796,13 +1139,22 @@ export default function OnboardingPage() {
                     Anterior
                   </Button>
 
-                  {currentStep < 3 ? (
+                  {currentStep < 4 ? (
                     <Button
                       onClick={() => setCurrentStep(prev => prev + 1)}
                       disabled={!canProceed()}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
                       Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : currentStep === 4 ? (
+                    <Button
+                      onClick={() => setCurrentStep(prev => prev + 1)}
+                      disabled={!canProceed()}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      Continuar a Confirmación
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   ) : (

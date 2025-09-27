@@ -12,6 +12,13 @@ export interface Tenant {
   contact_phone?: string
   slot_duration_minutes: number
   settings: Record<string, any> // jsonb field
+  branding?: {
+    primaryColor: string
+    secondaryColor: string
+    buttonColor: string
+    logoUrl?: string
+    coverImageUrl?: string
+  }
   created_at: string
   updated_at: string
 }

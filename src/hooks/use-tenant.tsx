@@ -24,6 +24,7 @@ interface TenantContextType {
   isLoading: boolean
   error: string | null
   refetchTenant: () => Promise<void>
+  refetch: () => Promise<void> // Alias for convenience
   isSupabaseConfigured: boolean
   
   // New membership-based properties
@@ -186,7 +187,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       const supabase = getPublicSupabaseClient()
       const { data, error: supabaseError } = await supabase
         .from('tenants')
-        .select('id, slug, name, subscription_status, subscription_plan, contact_email, contact_phone, slot_duration_minutes, settings, created_at, updated_at')
+        .select('id, slug, name, subscription_status, subscription_plan, contact_email, contact_phone, slot_duration_minutes, settings, branding, created_at, updated_at')
         .eq('slug', slug)
         .in('subscription_status', ['active', 'trial'])
         .maybeSingle()
@@ -232,7 +233,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           tenant:tenants!tenant_id (
             id,
             slug,
-            name
+            name,
+            branding
           )
         `)
         .eq('user_id', user.id)
@@ -362,6 +364,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     error,
     refetchTenant,
+    refetch: refetchTenant, // Alias for convenience
     isSupabaseConfigured: supabaseConfigured,
     
     // New membership-based properties
